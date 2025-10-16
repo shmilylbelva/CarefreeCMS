@@ -16,6 +16,7 @@
 
 # 静态生成文件
 /public/static/*
+/html/*
 !/public/static/.gitignore
 
 # IDE 文件

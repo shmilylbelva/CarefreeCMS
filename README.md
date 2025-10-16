@@ -1,4 +1,4 @@
-# 逍遥内容管理系统 (CarefreeC MS)
+# 逍遥内容管理系统 (CarefreeCMS)
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![PHP](https://img.shields.io/badge/php-8.1+-green.svg)
@@ -9,7 +9,7 @@
 
 ## 系统简介
 
-逍遥内容管理系统（CarefreeC MS）是一款功能强大、易于使用的内容管理平台，采用前后端分离架构，支持静态页面生成，适用于个人博客、企业网站、新闻媒体等各类内容发布场景。
+逍遥内容管理系统（CarefreeCMS）是一款功能强大、易于使用的内容管理平台，采用前后端分离架构，支持静态页面生成，适用于个人博客、企业网站、新闻媒体等各类内容发布场景。
 
 ### 核心特性
 
@@ -29,7 +29,7 @@
 ## 📁 项目结构
 
 ```
-cms1/
+carefreecms/
 ├── api/                          # ThinkPHP 8 后端API服务
 │   ├── app/                      # 应用目录
 │   │   ├── controller/          # 控制器
@@ -54,20 +54,6 @@ cms1/
 │   ├── composer.json
 │   └── .env                      # 环境配置
 │
-├── backend/                      # Vue 3 后台管理界面
-│   ├── src/
-│   │   ├── api/                 # API接口封装
-│   │   ├── assets/              # 静态资源
-│   │   ├── components/          # 公共组件
-│   │   ├── views/               # 页面视图
-│   │   ├── router/              # 路由配置
-│   │   ├── store/               # Pinia状态管理
-│   │   ├── utils/               # 工具函数
-│   │   ├── App.vue
-│   │   └── main.js
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.js
 │
 ├── database_design.sql           # 数据库设计文件
 └── README.md                     # 项目说明文档
@@ -180,30 +166,21 @@ cms1/
 
 ## 📖 文档
 
-完整的技术文档请查看：[文档中心](docs/README.md)
-
-**快速链接：**
-- [完整部署指南](docs/deployment/DEPLOY.md) - 生产环境部署详细步骤
-- [后端环境配置](docs/deployment/backend-env.md) - .env 配置说明
-- [前端环境配置](docs/deployment/frontend-env.md) - 环境变量配置
-- [API 接口文档](docs/api/API.md) - 完整的 API 接口说明
-- [前端开发指南](docs/development/frontend-guide.md) - 前端开发规范
-- [权限管理指南](docs/development/permissions-guide.md) - 权限系统使用
+完整的技术文档请查看：待完善
 
 ## 安装部署
 
 ### 1. 克隆项目
 
 ```bash
-git clone [项目地址]
-cd cms1
+git clone https://gitee.com/sinma/carefreecms.git
 ```
 
 ### 2. 后端配置
 
 ```bash
 # 进入后端目录
-cd api
+cd carefreecms
 
 # 安装依赖
 composer install
@@ -212,10 +189,10 @@ composer install
 # 编辑 config/database.php 文件，设置数据库连接信息
 
 # 导入数据库
-# 将 database.sql 导入到 MySQL 数据库
+# 将 database_design.sql 导入到 MySQL 数据库
 
 # 启动开发服务器
-php think run
+php think run -p8000
 ```
 
 后端服务将运行在 `http://localhost:8000`
@@ -237,7 +214,7 @@ npm run dev
 
 ### 4. 生产部署
 
-**详细的生产环境部署指南，请查看：[完整部署文档](docs/deployment/DEPLOY.md)**
+**详细的生产环境部署指南，请查看：待完善**
 
 快速步骤：
 
@@ -252,7 +229,6 @@ npm run build
 - 复制 `.env.production` 为 `.env` 并修改配置
 - 确保 `runtime` 和 `public/uploads` 目录可写
 
-更多细节请参考：[完整部署文档](docs/deployment/DEPLOY.md)
 
 ## 默认账号
 
@@ -265,7 +241,6 @@ npm run build
 
 后端 API 采用 RESTful 风格设计，所有接口都需要 JWT Token 认证（登录接口除外）。
 
-**完整的 API 文档请查看：[API 接口文档](docs/api/API.md)**
 
 常用接口：
 - `POST /api/auth/login` - 用户登录
@@ -305,10 +280,9 @@ npm run build
 
 ## 联系我们
 
-- **官网**: https://carefreecms.com
-- **GitHub**: https://github.com/carefreecms/carefreecms
-- **问题反馈**: https://github.com/carefreecms/carefreecms/issues
-- **邮箱**: support@carefreecms.com
+- **官网**: https://www.carefreecms.com
+- **问题反馈**: https://gitee.com/sinma/carefreecms/issues
+- **邮箱**: sinma@qq.com
 
 ## 致谢
 
@@ -321,4 +295,4 @@ npm run build
 
 ---
 
-Made with ❤️ by CarefreeC MS Team © 2025
+Made with ❤️ by Carefree Team © 2025
