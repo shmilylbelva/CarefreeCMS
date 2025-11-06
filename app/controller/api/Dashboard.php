@@ -97,10 +97,11 @@ class Dashboard extends BaseController
         try {
             $info = [
                 'system_name' => '逍遥内容管理系统',
-                'system_version' => '1.2.0',
+                'system_version' => '1.3.0',
                 'system_author' => 'CareFree Team',
                 'system_copyright' => '© 2025 CareFree CMS. All rights reserved.',
                 'system_license' => 'MIT License',
+                'qq_group' => '113572201',
                 'thinkphp_version' => app()->version(),
             ];
 

@@ -1,7 +1,7 @@
 <?php
 namespace app\service\tag;
 
-use app\model\SiteSetting;
+use app\model\Config;
 use think\facade\Cache;
 
 /**
@@ -23,17 +23,15 @@ class ConfigTagService
         $cacheKey = 'site_config_' . $name;
         $value = Cache::get($cacheKey);
 
-        if ($value !== false) {
+        if ($value !== false && $value !== null) {
             return $value;
         }
 
         // 从数据库查询
-        $setting = SiteSetting::where('key', $name)
-            ->where('status', 1)
-            ->find();
+        $setting = Config::where('config_key', $name)->find();
 
         if ($setting) {
-            $value = $setting->value;
+            $value = $setting->config_value;
             // 缓存1小时
             Cache::set($cacheKey, $value, 3600);
             return $value;
@@ -52,18 +50,11 @@ class ConfigTagService
         $cacheKey = 'site_config_all';
         $configs = Cache::get($cacheKey);
 
-        if ($configs !== false) {
+        if ($configs !== false && $configs !== null) {
             return $configs;
         }
 
-        $settings = SiteSetting::where('status', 1)
-            ->select()
-            ->toArray();
-
-        $configs = [];
-        foreach ($settings as $setting) {
-            $configs[$setting['key']] = $setting['value'];
-        }
+        $configs = Config::getAllConfigs();
 
         // 缓存1小时
         Cache::set($cacheKey, $configs, 3600);

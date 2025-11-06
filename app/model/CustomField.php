@@ -65,7 +65,11 @@ class CustomField extends Model
      */
     public function searchNameAttr($query, $value)
     {
-        $query->where('name', 'like', '%' . $value . '%');
+        // 如果值为空字符串或null，不应用过滤
+        if ($value === '' || $value === null) {
+            return $query;
+        }
+        return $query->where('name', 'like', '%' . $value . '%');
     }
 
     /**
@@ -73,7 +77,11 @@ class CustomField extends Model
      */
     public function searchModelTypeAttr($query, $value)
     {
-        $query->where('model_type', $value);
+        // 如果值为空字符串或null，不应用过滤
+        if ($value === '' || $value === null) {
+            return $query;
+        }
+        return $query->where('model_type', $value);
     }
 
     /**
@@ -81,7 +89,14 @@ class CustomField extends Model
      */
     public function searchModelIdAttr($query, $value)
     {
-        $query->where('model_id', $value);
+        // 如果值为空字符串或null，查询所有记录（包括model_id为NULL的记录）
+        if ($value === '' || $value === null) {
+            // 不添加任何条件，返回所有记录
+            return $query;
+        }
+
+        // 如果传递了具体的model_id值，进行精确匹配
+        return $query->where('model_id', $value);
     }
 
     /**
@@ -89,7 +104,11 @@ class CustomField extends Model
      */
     public function searchGroupNameAttr($query, $value)
     {
-        $query->where('group_name', $value);
+        // 如果值为空字符串或null，不应用过滤
+        if ($value === '' || $value === null) {
+            return $query;
+        }
+        return $query->where('group_name', $value);
     }
 
     /**

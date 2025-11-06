@@ -133,9 +133,9 @@ class RelatedTagService
             ->where('status', 1)
             ->where('id', '<>', $currentArticle->id)
             ->whereExists(function($query) use ($tagIds) {
-                $query->table('article_tag')
-                    ->whereRaw('article_tag.article_id = articles.id')
-                    ->whereIn('article_tag.tag_id', $tagIds);
+                $query->table('article_tags')
+                    ->whereRaw('article_tags.article_id = articles.id')
+                    ->whereIn('article_tags.tag_id', $tagIds);
             })
             ->order('view_count', 'desc')
             ->order('create_time', 'desc')

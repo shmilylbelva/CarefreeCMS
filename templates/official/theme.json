@@ -3,7 +3,7 @@
     "name": "官网模板",
     "description": "现代化企业官网模板，适合CMS产品展示、企业宣传",
     "author": "Claude",
-    "version": "1.0.0",
+    "version": "1.3.0",
     "preview": "/static/templates/official/preview.jpg",
     "features": [
         "响应式设计",

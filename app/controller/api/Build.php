@@ -55,8 +55,21 @@ class Build extends BaseController
     {
         $configs = Config::getAllConfigs();
 
-        // 映射配置键名
+        // 映射配置键名（同时支持新旧两种键名以保持向后兼容）
         $this->config = [
+            // 新键名（推荐使用）
+            'site_name' => $configs['site_name'] ?? 'CMS系统',
+            'site_logo' => $configs['site_logo'] ?? '',
+            'site_favicon' => $configs['site_favicon'] ?? '',
+            'site_url' => $configs['site_url'] ?? '',
+            'site_copyright' => $configs['site_copyright'] ?? '',
+            'site_icp' => $configs['site_icp'] ?? '',
+            'site_police' => $configs['site_police'] ?? '',
+            'seo_title' => $configs['seo_title'] ?? '',
+            'seo_keywords' => $configs['seo_keywords'] ?? '',
+            'seo_description' => $configs['seo_description'] ?? '',
+
+            // 旧键名（向后兼容，已废弃）
             'web_name' => $configs['site_name'] ?? 'CMS系统',
             'web_logo' => $configs['site_logo'] ?? '',
             'web_ico' => $configs['site_favicon'] ?? '',
@@ -67,6 +80,8 @@ class Build extends BaseController
             'web_title' => $configs['seo_title'] ?? '',
             'web_keywords' => $configs['seo_keywords'] ?? '',
             'web_description' => $configs['seo_description'] ?? '',
+
+            // 其他配置
             'web_thirdcode_pc' => $configs['thirdparty_code_pc'] ?? '',
             'index_template' => $configs['index_template'] ?? 'index',  // 首页模板
             'current_template_theme' => $configs['current_template_theme'] ?? 'default',  // 当前模板套装

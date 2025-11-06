@@ -40,7 +40,7 @@ class TagCloudService
         $tags = Db::table('tags')
             ->alias('t')
             ->field('t.id, t.name, t.slug, COUNT(at.article_id) as article_count')
-            ->leftJoin('article_tag at', 't.id = at.tag_id')
+            ->leftJoin('article_tags at', 't.id = at.tag_id')
             ->group('t.id')
             ->having('article_count > 0')
             ->order('article_count', 'desc')

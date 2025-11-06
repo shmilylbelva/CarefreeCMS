@@ -27,8 +27,8 @@ class HotwordsTagService
 
         // 基于标签使用频率
         $query = Tag::alias('t')
-            ->field('t.id, t.name as keyword, COUNT(at.article_id) as count, t.click_count')
-            ->leftJoin('article_tag at', 't.id = at.tag_id')
+            ->field('t.id, t.name as keyword, COUNT(at.article_id) as count')
+            ->leftJoin('article_tags at', 't.id = at.tag_id')
             ->where('t.status', 1)
             ->group('t.id');
 
@@ -47,7 +47,7 @@ class HotwordsTagService
             $query->orderRaw('RAND()');
         } else {
             $query->order('count', 'desc')
-                  ->order('click_count', 'desc');
+                  ->order('t.id', 'desc');
         }
 
         // 数量限制

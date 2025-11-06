@@ -56,7 +56,7 @@ class Template extends BaseController
                             'name' => ucfirst($dir),
                             'description' => '',
                             'author' => '',
-                            'version' => '1.0.0',
+                            'version' => '1.3.0',
                             'preview' => ''
                         ];
 
@@ -158,7 +158,7 @@ class Template extends BaseController
                 'name' => ucfirst($currentTheme),
                 'description' => '',
                 'author' => '',
-                'version' => '1.0.0'
+                'version' => '1.3.0'
             ];
 
             // 读取 theme.json

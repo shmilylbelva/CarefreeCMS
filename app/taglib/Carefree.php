@@ -150,6 +150,7 @@ class Carefree extends TagLib
     {
         // 解析属性
         $typeid = $tag['typeid'] ?? 0;
+        $tagid = $tag['tagid'] ?? 0;
         $limit = $tag['limit'] ?? 10;
         $order = $tag['order'] ?? 'create_time desc';
         $flag = $tag['flag'] ?? '';
@@ -162,10 +163,15 @@ class Carefree extends TagLib
         $mod = !empty($tag['mod']) ? $tag['mod'] : 'mod';
         $i = 'i';
 
+        // 使用autoBuildVar解析变量参数
+        $typeidVar = $this->autoBuildVar($typeid);
+        $tagidVar = $this->autoBuildVar($tagid);
+
         // 构建PHP代码
         $parseStr = '<?php ';
         $parseStr .= '$__articles__ = \app\service\tag\ArticleTagService::getList([';
-        $parseStr .= "'typeid' => {$typeid}, ";
+        $parseStr .= "'typeid' => {$typeidVar}, ";
+        $parseStr .= "'tagid' => {$tagidVar}, ";
         $parseStr .= "'limit' => {$limit}, ";
         $parseStr .= "'order' => '{$order}', ";
         $parseStr .= "'flag' => '{$flag}', ";
@@ -210,9 +216,12 @@ class Carefree extends TagLib
         $key = !empty($tag['key']) ? $tag['key'] : 'key';
         $i = 'i';
 
+        // 使用autoBuildVar解析变量参数
+        $parentVar = $this->autoBuildVar($parent);
+
         $parseStr = '<?php ';
         $parseStr .= '$__categories__ = \app\service\tag\CategoryTagService::getList([';
-        $parseStr .= "'parent' => {$parent}, ";
+        $parseStr .= "'parent' => {$parentVar}, ";
         $parseStr .= "'limit' => {$limit}";
         $parseStr .= ']); ';
 
@@ -280,7 +289,8 @@ class Carefree extends TagLib
 
     /**
      * 网站配置标签
-     * {carefree:config name='web_name' /}
+     * {carefree:config name='site_name' /}
+     * {carefree:config name='seo_keywords' /}
      */
     public function tagConfig($tag, $content)
     {
@@ -340,9 +350,12 @@ class Carefree extends TagLib
         $key = !empty($tag['key']) ? $tag['key'] : 'key';
         $i = 'i';
 
+        // 判断group是否为数字，如果不是数字则作为字符串处理
+        $groupValue = is_numeric($group) ? $group : "'{$group}'";
+
         $parseStr = '<?php ';
         $parseStr .= '$__links__ = \app\service\tag\LinkTagService::getList([';
-        $parseStr .= "'group' => {$group}, ";
+        $parseStr .= "'group' => {$groupValue}, ";
         $parseStr .= "'limit' => {$limit}";
         $parseStr .= ']); ';
 
@@ -480,9 +493,12 @@ class Carefree extends TagLib
         $key = !empty($tag['key']) ? $tag['key'] : 'key';
         $i = 'i';
 
+        // 判断group是否为数字，如果不是数字则作为字符串处理
+        $groupValue = is_numeric($group) ? $group : "'{$group}'";
+
         $parseStr = '<?php ';
         $parseStr .= '$__sliders__ = \app\service\tag\SliderTagService::getList([';
-        $parseStr .= "'group' => {$group}, ";
+        $parseStr .= "'group' => {$groupValue}, ";
         $parseStr .= "'limit' => {$limit}";
         $parseStr .= ']); ';
 
@@ -1246,8 +1262,9 @@ class Carefree extends TagLib
         $id = $tag['id'] ?? 'notice';
         $empty = $tag['empty'] ?? '';
 
-        // 使用autoBuildVar解析userid参数
+        // 使用autoBuildVar解析变量参数
         $useridVar = $userid ? $this->autoBuildVar($userid) : '""';
+        $typeVar = $type ? $this->autoBuildVar($type) : '""';
 
         $key = !empty($tag['key']) ? $tag['key'] : 'key';
         $i = 'i';
@@ -1256,7 +1273,7 @@ class Carefree extends TagLib
         $parseStr .= '$__notifications__ = \app\service\tag\NotificationTagService::getList([';
         $parseStr .= "'limit' => {$limit}, ";
         $parseStr .= "'userid' => " . $useridVar . ", ";
-        $parseStr .= "'type' => '{$type}', ";
+        $parseStr .= "'type' => " . $typeVar . ", ";
         $parseStr .= "'isread' => '{$isread}'";
         $parseStr .= ']); ';
 
@@ -1313,7 +1330,8 @@ class Carefree extends TagLib
         $id = $tag['id'] ?? 'contrib';
         $empty = $tag['empty'] ?? '';
 
-        // 使用autoBuildVar解析userid参数
+        // 使用autoBuildVar解析变量参数
+        $statusVar = $status ? $this->autoBuildVar($status) : '""';
         $useridVar = $userid ? $this->autoBuildVar($userid) : '""';
 
         $key = !empty($tag['key']) ? $tag['key'] : 'key';
@@ -1322,7 +1340,7 @@ class Carefree extends TagLib
         $parseStr = '<?php ';
         $parseStr .= '$__contributions__ = \app\service\tag\ContributionTagService::getList([';
         $parseStr .= "'limit' => {$limit}, ";
-        $parseStr .= "'status' => '{$status}', ";
+        $parseStr .= "'status' => " . $statusVar . ", ";
         $parseStr .= "'userid' => " . $useridVar . ", ";
         $parseStr .= "'orderby' => '{$orderby}'";
         $parseStr .= ']); ';

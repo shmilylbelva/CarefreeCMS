@@ -172,34 +172,26 @@
                         <h3><i class="bi bi-newspaper"></i> 最新资讯</h3>
                         <a href="/articles.html" class="more-link">更多 <i class="bi bi-arrow-right"></i></a>
                     </div>
-                    {carefree:article limit='6' order='create_time desc' id='article' empty='<div class="empty-state"><p>暂无文章</p></div>'}
                     <div class="article-list">
+                        {carefree:article limit='6' order='create_time desc' id='article' empty='<div class="empty-state"><p>暂无文章</p></div>'}
                         <div class="article-item" data-aos="fade-up" data-aos-delay="{$i * 50}">
-                            <div class="row g-3">
-                                {if condition="$article.cover_image"}
-                                <div class="col-md-4">
-                                    <a href="/article/{$article.id}.html" class="article-thumb">
-                                        <img src="{$article.cover_image}" alt="{$article.title}">
-                                    </a>
-                                </div>
-                                <div class="col-md-8">
-                                {else /}
-                                <div class="col-12">
-                                {/if}
-                                    <div class="article-info">
-                                        <h4><a href="/article/{$article.id}.html">{$article.title}</a></h4>
-                                        <p class="article-excerpt">{$article.description ?: mb_substr(strip_tags($article.content), 0, 100, 'utf-8') . '...'}</p>
-                                        <div class="article-meta">
-                                            <span><i class="bi bi-calendar"></i> {$article.create_time|date='Y-m-d'}</span>
-                                            <span><i class="bi bi-eye"></i> {$article.view_count ?: 0}</span>
-                                            <span><i class="bi bi-chat"></i> {$article.comment_count ?: 0}</span>
-                                        </div>
-                                    </div>
+                            {if condition="$article.cover_image"}
+                            <a href="/article/{$article.id}.html" class="article-thumb">
+                                <img src="{$article.cover_image}" alt="{$article.title}">
+                            </a>
+                            {/if}
+                            <div class="article-info">
+                                <h4><a href="/article/{$article.id}.html">{$article.title}</a></h4>
+                                <p class="article-excerpt">{$article.description ?: mb_substr(strip_tags($article.content), 0, 100, 'utf-8') . '...'}</p>
+                                <div class="article-meta">
+                                    <span><i class="bi bi-calendar"></i> {$article.create_time|date='Y-m-d'}</span>
+                                    <span><i class="bi bi-eye"></i> {$article.view_count ?: 0}</span>
+                                    <span><i class="bi bi-chat"></i> {$article.comment_count ?: 0}</span>
                                 </div>
                             </div>
                         </div>
+                        {/carefree:article}
                     </div>
-                    {/carefree:article}
                 </div>
             </div>
 
@@ -220,36 +212,6 @@
                     </div>
                     {/carefree:rank}
                 </div>
-
-                <!-- 热门标签云 -->
-                <div class="content-box mb-4">
-                    <div class="content-box-header">
-                        <h3><i class="bi bi-tags"></i> 热门标签</h3>
-                    </div>
-                    {carefree:hotwords limit='20' days='30' orderby='count' id='word' empty='<div class="empty-state"><p>暂无标签</p></div>'}
-                    <div class="tag-cloud">
-                        <a href="{$word.url}" class="tag-item tag-level-{$word.level}" title="{$word.keyword} ({$word.count})">{$word.keyword}</a>
-                    </div>
-                    {/carefree:hotwords}
-                </div>
-
-                <!-- 随机图片展示 -->
-                {carefree:randomimg limit='4' source='article' id='img' empty=''}
-                <div class="content-box">
-                    <div class="content-box-header">
-                        <h3><i class="bi bi-image"></i> 精选图片</h3>
-                    </div>
-                    <div class="random-images">
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <a href="{$img.link}" class="random-img-item">
-                                    <img src="{$img.url}" alt="{$img.title}">
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {/carefree:randomimg}
             </div>
         </div>
     </div>

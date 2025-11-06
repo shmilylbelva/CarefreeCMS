@@ -53,9 +53,9 @@ class ArticleTagService
         // 按标签筛选
         if ($tagid > 0) {
             $query->whereExists(function($query) use ($tagid) {
-                $query->table('article_tag')
-                    ->whereRaw('article_tag.article_id = articles.id')
-                    ->where('article_tag.tag_id', $tagid);
+                $query->table('article_tags')
+                    ->whereRaw('article_tags.article_id = articles.id')
+                    ->where('article_tags.tag_id', $tagid);
             });
         }
 
