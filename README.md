@@ -473,4 +473,4 @@ npm run build
 ---
 
 Made with ❤️ by CarefreeCMS Team © 2025
-![QQ群](qqqun.jpg)
+![QQ群](/readme/pic/qqqun.jpg)
