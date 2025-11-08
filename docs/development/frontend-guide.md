@@ -1,12 +1,12 @@
-# CMS 前端管理系统开发指南
+﻿# CMS 前端管理系统开发指南
 
 ## 📁 项目目录结构
 
 ```
-backend/
+frontend/
 ├── public/                  # 静态资源
 ├── src/
-│   ├── api/                # API 接口封装
+│   ├── backend/                # API 接口封装
 │   │   ├── request.js      # Axios 实例配置
 │   │   ├── auth.js         # 认证相关接口
 │   │   ├── article.js      # 文章接口
@@ -94,7 +94,7 @@ export default defineConfig({
 })
 ```
 
-### 3. Axios 请求封装 `src/api/request.js`
+### 3. Axios 请求封装 `src/backend/request.js`
 
 ```javascript
 import axios from 'axios'
@@ -170,7 +170,7 @@ export function removeToken() {
 }
 ```
 
-### 5. 认证 API `src/api/auth.js`
+### 5. 认证 API `src/backend/auth.js`
 
 ```javascript
 import request from './request'
@@ -210,7 +210,7 @@ export function changePassword(data) {
 }
 ```
 
-### 6. 文章 API `src/api/article.js`
+### 6. 文章 API `src/backend/article.js`
 
 ```javascript
 import request from './request'
@@ -279,7 +279,7 @@ export function offlineArticle(id) {
 
 ```javascript
 import { defineStore } from 'pinia'
-import { login, getUserInfo, logout } from '@/api/auth'
+import { login, getUserInfo, logout } from '@/backend/auth'
 import { setToken, removeToken } from '@/utils/auth'
 
 export const useUserStore = defineStore('user', {
@@ -468,7 +468,7 @@ app.mount('#app')
 ## 🚀 启动开发服务器
 
 ```bash
-cd backend
+cd frontend
 npm run dev
 ```
 

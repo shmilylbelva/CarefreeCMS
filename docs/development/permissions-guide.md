@@ -1,4 +1,4 @@
-# CMS 权限管理使用指南
+﻿# CMS 权限管理使用指南
 
 ## 📚 目录
 1. [权限系统架构](#权限系统架构)
@@ -30,7 +30,7 @@
 
 ### 步骤 1: 更新权限配置文件
 
-文件位置：`backend/src/config/permissions.js`
+文件位置：`frontend/src/config/permissions.js`
 
 #### 场景 A：添加新菜单
 
@@ -98,7 +98,7 @@ export const permissions = [
 
 ### 步骤 2: 在路由中添加路由（如果是新页面）
 
-文件位置：`backend/src/router/index.js`
+文件位置：`frontend/src/router/index.js`
 
 ```javascript
 {
@@ -111,7 +111,7 @@ export const permissions = [
 
 ### 步骤 3: 在侧边栏菜单中添加（如果是新菜单）
 
-文件位置：`backend/src/layouts/MainLayout.vue`
+文件位置：`frontend/src/layouts/MainLayout.vue`
 
 ```vue
 <el-menu-item index="/comments">
@@ -582,9 +582,9 @@ A: 目前需要逐个角色设置。建议：
 ## 技术支持
 
 如有问题，请参考：
-- 权限配置文件：`backend/src/config/permissions.js`
-- 权限Store：`backend/src/store/permission.js`
-- 权限指令：`backend/src/directives/permission.js`
-- 用户Store：`backend/src/store/user.js`
+- 权限配置文件：`frontend/src/config/permissions.js`
+- 权限Store：`frontend/src/store/permission.js`
+- 权限指令：`frontend/src/directives/permission.js`
+- 用户Store：`frontend/src/store/user.js`
 
 最后更新：2025-10-13

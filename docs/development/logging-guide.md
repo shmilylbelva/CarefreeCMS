@@ -1,4 +1,4 @@
-# 日志记录开发指南
+﻿# 日志记录开发指南
 
 ## 概述
 
@@ -8,13 +8,13 @@
 
 ### Logger 类
 
-位置：`api/app/common/Logger.php`
+位置：`backend/app/common/Logger.php`
 
 Logger 类提供了多种便捷方法来记录不同类型的操作。
 
 ### OperationLog 模型
 
-位置：`api/app/model/OperationLog.php`
+位置：`backend/app/model/OperationLog.php`
 
 定义了模块常量和操作类型常量。
 
@@ -375,7 +375,7 @@ Logger 类会自动过滤以下敏感字段：
 ### API接口
 
 ```
-GET /api/operation-logs
+GET /backend/operation-logs
 ```
 
 参数：

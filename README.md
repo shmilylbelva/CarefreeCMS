@@ -34,7 +34,7 @@ QQ群：113572201
 
 ```
 carefreecms/
-├── api/                          # ThinkPHP 8 后端API服务
+├── backend/                      # ThinkPHP 8 后端API服务
 │   ├── app/                      # 应用目录
 │   │   ├── controller/          # 控制器
 │   │   ├── model/               # 模型
@@ -58,7 +58,7 @@ carefreecms/
 │   ├── composer.json
 │   └── .env                      # 环境配置
 │
-├── backend/                      # Vue 3 后台管理界面
+├── frontend/                     # Vue 3 后台管理界面
 │   ├── src/
 │   │   ├── api/                 # API接口封装
 │   │   ├── assets/              # 静态资源
@@ -232,7 +232,7 @@ php think run -p8000
 
 ```bash
 # 进入前端目录
-cd backend
+cd frontend
 
 # 安装依赖
 npm install
@@ -251,12 +251,12 @@ npm run dev
 
 #### 前端构建
 ```bash
-cd backend
+cd frontend
 npm run build
 ```
 
 #### 后端配置
-- 配置 Nginx 或 Apache 指向 `api/public` 目录
+- 配置 Nginx 或 Apache 指向 `backend/public` 目录
 - 复制 `.env.production` 为 `.env` 并修改配置
 - 确保 `runtime` 和 `public/uploads` 目录可写
 
@@ -291,13 +291,13 @@ npm run build
 检查后端服务是否启动，确保运行在 8000 端口。
 
 ### 2. 前端无法登录？
-检查 `backend/src/utils/request.js` 中的 `baseURL` 配置是否正确。
+检查 `frontend/src/utils/request.js` 中的 `baseURL` 配置是否正确。
 
 ### 3. 上传文件失败？
-确保 `api/public/uploads` 目录存在且有写入权限。
+确保 `backend/public/uploads` 目录存在且有写入权限。
 
 ### 4. 静态生成失败？
-确保 `api/public/static` 目录存在且有写入权限。
+确保 `backend/public/static` 目录存在且有写入权限。
 
 ### 5. 全文搜索无结果？
 检查：
@@ -453,7 +453,9 @@ npm run build
 
 ## 许可证
 
-本项目采用 MIT 开源协议。详见 [LICENSE](./LICENSE) 文件。
+本项目自开发代码采用 MIT 开源协议。详见 [LICENSE](./LICENSE) 文件。
+本项目引用其他项目的代码，遵循引用项目的开源协议。
+例如 ThinkPHP遵循Apache2开源协议
 
 ## 联系我们
 

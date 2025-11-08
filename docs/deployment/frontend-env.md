@@ -1,4 +1,4 @@
-# 前端环境变量配置说明
+﻿# 前端环境变量配置说明
 
 本项目使用 Vite 的环境变量功能来管理不同环境的配置。
 
@@ -46,7 +46,7 @@ VITE_API_BASE_URL=https://your-api-domain.com/api
 修改配置后，需要重新构建前端：
 
 ```bash
-cd backend
+cd frontend
 npm run build
 ```
 
@@ -74,7 +74,7 @@ console.log(import.meta.env.VITE_API_BASE_URL)
 
 ### 示例 1：后端和前端在同一域名
 ```
-后端: https://example.com/api/
+后端: https://example.com/backend/
 前端: https://example.com/admin/
 
 .env.production:
@@ -83,7 +83,7 @@ VITE_API_BASE_URL=https://example.com/api
 
 ### 示例 2：后端和前端在不同域名（当前配置）
 ```
-后端: https://cmsapi.sinma.net/api/
+后端: https://cmsapi.sinma.net/backend/
 前端: https://cmsadmin.sinma.net/
 
 .env.production:
@@ -92,7 +92,7 @@ VITE_API_BASE_URL=https://cmsapi.sinma.net/api
 
 ### 示例 3：后端在子目录
 ```
-后端: https://example.com/cms/api/
+后端: https://example.com/cms/backend/
 前端: https://example.com/cms/admin/
 
 .env.production:
@@ -108,7 +108,7 @@ A: 需要重新构建：`npm run build`，然后将新的 dist 目录上传到�
 A: 检查 API 地址是否正确，确保包含 `/api` 前缀。
 
 ### Q: 跨域问题？
-A: 确保后端配置了 CORS，参考 `api/app/middleware/Cors.php`。
+A: 确保后端配置了 CORS，参考 `backend/app/middleware/Cors.php`。
 
 ### Q: 开发环境正常，生产环境不行？
 A: 检查 `.env.production` 文件是否正确配置，并重新构建。

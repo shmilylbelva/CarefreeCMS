@@ -1,4 +1,4 @@
-# 欢喜内容管理系统 - 生产环境部署指南
+﻿# 欢喜内容管理系统 - 生产环境部署指南
 
 本文档详细说明如何在生产环境中部署欢喜内容管理系统。
 
@@ -64,7 +64,7 @@ sudo yum install nginx
 
 ### 2. 配置 Nginx
 
-将项目中的 `api/nginx.conf` 文件内容复制到 Nginx 配置文件中：
+将项目中的 `backend/nginx.conf` 文件内容复制到 Nginx 配置文件中：
 
 ```bash
 sudo nano /etc/nginx/sites-available/huanxi-cms
@@ -76,7 +76,7 @@ sudo nano /etc/nginx/sites-available/huanxi-cms
 server {
     listen 80;
     server_name your-domain.com;  # 修改为你的域名
-    root /var/www/huanxi-cms/api/public;  # 修改为实际路径，必须指向 public 目录
+    root /var/www/huanxi-cms/backend/public;  # 修改为实际路径，必须指向 public 目录
     index index.php index.html;
 
     location / {
@@ -152,9 +152,9 @@ sudo nano /etc/apache2/sites-available/huanxi-cms.conf
 <VirtualHost *:80>
     ServerName your-domain.com
     ServerAdmin admin@your-domain.com
-    DocumentRoot /var/www/huanxi-cms/api/public
+    DocumentRoot /var/www/huanxi-cms/backend/public
 
-    <Directory /var/www/huanxi-cms/api/public>
+    <Directory /var/www/huanxi-cms/backend/public>
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
@@ -175,7 +175,7 @@ sudo systemctl reload apache2
 
 ### 5. 验证 .htaccess
 
-确保 `api/public/.htaccess` 文件存在（项目已包含此文件）。
+确保 `backend/public/.htaccess` 文件存在（项目已包含此文件）。
 
 ---
 
@@ -259,14 +259,14 @@ sudo chmod -R 755 public/static/
 
 在本地开发机器上：
 ```bash
-cd backend
+cd frontend
 npm install
 npm run build
 ```
 
 ### 2. 上传构建产物
 
-将 `backend/dist` 目录上传到服务器：
+将 `frontend/dist` 目录上传到服务器：
 ```bash
 scp -r dist/ user@server:/var/www/huanxi-cms/frontend
 ```
@@ -301,10 +301,10 @@ server {
 server {
     listen 80;
     server_name your-domain.com;
-    root /var/www/huanxi-cms/api/public;
+    root /var/www/huanxi-cms/backend/public;
 
     # 后端 API
-    location /api/ {
+    location /backend/ {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
@@ -327,7 +327,7 @@ server {
 
 如果 API 地址有变化，需要修改前端的 API 请求地址。
 
-编辑 `backend/src/utils/request.js`：
+编辑 `frontend/src/utils/request.js`：
 ```javascript
 const request = axios.create({
   baseURL: 'https://api.your-domain.com/api',  // 修改为实际 API 地址
@@ -354,23 +354,23 @@ sudo find . -type d -exec chmod 755 {} \;
 sudo find . -type f -exec chmod 644 {} \;
 
 # 可写目录权限
-sudo chmod -R 775 api/runtime/
-sudo chmod -R 775 api/public/uploads/
-sudo chmod -R 775 api/public/static/
+sudo chmod -R 775 backend/runtime/
+sudo chmod -R 775 backend/public/uploads/
+sudo chmod -R 775 backend/public/static/
 
 # 如果需要，设置特定文件可执行
-sudo chmod +x api/think
+sudo chmod +x backend/think
 ```
 
 ### 使用 ACL（推荐）
 
 如果系统支持 ACL：
 ```bash
-sudo setfacl -R -m u:www-data:rwX api/runtime/
-sudo setfacl -R -d -m u:www-data:rwX api/runtime/
+sudo setfacl -R -m u:www-data:rwX backend/runtime/
+sudo setfacl -R -d -m u:www-data:rwX backend/runtime/
 
-sudo setfacl -R -m u:www-data:rwX api/public/uploads/
-sudo setfacl -R -d -m u:www-data:rwX api/public/uploads/
+sudo setfacl -R -m u:www-data:rwX backend/public/uploads/
+sudo setfacl -R -d -m u:www-data:rwX backend/public/uploads/
 ```
 
 ---
@@ -462,15 +462,15 @@ location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
 ### 1. 访问后端 API 返回 404
 
 **原因**: Web 服务器根目录配置错误
-**解决**: 确保 Nginx/Apache 的 `root` 或 `DocumentRoot` 指向 `api/public` 目录
+**解决**: 确保 Nginx/Apache 的 `root` 或 `DocumentRoot` 指向 `backend/public` 目录
 
 ### 2. 文件上传失败
 
 **原因**: 目录权限不足
 **解决**:
 ```bash
-sudo chown -R www-data:www-data api/public/uploads/
-sudo chmod -R 775 api/public/uploads/
+sudo chown -R www-data:www-data backend/public/uploads/
+sudo chmod -R 775 backend/public/uploads/
 ```
 
 ### 3. 页面刷新后 404
@@ -481,7 +481,7 @@ sudo chmod -R 775 api/public/uploads/
 ### 4. API 跨域问题
 
 **原因**: CORS 配置未生效
-**解决**: 检查 `api/app/middleware/Cors.php` 是否正确配置
+**解决**: 检查 `backend/app/middleware/Cors.php` 是否正确配置
 
 ### 5. 数据库连接失败
 
@@ -489,7 +489,7 @@ sudo chmod -R 775 api/public/uploads/
 **解决**:
 ```bash
 # 检查数据库配置
-nano api/config/database.php
+nano backend/config/database.php
 
 # 授予数据库权限
 mysql -u root -p
@@ -520,7 +520,7 @@ sudo tail -f /var/log/php8.2-fpm.log
 
 **应用日志:**
 ```bash
-tail -f api/runtime/log/202510/15.log
+tail -f backend/runtime/log/202510/15.log
 ```
 
 ### 2. 定期备份
@@ -532,14 +532,14 @@ mysqldump -u root -p cms_database > backup_$(date +%Y%m%d).sql
 
 **文件备份:**
 ```bash
-tar -czf backup_$(date +%Y%m%d).tar.gz /var/www/huanxi-cms/api/public/uploads/
+tar -czf backup_$(date +%Y%m%d).tar.gz /var/www/huanxi-cms/backend/public/uploads/
 ```
 
 ### 3. 清理日志
 
 ```bash
 # 清理超过 30 天的日志
-find api/runtime/log/ -name "*.log" -mtime +30 -delete
+find backend/runtime/log/ -name "*.log" -mtime +30 -delete
 ```
 
 ---

@@ -53,13 +53,13 @@ cd carefreecms
 #### 2.1 安装PHP依赖
 
 ```bash
-cd api
+cd backend
 composer install
 ```
 
 #### 2.2 配置数据库
 
-编辑 `api/config/database.php` 文件，配置数据库连接：
+编辑 `backend/config/database.php` 文件，配置数据库连接：
 
 ```php
 return [
@@ -95,7 +95,7 @@ return [
 复制并配置环境变量文件：
 
 ```bash
-cd api
+cd backend
 cp .env.example .env
 ```
 
@@ -155,21 +155,21 @@ mysql -u root -p cms_database < docs/database_seo.sql              # SEO功能
 
 ```bash
 # 确保以下目录可写
-chmod -R 755 api/runtime
-chmod -R 755 api/public/uploads
-chmod -R 755 api/html  # 静态文件生成目录（在api目录下）
+chmod -R 755 backend/runtime
+chmod -R 755 backend/public/uploads
+chmod -R 755 backend/html  # 静态文件生成目录（在backend目录下）
 ```
 
 > 📁 **目录说明**:
 > - `runtime/`: 框架运行时缓存
 > - `public/uploads/`: 文件上传目录
-> - `html/`: 静态化HTML文件目录（在api目录下，需手动创建）
+> - `html/`: 静态化HTML文件目录（在backend目录下，需手动创建）
 
 #### 2.6 测试后端服务
 
 ```bash
-# 在 api 目录下启动开发服务器
-cd api
+# 在 backend 目录下启动开发服务器
+cd backend
 php think run
 
 # 访问 http://localhost:8000/api 测试API
@@ -181,13 +181,13 @@ php think run
 #### 3.1 安装Node.js依赖
 
 ```bash
-cd backend
+cd frontend
 npm install
 ```
 
 #### 3.2 配置API地址
 
-编辑 `backend/.env.development` 文件：
+编辑 `frontend/.env.development` 文件：
 
 ```
 VITE_API_BASE_URL=http://localhost:8000
@@ -249,8 +249,8 @@ CORS_ALLOWED_ORIGINS = http://localhost:5173,http://localhost:3000
 #### 5.1 创建静态文件目录和占位图
 
 ```bash
-# 在 api 目录下创建 html 目录
-cd api
+# 在 backend 目录下创建 html 目录
+cd backend
 mkdir -p html
 mkdir -p html/assets/images/placeholder
 
@@ -261,19 +261,19 @@ chmod -R 755 html
 **占位图文件**：
 
 系统已内置本地占位图（SVG格式），无需依赖外部服务，位于：
-- `api/html/assets/images/placeholder/article.svg` - 文章封面占位图
-- `api/html/assets/images/placeholder/avatar.svg` - 用户头像占位图
-- `api/html/assets/images/placeholder/dashboard.svg` - 仪表板占位图
+- `backend/html/assets/images/placeholder/article.svg` - 文章封面占位图
+- `backend/html/assets/images/placeholder/avatar.svg` - 用户头像占位图
+- `backend/html/assets/images/placeholder/dashboard.svg` - 仪表板占位图
 - 其他占位图文件...
 
 这些占位图会在模板渲染时自动使用，不需要额外配置。
 
 #### 5.2 配置静态化路径
 
-静态文件将生成到 `api/html/` 目录，目录结构：
+静态文件将生成到 `backend/html/` 目录，目录结构：
 
 ```
-api/html/
+backend/html/
 ├── assets/        # 静态资源
 │   └── images/
 │       └── placeholder/  # 占位图
@@ -309,14 +309,14 @@ curl -X POST http://localhost:8000/api/static/generate-all \
 
 #### 5.4 访问静态页面
 
-配置Nginx或其他Web服务器指向 `api/html/` 目录，即可通过浏览器访问静态页面。
+配置Nginx或其他Web服务器指向 `backend/html/` 目录，即可通过浏览器访问静态页面。
 
 示例Nginx配置：
 ```nginx
 server {
     listen 80;
     server_name www.example.com;
-    root /path/to/cms/api/html;
+    root /path/to/cms/backend/html;
     index index.html;
 
     location / {
@@ -339,7 +339,7 @@ server {
 ### 1. 构建前端
 
 ```bash
-cd backend
+cd frontend
 npm run build
 ```
 
@@ -353,7 +353,7 @@ npm run build
 server {
     listen 80;
     server_name your-domain.com;
-    root /var/www/carefreecms/api/public;
+    root /var/www/carefreecms/backend/public;
     index index.php index.html;
 
     # 后端API
@@ -385,7 +385,7 @@ server {
 server {
     listen 80;
     server_name admin.your-domain.com;
-    root /var/www/carefreecms/backend/dist;
+    root /var/www/carefreecms/frontend/dist;
     index index.html;
 
     location / {
@@ -409,7 +409,7 @@ systemctl reload nginx
 
 ### 3. 配置生产环境变量
 
-编辑 `api/.env.production` 并重命名为 `.env`:
+编辑 `backend/.env.production` 并重命名为 `.env`:
 
 ```
 APP_DEBUG = false
@@ -476,9 +476,9 @@ composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
 
 ```bash
 # 设置正确的所有者（假设Web服务器用户为www-data）
-chown -R www-data:www-data api/runtime
-chown -R www-data:www-data api/public/uploads
-chown -R www-data:www-data api/html
+chown -R www-data:www-data backend/runtime
+chown -R www-data:www-data backend/public/uploads
+chown -R www-data:www-data backend/html
 ```
 
 ### 4. 前端构建失败
@@ -493,8 +493,8 @@ npm run build
 
 ### 5. 静态页面生成失败
 
-- 确保 `api/templates` 目录存在且模板文件完整
-- 检查 `api/html` 目录是否有写入权限
+- 确保 `backend/templates` 目录存在且模板文件完整
+- 检查 `backend/html` 目录是否有写入权限
 - 查看生成日志了解具体错误信息
 
 ## 安全建议

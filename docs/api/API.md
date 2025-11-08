@@ -1,4 +1,4 @@
-# CMS API 接口文档
+﻿# CMS API 接口文档
 
 ## 基础信息
 
@@ -42,7 +42,7 @@
 
 ### 1. 用户登录
 
-**请求地址**: `/api/auth/login`
+**请求地址**: `/backend/auth/login`
 **请求方式**: POST
 **是否需要认证**: 否
 
@@ -78,7 +78,7 @@
 
 ### 2. 退出登录
 
-**请求地址**: `/api/auth/logout`
+**请求地址**: `/backend/auth/logout`
 **请求方式**: POST
 **是否需要认证**: 否
 
@@ -96,7 +96,7 @@
 
 ### 3. 获取当前用户信息
 
-**请求地址**: `/api/auth/info`
+**请求地址**: `/backend/auth/info`
 **请求方式**: GET
 **是否需要认证**: 是
 
@@ -130,7 +130,7 @@ Authorization: Bearer {token}
 
 ### 4. 修改密码
 
-**请求地址**: `/api/auth/change-password`
+**请求地址**: `/backend/auth/change-password`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -158,7 +158,7 @@ Authorization: Bearer {token}
 
 ### 1. 文章列表
 
-**请求地址**: `/api/articles`
+**请求地址**: `/backend/articles`
 **请求方式**: GET
 **是否需要认证**: 是
 
@@ -175,7 +175,7 @@ Authorization: Bearer {token}
 
 ### 2. 文章详情
 
-**请求地址**: `/api/articles/:id`
+**请求地址**: `/backend/articles/:id`
 **请求方式**: GET
 **是否需要认证**: 是
 
@@ -183,7 +183,7 @@ Authorization: Bearer {token}
 
 ### 3. 创建文章
 
-**请求地址**: `/api/articles`
+**请求地址**: `/backend/articles`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -208,7 +208,7 @@ Authorization: Bearer {token}
 
 ### 4. 更新文章
 
-**请求地址**: `/api/articles/:id`
+**请求地址**: `/backend/articles/:id`
 **请求方式**: PUT
 **是否需要认证**: 是
 
@@ -216,7 +216,7 @@ Authorization: Bearer {token}
 
 ### 5. 删除文章
 
-**请求地址**: `/api/articles/:id`
+**请求地址**: `/backend/articles/:id`
 **请求方式**: DELETE
 **是否需要认证**: 是
 
@@ -226,7 +226,7 @@ Authorization: Bearer {token}
 
 ### 1. 分类列表
 
-**请求地址**: `/api/categories`
+**请求地址**: `/backend/categories`
 **请求方式**: GET
 **是否需要认证**: 是
 
@@ -234,7 +234,7 @@ Authorization: Bearer {token}
 
 ### 2. 分类树（树形结构）
 
-**请求地址**: `/api/categories/tree`
+**请求地址**: `/backend/categories/tree`
 **请求方式**: GET
 **是否需要认证**: 是
 
@@ -242,7 +242,7 @@ Authorization: Bearer {token}
 
 ### 3. 创建分类
 
-**请求地址**: `/api/categories`
+**请求地址**: `/backend/categories`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -267,7 +267,7 @@ Authorization: Bearer {token}
 
 ### 1. 标签列表
 
-**请求地址**: `/api/tags`
+**请求地址**: `/backend/tags`
 **请求方式**: GET
 **是否需要认证**: 是
 
@@ -275,7 +275,7 @@ Authorization: Bearer {token}
 
 ### 2. 创建标签
 
-**请求地址**: `/api/tags`
+**请求地址**: `/backend/tags`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -294,7 +294,7 @@ Authorization: Bearer {token}
 
 ### 上传文件
 
-**请求地址**: `/api/media/upload`
+**请求地址**: `/backend/media/upload`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -326,7 +326,7 @@ Authorization: Bearer {token}
 
 ### 1. 生成所有静态页
 
-**请求地址**: `/api/build/all`
+**请求地址**: `/backend/build/all`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -334,7 +334,7 @@ Authorization: Bearer {token}
 
 ### 2. 生成首页
 
-**请求地址**: `/api/build/index`
+**请求地址**: `/backend/build/index`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -342,7 +342,7 @@ Authorization: Bearer {token}
 
 ### 3. 生成文章详情页
 
-**请求地址**: `/api/build/article/:id`
+**请求地址**: `/backend/build/article/:id`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -350,7 +350,7 @@ Authorization: Bearer {token}
 
 ### 4. 生成分类列表页
 
-**请求地址**: `/api/build/category/:id`
+**请求地址**: `/backend/build/category/:id`
 **请求方式**: POST
 **是否需要认证**: 是
 
@@ -361,7 +361,7 @@ Authorization: Bearer {token}
 ### 1. 启动后端服务
 
 ```bash
-cd api
+cd backend
 php think run
 ```
 
@@ -372,7 +372,7 @@ php think run
 使用 Postman 或 curl 测试：
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/login \
+curl -X POST http://localhost:8000/backend/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
 ```
@@ -380,7 +380,7 @@ curl -X POST http://localhost:8000/api/auth/login \
 ### 3. 使用Token访问需要认证的接口
 
 ```bash
-curl -X GET http://localhost:8000/api/auth/info \
+curl -X GET http://localhost:8000/backend/auth/info \
   -H "Authorization: Bearer {your_token}"
 ```
 
