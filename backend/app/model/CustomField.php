@@ -20,9 +20,9 @@ class CustomField extends Model
         'is_show_in_list'  => 'integer',
         'sort'             => 'integer',
         'status'           => 'integer',
+        'options'          => 'json',
+        'validation_rules' => 'json',
     ];
-
-    protected $json = ['options', 'validation_rules'];
 
     // 字段类型常量
     const TYPE_TEXT = 'text';           // 单行文本

@@ -6,6 +6,7 @@ use app\BaseController;
 use app\common\Response;
 use app\model\AdminUser;
 use app\model\AdminRole;
+use app\traits\QueryFilterTrait;
 use think\Request;
 
 /**
@@ -13,48 +14,37 @@ use think\Request;
  */
 class User extends BaseController
 {
+    use QueryFilterTrait;
     /**
      * 用户列表
      */
     public function index(Request $request)
     {
-        $page = $request->get('page', 1);
-        $pageSize = $request->get('pageSize', 10);
-        $username = $request->get('username', '');
-        $roleId = $request->get('role_id', '');
-        $status = $request->get('status', '');
-
         // 构建查询
         $query = AdminUser::with(['role']);
 
-        // 搜索条件
-        if (!empty($username)) {
-            $query->where('username', 'like', '%' . $username . '%');
-        }
-        if ($roleId !== '') {
-            $query->where('role_id', $roleId);
-        }
-        if ($status !== '') {
-            $query->where('status', $status);
-        }
+        // 定义过滤条件
+        $filters = [
+            'username' => ['operator' => 'like'],
+            'role_id' => ['operator' => '='],
+            'status' => ['operator' => '='],
+        ];
 
-        // 排序
-        $query->order(['id' => 'desc']);
+        // 定义排序
+        $order = ['id' => 'desc'];
 
-        // 分页
-        $list = $query->page($page, $pageSize)->select();
-        $total = AdminUser::when(!empty($username), function($query) use ($username) {
-            $query->where('username', 'like', '%' . $username . '%');
-        })
-        ->when($roleId !== '', function($query) use ($roleId) {
-            $query->where('role_id', $roleId);
-        })
-        ->when($status !== '', function($query) use ($status) {
-            $query->where('status', $status);
-        })
-        ->count();
+        // 使用Trait的快速构建方法
+        $result = $this->buildListQuery($query, $filters, $order, $request);
 
-        return Response::paginate($list->toArray(), $total, $page, $pageSize);
+        // 确保list是数组
+        $list = is_array($result['list']) ? $result['list'] : $result['list']->toArray();
+
+        return Response::paginate(
+            $list,
+            $result['total'],
+            $request->get('page', 1),
+            $request->get('pageSize', 10)
+        );
     }
 
     /**
@@ -158,7 +148,7 @@ class User extends BaseController
         }
 
         // 不能删除ID为1的超级管理员
-        if ($id == 1) {
+        if ((int)$id === 1) {
             return Response::error('不能删除超级管理员');
         }
 

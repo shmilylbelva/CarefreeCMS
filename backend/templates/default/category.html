@@ -1,47 +1,115 @@
-{extend name="layout" /}
+{extend name="default/layout" /}
+
+{block name="title"}{$category.name} - {$site.site_name|default='国产CMS'}{/block}
+{block name="keywords"}{$keywords|default=''}{/block}
+{block name="description"}{$description|default=''}{/block}
 
 {block name="content"}
-<div class="content-box">
-    <h2 style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #409EFF;">
-        分类：{$category.name}
-    </h2>
-
-    {notempty name="category.description"}
-    <p style="color: #666; margin-bottom: 30px; padding: 15px; background: #f9f9f9; border-radius: 4px;">
-        {$category.description}
-    </p>
-    {/notempty}
-
-    <div class="article-list">
-        {volist name="articles" id="article"}
-        <article style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-            <h3 style="margin-bottom: 10px;">
-                <a href="/article/{$article.id}.html" style="color: #333; text-decoration: none;">
-                    {$article.title}
-                </a>
-            </h3>
-            <div style="color: #999; font-size: 14px; margin-bottom: 10px;">
-                <span>作者：{$article.user.real_name ?: ($article.author ?: '管理员')}</span>
-                <span style="margin-left: 20px;">发布时间：{$article.publish_time ?: $article.create_time}</span>
-                <span style="margin-left: 20px;">浏览量：{$article.view_count}</span>
-            </div>
-            <p style="color: #666; line-height: 1.8;">
-                {$article.summary ?: '暂无摘要'}
-            </p>
-        </article>
-        {/volist}
+<!-- 分类头部 -->
+<div class="category-header">
+    <div class="breadcrumb">
+        <a href="{$base_url}/index.html">首页</a>
+        <span class="separator">/</span>
+        {if condition="!empty($category['parent'])"}
+        <a href="{$base_url}/category/{$category.parent.id}.html">{$category.parent.name}</a>
+        <span class="separator">/</span>
+        {/if}
+        <span>{$category.name}</span>
     </div>
 
-    {empty name="articles"}
-    <div style="text-align: center; padding: 50px 0; color: #999;">
-        该分类下暂无文章
+    <h1 class="category-title">{$category.name}</h1>
+    {if condition="!empty($category['description'])"}
+    <p class="category-description">{$category.description}</p>
+    {/if}
+
+    <!-- 子分类 -->
+    {if condition="isset($sub_categories) && !empty($sub_categories)"}
+    <div class="sub-categories">
+        <span class="label">子分类：</span>
+        {carefree:foreach from="$sub_categories" item="sub"}
+        <a href="{$base_url}/category/{$sub.id}.html" class="sub-category-link">{$sub.name}</a>
+        {/carefree:foreach}
     </div>
-    {/empty}
+    {/if}
 </div>
 
-<style>
-    .article-list a:hover {
-        color: #409EFF;
-    }
-</style>
+<!-- 筛选和排序 -->
+<div class="filter-bar">
+    <div class="filter-left">
+        <span class="total-count">共 {$total} 篇文章</span>
+    </div>
+    <div class="filter-right">
+        <select class="sort-select" onchange="location.href=this.value">
+            <option value="?order=latest" {if condition="isset($order) && $order == 'latest'"}selected{/if}>最新发布</option>
+            <option value="?order=hot" {if condition="isset($order) && $order == 'hot'"}selected{/if}>最热文章</option>
+            <option value="?order=views" {if condition="isset($order) && $order == 'views'"}selected{/if}>浏览最多</option>
+        </select>
+    </div>
+</div>
+
+<!-- 文章列表 -->
+<div class="category-articles">
+    {if condition="$articles"}
+    <div class="article-grid">
+        {carefree:foreach from="$articles" item="article"}
+        <article class="article-card">
+            {if condition="!empty($article['cover_image'])"}
+            <div class="article-thumbnail">
+                <a href="{$base_url}/article/{$article.id}.html">
+                    <img src="{$article.cover_image}" alt="{$article.title}" loading="lazy">
+                </a>
+                {if condition="!empty($article['flag'])"}
+                <span class="article-flag {$article.flag|lower}">{$article.flag}</span>
+                {/if}
+            </div>
+            {/if}
+
+            <div class="article-info">
+                <h3 class="article-title">
+                    <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
+                </h3>
+
+                {if condition="!empty($article['summary'])"}
+                <p class="article-excerpt">{$article.summary}</p>
+                {/if}
+
+                <div class="article-meta">
+                    <span class="author">{$article.author}</span>
+                    <span class="date">{$article.publish_time|date='Y-m-d'}</span>
+                    <span class="views">{$article.views} 阅读</span>
+                </div>
+            </div>
+        </article>
+        {/carefree:foreach}
+    </div>
+
+    <!-- 分页 -->
+    {if condition="$pages > 1"}
+    <div class="pagination">
+        {if condition="$page > 1"}
+        <a href="?page={$page - 1}" class="page-link prev">上一页</a>
+        {/if}
+
+        {for start="1" end="$pages" name="p"}
+        {if condition="$p == $page"}
+        <span class="page-link active">{$p}</span>
+        {elseif condition="$p == 1 || $p == $pages || ($p >= $page - 2 && $p <= $page + 2)" /}
+        <a href="?page={$p}" class="page-link">{$p}</a>
+        {elseif condition="$p == $page - 3 || $p == $page + 3" /}
+        <span class="page-link ellipsis">...</span>
+        {/if}
+        {/for}
+
+        {if condition="$page < $pages"}
+        <a href="?page={$page + 1}" class="page-link next">下一页</a>
+        {/if}
+    </div>
+    {/if}
+
+    {else /}
+    <div class="empty-state">
+        <p>该分类下暂无文章</p>
+    </div>
+    {/if}
+</div>
 {/block}

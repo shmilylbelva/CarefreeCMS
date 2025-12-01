@@ -484,6 +484,15 @@ const filteredFileTree = computed(() => {
 onMounted(async () => {
   await loadThemes()
   await loadCurrentTheme()
+
+  // 验证 localStorage 中的主题是否存在
+  const savedTheme = localStorage.getItem('template_editor_current_theme')
+  if (savedTheme && !themes.value.find(t => t.key === savedTheme)) {
+    // 如果保存的主题不存在，清除 localStorage 并重新加载
+    localStorage.removeItem('template_editor_current_theme')
+    await loadCurrentTheme()
+  }
+
   await loadFileTree()
   setupKeyboardShortcuts()
 })
@@ -505,10 +514,19 @@ const loadThemes = async () => {
 // 加载当前主题
 const loadCurrentTheme = async () => {
   try {
+    // 优先从 localStorage 读取用户上次选择的模板
+    const savedTheme = localStorage.getItem('template_editor_current_theme')
+    if (savedTheme) {
+      currentTheme.value = savedTheme
+      return
+    }
+
+    // 如果没有保存的选择，则获取主站点的模板套装
     const res = await getCurrentTheme()
     currentTheme.value = res.data.key || 'default'
   } catch (error) {
     console.error('加载当前模板套装失败', error)
+    currentTheme.value = 'default'
   }
 }
 
@@ -540,6 +558,9 @@ const handleThemeChange = async () => {
       return
     }
   }
+
+  // 保存用户的选择到 localStorage
+  localStorage.setItem('template_editor_current_theme', currentTheme.value)
 
   openTabs.value = []
   activeTabId.value = null

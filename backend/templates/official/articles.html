@@ -1,4 +1,4 @@
-{extend name="layout" /}
+{extend name="official/layout" /}
 
 {block name="style"}
 <link rel="stylesheet" href="/assets/css/articles.css">
@@ -41,9 +41,9 @@
                                 <p class="article-summary">{$article.summary ?: $article.content_preview}...</p>
                                 {notempty name="article.tags"}
                                 <div class="article-tags">
-                                    {volist name="article.tags" id="tag"}
+                                    {carefree:foreach from="$article.tags" item="tag"}
                                     <a href="/tag-{$tag.id}.html" class="article-tag">{$tag.name}</a>
-                                    {/volist}
+                                    {/carefree:foreach}
                                 </div>
                                 {/notempty}
                                 <a href="/article/{$article.id}.html" class="read-more">

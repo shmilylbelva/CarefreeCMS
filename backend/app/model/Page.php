@@ -3,13 +3,12 @@ declare(strict_types=1);
 
 namespace app\model;
 
-use think\Model;
 use think\model\concern\SoftDelete;
 
 /**
  * 单页模型
  */
-class Page extends Model
+class Page extends SiteModel
 {
     use SoftDelete;
 

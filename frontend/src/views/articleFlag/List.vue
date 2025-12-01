@@ -142,7 +142,7 @@ const loadData = async () => {
   try {
     const params = {
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,
       name: searchForm.name
     }
     const res = await getArticleFlags(params)

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Carefree Config Tag Test</title>
+</head>
+<body>
+    <h1>Carefree ConfigTagService Multisite Test</h1>
+
+    <h2>Using ThinkPHP Variables (from $templateData)</h2>
+    <p>Site Name (Think): {$site.site_name}</p>
+    <p>Site Code (Think): {$site.site_code}</p>
+    <p>Logo (Think): {$site.logo}</p>
+
+    <h2>Using Carefree Config Tags (from ConfigTagService)</h2>
+    <p>Site Name (Carefree): {carefree:config name="site_name" default="Default Site" /}</p>
+    <p>Site Code (Carefree): {carefree:config name="site_code" default="default" /}</p>
+    <p>Logo (Carefree): {carefree:config name="logo" default="/default-logo.png" /}</p>
+
+    <h2>Nested Config Access</h2>
+    <p>SEO Keywords (nested dot notation): {carefree:config name="seo.keywords" default="default keywords" /}</p>
+    <p>SEO Keywords (flat notation): {carefree:config name="seo_keywords" default="default keywords" /}</p>
+    <p>SEO Title (nested): {carefree:config name="seo.title" default="Default Title" /}</p>
+
+    <h2>Site URL Fields (前端网站网址)</h2>
+    <p>Site URL (前端网站网址): {carefree:config name="site_url" default="http://localhost" /}</p>
+    <p>URL (别名，优先site_url): {carefree:config name="url" default="http://localhost" /}</p>
+    <p>Domain (域名，兼容): {carefree:config name="domain" default="localhost" /}</p>
+
+    <hr>
+    <p>Template package code: {$package.code}</p>
+    <p>Config keys available: {$config|json_encode}</p>
+
+    <hr>
+    <h3>使用说明</h3>
+    <ul>
+        <li><strong>site_url</strong>: 前端网站网址（推荐使用）</li>
+        <li><strong>url</strong>: site_url的别名，如果site_url为空则使用domain</li>
+        <li><strong>domain</strong>: 域名字段，保留用于兼容旧模板</li>
+    </ul>
+</body>
+</html>

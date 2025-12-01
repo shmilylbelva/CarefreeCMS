@@ -6,13 +6,13 @@
     <div class="container">
         <h1 data-aos="fade-up">分类：{$category.name ?: '未分类'}</h1>
         <p data-aos="fade-up" data-aos-delay="100">{$category.description ?: '查看该分类下的所有文章'}</p>
+        {carefree:breadcrumb separator='>' id='crumb'}
         <nav aria-label="breadcrumb" data-aos="fade-up" data-aos-delay="200">
             <ol class="breadcrumb breadcrumb-custom">
-                <li class="breadcrumb-item"><a href="/index.html">首页</a></li>
-                <li class="breadcrumb-item"><a href="/articles.html">新闻动态</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{$category.name ?: '未分类'}</li>
+                <li class="breadcrumb-item"><a href="{$crumb.url}">{$crumb.title}</a></li>
             </ol>
         </nav>
+        {/carefree:breadcrumb}
     </div>
 </div>
 
@@ -38,9 +38,9 @@
                                 <p class="article-summary">{$article.summary ?: $article.content_preview}...</p>
                                 {notempty name="article.tags"}
                                 <div class="article-tags">
-                                    {volist name="article.tags" id="tag"}
+                                    {carefree:foreach from="$article.tags" item="tag"}
                                     <a href="/tag-{$tag.id}.html" class="article-tag">{$tag.name}</a>
-                                    {/volist}
+                                    {/carefree:foreach}
                                 </div>
                                 {/notempty}
                                 <a href="/article/{$article.id}.html" class="read-more">
@@ -57,20 +57,31 @@
         <!-- 侧边栏 -->
         <div class="col-lg-4">
             <!-- 分类信息 -->
+            {carefree:catinfo catid='{$category.id}' id='catinfo'}
             <div class="sidebar-widget" data-aos="fade-up">
                 <div class="widget-header">
-                    <h3><i class="bi bi-folder-fill"></i> 分类信息</h3>
+                    <h3><i class="bi bi-folder-fill"></i> {$catinfo.name}</h3>
                 </div>
                 <div class="category-info">
-                    <p class="text-secondary">{$category.description ?: '暂无描述'}</p>
+                    <p class="text-secondary">{$catinfo.description ?: '暂无描述'}</p>
                     <div class="info-stats">
                         <div class="stat-item">
                             <span class="stat-label">文章数</span>
-                            <span class="stat-value">{$category.article_count ?: 0}</span>
+                            <span class="stat-value">{$catinfo.article_count ?: 0}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">子分类</span>
+                            <span class="stat-value">{$catinfo.child_count ?: 0}</span>
                         </div>
                     </div>
+                    {if condition="$catinfo.keywords"}
+                    <div class="mt-3">
+                        <small class="text-muted">关键词：{$catinfo.keywords}</small>
+                    </div>
+                    {/if}
                 </div>
             </div>
+            {/carefree:catinfo}
 
             <!-- 引入公共侧边栏 -->
             {include file="sidebar" /}

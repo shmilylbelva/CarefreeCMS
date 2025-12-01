@@ -111,29 +111,58 @@
     </el-card>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="dialogVisible" title="日志详情" width="700px">
-      <el-descriptions :column="1" border v-if="currentLog">
-        <el-descriptions-item label="ID">{{ currentLog.id }}</el-descriptions-item>
-        <el-descriptions-item label="操作用户">{{ currentLog.username || '未知' }}</el-descriptions-item>
-        <el-descriptions-item label="模块">{{ getModuleName(currentLog.module) }}</el-descriptions-item>
-        <el-descriptions-item label="操作类型">{{ getActionName(currentLog.action) }}</el-descriptions-item>
-        <el-descriptions-item label="操作描述">{{ currentLog.description }}</el-descriptions-item>
-        <el-descriptions-item label="IP地址">{{ currentLog.ip }}</el-descriptions-item>
-        <el-descriptions-item label="用户代理">{{ currentLog.user_agent }}</el-descriptions-item>
-        <el-descriptions-item label="请求方法">{{ currentLog.request_method }}</el-descriptions-item>
-        <el-descriptions-item label="请求URL">{{ currentLog.request_url }}</el-descriptions-item>
-        <el-descriptions-item label="请求参数">
-          <pre style="max-height: 200px; overflow: auto; margin: 0;">{{ formatParams(currentLog.request_params) }}</pre>
-        </el-descriptions-item>
-        <el-descriptions-item label="状态">
-          <el-tag :type="currentLog.status === 1 ? 'success' : 'danger'">
-            {{ currentLog.status === 1 ? '成功' : '失败' }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="错误信息" v-if="currentLog.error_msg">{{ currentLog.error_msg }}</el-descriptions-item>
-        <el-descriptions-item label="执行时间">{{ currentLog.execute_time }}ms</el-descriptions-item>
-        <el-descriptions-item label="操作时间">{{ currentLog.create_time }}</el-descriptions-item>
-      </el-descriptions>
+    <el-dialog v-model="dialogVisible" title="日志详情" width="900px">
+      <el-tabs v-if="currentLog" type="border-card">
+        <el-tab-pane label="基本信息">
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="ID">{{ currentLog.id }}</el-descriptions-item>
+            <el-descriptions-item label="操作用户">{{ currentLog.username || '未知' }}</el-descriptions-item>
+            <el-descriptions-item label="模块">{{ getModuleName(currentLog.module) }}</el-descriptions-item>
+            <el-descriptions-item label="操作类型">{{ getActionName(currentLog.action) }}</el-descriptions-item>
+            <el-descriptions-item label="操作描述">{{ currentLog.description }}</el-descriptions-item>
+            <el-descriptions-item label="IP地址">{{ currentLog.ip }}</el-descriptions-item>
+            <el-descriptions-item label="用户代理">{{ currentLog.user_agent }}</el-descriptions-item>
+            <el-descriptions-item label="请求方法">{{ currentLog.request_method }}</el-descriptions-item>
+            <el-descriptions-item label="请求URL">{{ currentLog.request_url }}</el-descriptions-item>
+            <el-descriptions-item label="请求参数">
+              <pre style="max-height: 200px; overflow: auto; margin: 0;">{{ formatParams(currentLog.request_params) }}</pre>
+            </el-descriptions-item>
+            <el-descriptions-item label="状态">
+              <el-tag :type="currentLog.status === 1 ? 'success' : 'danger'">
+                {{ currentLog.status === 1 ? '成功' : '失败' }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="错误信息" v-if="currentLog.error_msg">{{ currentLog.error_msg }}</el-descriptions-item>
+            <el-descriptions-item label="执行时间">{{ currentLog.execute_time }}ms</el-descriptions-item>
+            <el-descriptions-item label="操作时间">{{ currentLog.create_time }}</el-descriptions-item>
+          </el-descriptions>
+        </el-tab-pane>
+
+        <el-tab-pane label="变更对比" v-if="hasChanges(currentLog)">
+          <el-alert type="info" :closable="false" style="margin-bottom: 15px;">
+            <template #title>
+              变更字段：{{ currentLog.changed_fields || '无' }}
+            </template>
+          </el-alert>
+          <el-table :data="getChanges(currentLog)" border stripe>
+            <el-table-column prop="field" label="字段名" width="150" />
+            <el-table-column label="修改前" min-width="250">
+              <template #default="{ row }">
+                <div style="word-break: break-all; white-space: pre-wrap;">{{ formatValue(row.oldValue) }}</div>
+              </template>
+            </el-table-column>
+            <el-table-column label="修改后" min-width="250">
+              <template #default="{ row }">
+                <div style="word-break: break-all; white-space: pre-wrap;">{{ formatValue(row.newValue) }}</div>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div v-if="!hasChanges(currentLog)" style="text-align: center; padding: 40px; color: #909399;">
+            <el-icon size="48"><DocumentCopy /></el-icon>
+            <p style="margin-top: 10px;">暂无变更记录</p>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </el-dialog>
 
     <!-- 清空日志对话框 -->
@@ -157,6 +186,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { DocumentCopy } from '@element-plus/icons-vue'
 import {
   getOperationLogs,
   getModules,
@@ -229,7 +259,7 @@ const loadData = async () => {
   try {
     const params = {
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,
       username: searchForm.username,
       module: searchForm.module,
       action: searchForm.action,
@@ -374,6 +404,87 @@ const handleSizeChange = (size) => {
   pagination.pageSize = size
   pagination.page = 1
   loadData()
+}
+
+// 检查是否有变更
+const hasChanges = (log) => {
+  return log && (log.old_values || log.new_values || log.changed_fields)
+}
+
+// 获取变更列表
+const getChanges = (log) => {
+  if (!log || !log.old_values || !log.new_values) {
+    return []
+  }
+
+  try {
+    const oldValues = JSON.parse(log.old_values)
+    const newValues = JSON.parse(log.new_values)
+    const changes = []
+
+    // 字段名称映射
+    const fieldNames = {
+      'title': '标题',
+      'category_id': '分类ID',
+      'status': '状态',
+      'is_top': '置顶',
+      'is_recommend': '推荐',
+      'is_hot': '热门',
+      'summary': '摘要',
+      'seo_keywords': 'SEO关键词',
+      'seo_description': 'SEO描述'
+    }
+
+    // 状态值映射
+    const statusMap = {
+      0: '草稿',
+      1: '已发布',
+      2: '待审核',
+      3: '已下线'
+    }
+
+    const booleanMap = {
+      0: '否',
+      1: '是'
+    }
+
+    for (const key in oldValues) {
+      const field = fieldNames[key] || key
+      let oldValue = oldValues[key]
+      let newValue = newValues[key]
+
+      // 格式化值
+      if (key === 'status') {
+        oldValue = statusMap[oldValue] || oldValue
+        newValue = statusMap[newValue] || newValue
+      } else if (['is_top', 'is_recommend', 'is_hot'].includes(key)) {
+        oldValue = booleanMap[oldValue] || oldValue
+        newValue = booleanMap[newValue] || newValue
+      }
+
+      changes.push({
+        field,
+        oldValue,
+        newValue
+      })
+    }
+
+    return changes
+  } catch (e) {
+    console.error('解析变更数据失败:', e)
+    return []
+  }
+}
+
+// 格式化值
+const formatValue = (value) => {
+  if (value === null || value === undefined) {
+    return '(空)'
+  }
+  if (value === '') {
+    return '(空字符串)'
+  }
+  return value
 }
 
 onMounted(async () => {

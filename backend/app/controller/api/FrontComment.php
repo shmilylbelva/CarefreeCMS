@@ -7,7 +7,7 @@ use app\common\Response;
 use app\model\Comment;
 use app\model\Article;
 use app\model\Config;
-use app\service\SensitiveWordFilter;
+use app\service\SensitiveWordService;
 use think\Request;
 use think\facade\Db;
 
@@ -21,12 +21,20 @@ class FrontComment extends BaseController
      */
     public function index(Request $request)
     {
-        $articleId = $request->get('article_id', 0);
-        $page = $request->get('page', 1);
-        $limit = $request->get('limit', 20);
+        $articleId = (int) $request->get('article_id', 0);
+        $page = (int) $request->get('page', 1);
+        $limit = (int) $request->get('limit', 20);
 
-        if (!$articleId) {
+        if ($articleId <= 0) {
             return Response::error('文章ID不能为空');
+        }
+
+        // 验证分页参数
+        if ($page < 1) {
+            $page = 1;
+        }
+        if ($limit < 1 || $limit > 100) {
+            $limit = 20;
         }
 
         // 检查文章是否存在
@@ -51,13 +59,17 @@ class FrontComment extends BaseController
      */
     public function create(Request $request)
     {
-        $articleId = $request->post('article_id', 0);
-        $parentId = $request->post('parent_id', 0);
+        $articleId = (int) $request->post('article_id', 0);
+        $parentId = (int) $request->post('parent_id', 0);
         $content = trim($request->post('content', ''));
 
         // 验证参数
-        if (!$articleId) {
+        if ($articleId <= 0) {
             return Response::error('文章ID不能为空');
+        }
+
+        if ($parentId < 0) {
+            return Response::error('父评论ID无效');
         }
 
         if (empty($content)) {
@@ -89,12 +101,17 @@ class FrontComment extends BaseController
             }
         }
 
-        // 获取系统配置
-        $commentConfig = Config::getConfig('comment_settings', [
-            'enable_guest_comment' => true,   // 是否允许游客评论
-            'auto_approve'         => false,  // 是否自动审核通过
-            'enable_sensitive_filter' => true, // 是否启用敏感词过滤
-        ]);
+        // 获取站点配置
+        $siteId = $article->site_id ?? 1;
+        $site = \app\model\Site::find($siteId);
+        $siteConfig = $site && is_array($site->config) ? $site->config : [];
+
+        // 评论配置（从站点配置中读取，如果没有则使用默认值）
+        $commentConfig = [
+            'enable_guest_comment' => $siteConfig['enable_guest_comment'] ?? true,   // 是否允许游客评论
+            'auto_approve'         => $siteConfig['auto_approve'] ?? false,  // 是否自动审核通过
+            'enable_sensitive_filter' => $siteConfig['enable_sensitive_filter'] ?? true, // 是否启用敏感词过滤
+        ];
 
         // 判断是否为注册用户（尝试从token解析）
         $userId = 0;
@@ -139,9 +156,22 @@ class FrontComment extends BaseController
 
         // 敏感词过滤
         if ($commentConfig['enable_sensitive_filter']) {
-            if (SensitiveWordFilter::check($content)) {
-                return Response::error('评论内容包含敏感词，请修改后重试');
+            $sensitiveService = new SensitiveWordService();
+
+            $checkResult = $sensitiveService->checkAndHandle(
+                'comment',
+                0,  // 新评论，ID为0
+                $userId,
+                $content,
+                true  // 自动替换
+            );
+
+            if (!$checkResult['allowed']) {
+                return Response::error($checkResult['message']);
             }
+
+            // 使用过滤后的内容
+            $content = $checkResult['content'];
         }
 
         // 防刷：检查最近1分钟内是否有相同内容的评论
@@ -185,6 +215,17 @@ class FrontComment extends BaseController
                 }
             }
 
+            // 发送通知（如果自动审核通过）
+            if ($commentConfig['auto_approve']) {
+                if ($parentId > 0) {
+                    // 回复评论，通知被回复的用户
+                    \app\service\CommentNotificationService::notifyCommentReply($comment);
+                } else {
+                    // 新评论，通知文章作者
+                    \app\service\CommentNotificationService::notifyNewComment($comment);
+                }
+            }
+
             Db::commit();
 
             return Response::success([
@@ -204,10 +245,10 @@ class FrontComment extends BaseController
      */
     public function like(Request $request)
     {
-        $commentId = $request->post('comment_id', 0);
+        $commentId = (int) $request->post('comment_id', 0);
         $userId = $request->user['id'] ?? 0;
 
-        if (!$commentId) {
+        if ($commentId <= 0) {
             return Response::error('评论ID不能为空');
         }
 
@@ -257,10 +298,10 @@ class FrontComment extends BaseController
      */
     public function unlike(Request $request)
     {
-        $commentId = $request->post('comment_id', 0);
+        $commentId = (int) $request->post('comment_id', 0);
         $userId = $request->user['id'] ?? 0;
 
-        if (!$commentId) {
+        if ($commentId <= 0) {
             return Response::error('评论ID不能为空');
         }
 
@@ -321,16 +362,21 @@ class FrontComment extends BaseController
      */
     public function report(Request $request)
     {
-        $commentId = $request->post('comment_id', 0);
+        $commentId = (int) $request->post('comment_id', 0);
         $reason = trim($request->post('reason', ''));
         $userId = $request->user['id'] ?? 0;
 
-        if (!$commentId) {
+        if ($commentId <= 0) {
             return Response::error('评论ID不能为空');
         }
 
         if (empty($reason)) {
             return Response::error('请填写举报原因');
+        }
+
+        // 验证举报原因长度
+        if (mb_strlen($reason, 'utf-8') > 500) {
+            return Response::error('举报原因不能超过500个字符');
         }
 
         $comment = Comment::find($commentId);

@@ -50,6 +50,17 @@
         <el-card>
           <!-- 搜索栏 -->
           <el-form :inline="true" :model="searchForm" class="search-form">
+            <el-form-item label="所属站点">
+              <el-select v-model="searchForm.site_id" placeholder="选择站点" clearable style="width: 200px;">
+                <el-option label="全部站点" :value="null" />
+                <el-option
+                  v-for="site in siteOptions"
+                  :key="site.id"
+                  :label="site.name"
+                  :value="site.id"
+                />
+              </el-select>
+            </el-form-item>
             <el-form-item label="关键词">
               <el-input
                 v-model="searchForm.keyword"
@@ -87,6 +98,11 @@
             </el-table-column>
             <el-table-column prop="name" label="网站名称" min-width="120" />
             <el-table-column prop="url" label="网站URL" min-width="180" show-overflow-tooltip />
+            <el-table-column label="所属站点" width="120">
+              <template #default="{ row }">
+                <el-tag size="small">{{ row.site?.name || '-' }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="group.name" label="分组" width="100" />
             <el-table-column label="状态" width="80" align="center">
               <template #default="{ row }">
@@ -140,6 +156,32 @@
         :rules="groupRules"
         label-width="100px"
       >
+        <el-form-item label="所属站点" :prop="isGroupEdit ? 'site_id' : 'site_ids'">
+          <!-- 编辑时：单选 -->
+          <el-select v-if="isGroupEdit" v-model="groupForm.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+          <!-- 创建时：多选 -->
+          <div v-else>
+            <el-select v-model="groupForm.site_ids" placeholder="请选择站点（可多选）" multiple style="width: 100%;">
+              <el-option
+                v-for="site in siteOptions"
+                :key="site.id"
+                :label="site.name"
+                :value="site.id"
+              />
+            </el-select>
+            <div style="margin-top: 8px;">
+              <el-button size="small" @click="selectAllSitesForGroup">全选</el-button>
+              <el-button size="small" @click="deselectAllSitesForGroup">取消全选</el-button>
+            </div>
+          </div>
+        </el-form-item>
         <el-form-item label="分组名称" prop="name">
           <el-input v-model="groupForm.name" placeholder="请输入分组名称" />
         </el-form-item>
@@ -175,6 +217,33 @@
         :rules="rules"
         label-width="100px"
       >
+        <el-form-item label="所属站点" :prop="isEdit ? 'site_id' : 'site_ids'">
+          <!-- 编辑时：单选 -->
+          <el-select v-if="isEdit" v-model="form.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+          <!-- 创建时：多选 -->
+          <div v-else>
+            <el-select v-model="form.site_ids" placeholder="请选择站点（可多选）" multiple style="width: 100%;">
+              <el-option
+                v-for="site in siteOptions"
+                :key="site.id"
+                :label="site.name"
+                :value="site.id"
+              />
+            </el-select>
+            <div style="margin-top: 8px;">
+              <el-button size="small" @click="selectAllSites">全选</el-button>
+              <el-button size="small" @click="deselectAllSites">取消全选</el-button>
+            </div>
+          </div>
+        </el-form-item>
+
         <el-form-item label="网站名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入网站名称" />
         </el-form-item>
@@ -274,9 +343,12 @@ import {
   updateLinkGroup,
   deleteLinkGroup
 } from '@/api/linkGroup'
+import { getSiteOptions } from '@/api/site'
 import { getToken } from '@/utils/auth'
 
+const siteOptions = ref([])
 const searchForm = reactive({
+  site_id: null,
   keyword: '',
   status: ''
 })
@@ -304,6 +376,8 @@ const isGroupEdit = ref(false)
 const editGroupId = ref(0)
 
 const form = reactive({
+  site_id: null,
+  site_ids: [], // 多站点创建
   group_id: null,
   name: '',
   url: '',
@@ -316,6 +390,8 @@ const form = reactive({
 })
 
 const groupForm = reactive({
+  site_id: null,
+  site_ids: [], // 多站点创建
   name: '',
   description: '',
   sort: 0,
@@ -323,6 +399,8 @@ const groupForm = reactive({
 })
 
 const rules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
+  site_ids: [{ required: true, type: 'array', min: 1, message: '请至少选择一个站点', trigger: 'change' }],
   name: [{ required: true, message: '请输入网站名称', trigger: 'blur' }],
   url: [
     { required: true, message: '请输入网站URL', trigger: 'blur' },
@@ -331,6 +409,8 @@ const rules = {
 }
 
 const groupRules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
+  site_ids: [{ required: true, type: 'array', min: 1, message: '请至少选择一个站点', trigger: 'change' }],
   name: [{ required: true, message: '请输入分组名称', trigger: 'blur' }]
 }
 
@@ -432,6 +512,7 @@ const handleSearch = () => {
 
 // 重置
 const handleReset = () => {
+  searchForm.site_id = null
   searchForm.keyword = ''
   searchForm.status = ''
   currentGroupId.value = null
@@ -494,11 +575,20 @@ const handleSubmitGroup = async () => {
     if (valid) {
       submitting.value = true
       try {
+        const submitData = { ...groupForm }
+
+        // 区分创建和编辑模式的站点字段
         if (isGroupEdit.value) {
-          await updateLinkGroup(editGroupId.value, groupForm)
+          delete submitData.site_ids
+        } else {
+          delete submitData.site_id
+        }
+
+        if (isGroupEdit.value) {
+          await updateLinkGroup(editGroupId.value, submitData)
           ElMessage.success('更新成功')
         } else {
-          await createLinkGroup(groupForm)
+          await createLinkGroup(submitData)
           ElMessage.success('创建成功')
         }
         groupDialogVisible.value = false
@@ -584,11 +674,20 @@ const handleSubmit = async () => {
     if (valid) {
       submitting.value = true
       try {
+        const submitData = { ...form }
+
+        // 区分创建和编辑模式的站点字段
         if (isEdit.value) {
-          await updateLink(editId.value, form)
+          delete submitData.site_ids
+        } else {
+          delete submitData.site_id
+        }
+
+        if (isEdit.value) {
+          await updateLink(editId.value, submitData)
           ElMessage.success('更新成功')
         } else {
-          await createLink(form)
+          await createLink(submitData)
           ElMessage.success('创建成功')
         }
         dialogVisible.value = false
@@ -604,6 +703,8 @@ const handleSubmit = async () => {
 
 // 重置表单
 const resetForm = () => {
+  form.site_id = null
+  form.site_ids = []
   form.group_id = null
   form.name = ''
   form.url = ''
@@ -616,13 +717,46 @@ const resetForm = () => {
 }
 
 const resetGroupForm = () => {
+  groupForm.site_id = null
+  groupForm.site_ids = []
   groupForm.name = ''
   groupForm.description = ''
   groupForm.sort = 0
   groupForm.status = 1
 }
 
+// 获取站点选项
+const fetchSiteOptions = async () => {
+  try {
+    const res = await getSiteOptions()
+    siteOptions.value = res.data || []
+  } catch (error) {
+    console.error('获取站点列表失败:', error)
+  }
+}
+
+// 全选站点（友链）
+const selectAllSites = () => {
+  form.site_ids = siteOptions.value.map(site => site.id)
+}
+
+// 取消全选站点（友链）
+const deselectAllSites = () => {
+  form.site_ids = []
+}
+
+// 全选站点（分组）
+const selectAllSitesForGroup = () => {
+  groupForm.site_ids = siteOptions.value.map(site => site.id)
+}
+
+// 取消全选站点（分组）
+const deselectAllSitesForGroup = () => {
+  groupForm.site_ids = []
+}
+
 onMounted(async () => {
+  await fetchSiteOptions()
   await loadGroups()
   await loadData()
 })

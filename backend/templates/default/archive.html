@@ -1,0 +1,75 @@
+{extend name="default/layout" /}
+
+{block name="title"}文章归档 - {$site.site_name|default='国产CMS'}{/block}
+
+{block name="content"}
+<div class="archive-page">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="/">首页</a>
+            <span class="separator">/</span>
+            <span>归档</span>
+        </div>
+        <h1>文章归档</h1>
+        <p class="archive-total">共 {$total} 篇文章</p>
+    </div>
+
+    <!-- 年度归档 -->
+    {if condition="$archive_by_year"}
+    <div class="archive-timeline">
+        {carefree:foreach from="$archive_by_year" item="year_data"}
+        <div class="archive-year">
+            <h2 class="year-title">
+                {$year_data.year} 年
+                <span class="year-count">{$year_data.count} 篇</span>
+            </h2>
+
+            <!-- 月份归档 -->
+            {carefree:foreach from="$year_data.months" item="month_data"}
+            <div class="archive-month">
+                <h3 class="month-title">{$month_data.month} 月</h3>
+
+                <ul class="article-list-timeline">
+                    {carefree:foreach from="$month_data.articles" item="article"}
+                    <li class="timeline-item">
+                        <span class="timeline-date">{$article.publish_time|date='d'}</span>
+                        <div class="timeline-content">
+                            <h4 class="article-title">
+                                <a href="/article/{$article.id}">{$article.title}</a>
+                            </h4>
+                            <div class="article-meta">
+                                {if condition="isset($article['category_id'])"}
+                                <span class="category">
+                                    <a href="/category/{$article.category_id}">{$article.category_name|default='未分类'}</a>
+                                </span>
+                                {/if}
+                                <span class="views">{$article.views} 阅读</span>
+                            </div>
+                        </div>
+                    </li>
+                    {/carefree:foreach}
+                </ul>
+            </div>
+            {/carefree:foreach}
+        </div>
+        {/carefree:foreach}
+    </div>
+    {else /}
+    <div class="empty-state">
+        <p>暂无归档内容</p>
+    </div>
+    {/if}
+
+    <!-- 年份导航 -->
+    {if condition="$available_years"}
+    <div class="archive-nav">
+        <h3>快速导航</h3>
+        <div class="year-nav">
+            {carefree:foreach from="$available_years" item="year"}
+            <a href="#year-{$year}" class="year-link">{$year}</a>
+            {/carefree:foreach}
+        </div>
+    </div>
+    {/if}
+</div>
+{/block}

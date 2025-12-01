@@ -50,10 +50,8 @@ class PointShopGoods extends Model
         'vip_required'   => 'boolean',
         'status'         => 'boolean',
         'sort_order'     => 'integer',
+        'images'         => 'json',
     ];
-
-    // JSON字段
-    protected $json = ['images'];
 
     // 追加属性
     protected $append = [
@@ -120,9 +118,16 @@ class PointShopGoods extends Model
             return null;
         }
 
-        $images = is_string($data['images']) ? json_decode($data['images'], true) : $data['images'];
+        $images = $data['images'];
 
-        return $images[0] ?? null;
+        // 处理 ThinkPHP 8 的 Json 对象
+        if ($images instanceof \think\model\type\Json) {
+            $images = $images->value();
+        } elseif (is_string($images)) {
+            $images = json_decode($images, true);
+        }
+
+        return is_array($images) ? ($images[0] ?? null) : null;
     }
 
     /**
@@ -130,7 +135,7 @@ class PointShopGoods extends Model
      */
     public function category()
     {
-        return $this->belongsTo(PointShopCategory::class, 'category_id');
+        return $this->belongsTo(PointShopCategory::class, 'category_id', 'id');
     }
 
     /**

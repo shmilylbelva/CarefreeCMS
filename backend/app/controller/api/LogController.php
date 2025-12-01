@@ -3,10 +3,11 @@ declare (strict_types = 1);
 
 namespace app\controller\api;
 
+use app\BaseController;
+use app\common\Response;
 use app\service\SystemLogger;
 use app\model\SystemLog;
-use app\model\LoginLog;
-use app\model\SecurityLog;
+use app\model\OperationLog;
 use think\Request;
 
 /**
@@ -47,7 +48,7 @@ class LogController extends BaseController
 
         $result = SystemLog::getList($where, $page, $perPage);
 
-        return $this->success($result);
+        return Response::success($result);
     }
 
     /**
@@ -58,26 +59,44 @@ class LogController extends BaseController
         $page = $request->param('page', 1);
         $perPage = $request->param('per_page', 20);
 
-        $where = [];
+        $query = OperationLog::where('module', 'auth')
+            ->where('action', 'login');
+
         if ($request->has('username')) {
-            $where['username'] = $request->param('username');
+            $query->where('username', 'like', '%' . $request->param('username') . '%');
         }
         if ($request->has('status')) {
-            $where['status'] = $request->param('status');
+            // status参数可能是'success'/'failed'或1/0
+            $status = $request->param('status');
+            if ($status === 'success' || $status == 1) {
+                $query->where('status', 1);
+            } elseif ($status === 'failed' || $status == 0) {
+                $query->where('status', 0);
+            }
         }
         if ($request->has('ip')) {
-            $where['ip'] = $request->param('ip');
+            $query->where('ip', $request->param('ip'));
         }
         if ($request->has('start_time')) {
-            $where['start_time'] = $request->param('start_time');
+            $query->where('create_time', '>=', $request->param('start_time'));
         }
         if ($request->has('end_time')) {
-            $where['end_time'] = $request->param('end_time');
+            $query->where('create_time', '<=', $request->param('end_time'));
         }
 
-        $result = LoginLog::getList($where, $page, $perPage);
+        $total = $query->count();
+        $list = $query->page($page, $perPage)
+            ->order('create_time', 'desc')
+            ->select();
 
-        return $this->success($result);
+        $result = [
+            'total' => $total,
+            'per_page' => $perPage,
+            'current_page' => $page,
+            'list' => $list->toArray()
+        ];
+
+        return Response::success($result);
     }
 
     /**
@@ -88,29 +107,43 @@ class LogController extends BaseController
         $page = $request->param('page', 1);
         $perPage = $request->param('per_page', 20);
 
-        $where = [];
+        $query = OperationLog::where('module', 'security');
+
         if ($request->has('type')) {
-            $where['type'] = $request->param('type');
+            $query->where('action', $request->param('type'));
         }
         if ($request->has('level')) {
-            $where['level'] = $request->param('level');
+            $level = $request->param('level');
+            $query->where('description', 'like', "%[{$level}]%");
         }
         if ($request->has('ip')) {
-            $where['ip'] = $request->param('ip');
+            $query->where('ip', $request->param('ip'));
         }
         if ($request->has('is_blocked')) {
-            $where['is_blocked'] = $request->param('is_blocked');
+            // is_blocked=1 对应 status=0（被拦截）
+            $isBlocked = $request->param('is_blocked');
+            $query->where('status', $isBlocked ? 0 : 1);
         }
         if ($request->has('start_time')) {
-            $where['start_time'] = $request->param('start_time');
+            $query->where('create_time', '>=', $request->param('start_time'));
         }
         if ($request->has('end_time')) {
-            $where['end_time'] = $request->param('end_time');
+            $query->where('create_time', '<=', $request->param('end_time'));
         }
 
-        $result = SecurityLog::getList($where, $page, $perPage);
+        $total = $query->count();
+        $list = $query->page($page, $perPage)
+            ->order('create_time', 'desc')
+            ->select();
 
-        return $this->success($result);
+        $result = [
+            'total' => $total,
+            'per_page' => $perPage,
+            'current_page' => $page,
+            'list' => $list->toArray()
+        ];
+
+        return Response::success($result);
     }
 
     /**
@@ -123,7 +156,7 @@ class LogController extends BaseController
 
         $stats = SystemLogger::getStatistics($startTime, $endTime);
 
-        return $this->success($stats);
+        return Response::success($stats);
     }
 
     /**
@@ -136,7 +169,7 @@ class LogController extends BaseController
 
         $stats = SystemLogger::getLoginStatistics($startTime, $endTime);
 
-        return $this->success($stats);
+        return Response::success($stats);
     }
 
     /**
@@ -146,9 +179,18 @@ class LogController extends BaseController
     {
         $limit = $request->param('limit', 10);
 
-        $ips = SecurityLog::getHighRiskIps($limit);
+        // 统计失败登录次数最多的IP
+        $ips = OperationLog::where('module', 'auth')
+            ->where('action', 'login')
+            ->where('status', 0)
+            ->field('ip, COUNT(*) as fail_count, MAX(create_time) as last_attempt')
+            ->group('ip')
+            ->order('fail_count', 'desc')
+            ->limit($limit)
+            ->select()
+            ->toArray();
 
-        return $this->success($ips);
+        return Response::success($ips);
     }
 
     /**
@@ -157,9 +199,9 @@ class LogController extends BaseController
     public function deleteSystemLog(Request $request, $id)
     {
         if (SystemLog::destroy($id)) {
-            return $this->success(null, '删除成功');
+            return Response::success(null, '删除成功');
         } else {
-            return $this->error('删除失败');
+            return Response::error('删除失败');
         }
     }
 
@@ -171,12 +213,12 @@ class LogController extends BaseController
         $ids = $request->param('ids', []);
 
         if (empty($ids)) {
-            return $this->error('请选择要删除的日志');
+            return Response::error('请选择要删除的日志');
         }
 
         $count = SystemLog::batchDelete($ids);
 
-        return $this->success(['count' => $count], "成功删除 {$count} 条日志");
+        return Response::success(['count' => $count], "成功删除 {$count} 条日志");
     }
 
     /**
@@ -184,10 +226,14 @@ class LogController extends BaseController
      */
     public function deleteLoginLog(Request $request, $id)
     {
-        if (LoginLog::destroy($id)) {
-            return $this->success(null, '删除成功');
+        $log = OperationLog::where('module', 'auth')
+            ->where('action', 'login')
+            ->find($id);
+
+        if ($log && $log->delete()) {
+            return Response::success(null, '删除成功');
         } else {
-            return $this->error('删除失败');
+            return Response::error('删除失败');
         }
     }
 
@@ -199,12 +245,15 @@ class LogController extends BaseController
         $ids = $request->param('ids', []);
 
         if (empty($ids)) {
-            return $this->error('请选择要删除的日志');
+            return Response::error('请选择要删除的日志');
         }
 
-        $count = LoginLog::batchDelete($ids);
+        $count = OperationLog::where('module', 'auth')
+            ->where('action', 'login')
+            ->whereIn('id', $ids)
+            ->delete();
 
-        return $this->success(['count' => $count], "成功删除 {$count} 条日志");
+        return Response::success(['count' => $count], "成功删除 {$count} 条日志");
     }
 
     /**
@@ -212,10 +261,13 @@ class LogController extends BaseController
      */
     public function deleteSecurityLog(Request $request, $id)
     {
-        if (SecurityLog::destroy($id)) {
-            return $this->success(null, '删除成功');
+        $log = OperationLog::where('module', 'security')
+            ->find($id);
+
+        if ($log && $log->delete()) {
+            return Response::success(null, '删除成功');
         } else {
-            return $this->error('删除失败');
+            return Response::error('删除失败');
         }
     }
 
@@ -227,12 +279,14 @@ class LogController extends BaseController
         $ids = $request->param('ids', []);
 
         if (empty($ids)) {
-            return $this->error('请选择要删除的日志');
+            return Response::error('请选择要删除的日志');
         }
 
-        $count = SecurityLog::batchDelete($ids);
+        $count = OperationLog::where('module', 'security')
+            ->whereIn('id', $ids)
+            ->delete();
 
-        return $this->success(['count' => $count], "成功删除 {$count} 条日志");
+        return Response::success(['count' => $count], "成功删除 {$count} 条日志");
     }
 
     /**
@@ -245,7 +299,7 @@ class LogController extends BaseController
 
         $count = SystemLogger::cleanOldLogs($days, $logType);
 
-        return $this->success(['count' => $count], "成功清理 {$count} 条日志");
+        return Response::success(['count' => $count], "成功清理 {$count} 条日志");
     }
 
     /**

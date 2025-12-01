@@ -3,7 +3,7 @@ declare (strict_types = 1);
 
 namespace app\controller\api;
 
-use app\model\LinkGroup;
+use app\model\Group;
 use think\Request;
 use think\facade\Validate;
 
@@ -22,7 +22,8 @@ class LinkGroupController extends BaseController
         $keyword = $request->param('keyword', '');
         $status = $request->param('status', '');
 
-        $query = LinkGroup::order('sort', 'asc')
+        $query = Group::where('type', Group::TYPE_LINK)
+            ->order('sort', 'asc')
             ->order('id', 'desc');
 
         // 关键词搜索
@@ -40,8 +41,23 @@ class LinkGroupController extends BaseController
             'page' => $page,
         ]);
 
+        // 统计每个分组下的友链数量（跨站点统计）
+        $items = $list->items();
+        $groupIds = array_column($items, 'id');
+
+        if (!empty($groupIds)) {
+            $linkCounts = \app\model\Link::withoutSiteScope()
+                ->whereIn('group_id', $groupIds)
+                ->group('group_id')
+                ->column('COUNT(*) as count', 'group_id');
+
+            foreach ($items as &$item) {
+                $item['link_count'] = $linkCounts[$item['id']] ?? 0;
+            }
+        }
+
         return $this->success([
-            'list' => $list->items(),
+            'list' => $items,
             'total' => $list->total(),
             'page' => $page,
             'page_size' => $pageSize,
@@ -53,9 +69,25 @@ class LinkGroupController extends BaseController
      */
     public function all()
     {
-        $list = LinkGroup::where('status', LinkGroup::STATUS_ENABLED)
+        $list = Group::where('type', Group::TYPE_LINK)
+            ->where('status', Group::STATUS_ENABLED)
             ->order('sort', 'asc')
-            ->select();
+            ->select()
+            ->toArray();
+
+        // 统计每个分组下的友链数量（跨站点统计）
+        $groupIds = array_column($list, 'id');
+
+        if (!empty($groupIds)) {
+            $linkCounts = \app\model\Link::withoutSiteScope()
+                ->whereIn('group_id', $groupIds)
+                ->group('group_id')
+                ->column('COUNT(*) as count', 'group_id');
+
+            foreach ($list as &$item) {
+                $item['link_count'] = $linkCounts[$item['id']] ?? 0;
+            }
+        }
 
         return $this->success([
             'list' => $list,
@@ -67,7 +99,7 @@ class LinkGroupController extends BaseController
      */
     public function read($id)
     {
-        $group = LinkGroup::find($id);
+        $group = Group::where('type', Group::TYPE_LINK)->find($id);
 
         if (!$group) {
             return $this->error('分组不存在');
@@ -101,15 +133,15 @@ class LinkGroupController extends BaseController
         }
 
         // 设置默认值
+        $data['type'] = Group::TYPE_LINK;
         if (!isset($data['status'])) {
-            $data['status'] = LinkGroup::STATUS_ENABLED;
+            $data['status'] = Group::STATUS_ENABLED;
         }
         if (!isset($data['sort'])) {
             $data['sort'] = 0;
         }
 
-        $group = new LinkGroup();
-        $group->save($data);
+        $group = Group::create($data);
 
         return $this->success($group, '创建成功');
     }
@@ -119,7 +151,7 @@ class LinkGroupController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $group = LinkGroup::find($id);
+        $group = Group::where('type', Group::TYPE_LINK)->find($id);
 
         if (!$group) {
             return $this->error('分组不存在');
@@ -154,7 +186,7 @@ class LinkGroupController extends BaseController
      */
     public function delete($id)
     {
-        $group = LinkGroup::find($id);
+        $group = Group::where('type', Group::TYPE_LINK)->find($id);
 
         if (!$group) {
             return $this->error('分组不存在');

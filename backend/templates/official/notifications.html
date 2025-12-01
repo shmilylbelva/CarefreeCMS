@@ -1,4 +1,4 @@
-{extend name="layout" /}
+{extend name="official/layout" /}
 
 {block name="style"}
 <link rel="stylesheet" href="/assets/css/notifications.css">
@@ -45,7 +45,7 @@
 
         <!-- 通知列表 -->
         <div class="notification-list">
-            {carefree:notification limit='20' userid='$current_user_id' type='$type' id='notice' empty='<div class="empty-state"><i class="bi bi-bell-slash"></i><h5>暂无通知</h5><p class="text-muted">您还没有收到任何通知消息</p></div>'}
+            {carefree:notification limit='20' userid='current_user_id' type='type' id='notice' empty='<div class="empty-state"><i class="bi bi-bell-slash"></i><h5>暂无通知</h5><p class="text-muted">您还没有收到任何通知消息</p></div>'}
             <div class="notification-item {if condition='$notice.is_read eq 0'}unread{/if}">
                 <div class="notification-icon {$notice.type ?: 'system'}">
                     {if condition="$notice.type eq 'reply'"}
@@ -78,7 +78,7 @@
     <!-- 分页 -->
     {if condition="isset($last_page) && $last_page > 1"}
     <nav class="mt-4">
-        {carefree:pagelist total='$total' pagesize='$pagesize' currentpage='$current_page' url='/notifications.html?page={page}' style='full' /}
+        {carefree:pagelist total='total' pagesize='pagesize' currentpage='current_page' url='/notifications.html?page={page}' style='full' /}
     </nav>
     {/if}
 </div>

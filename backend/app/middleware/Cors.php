@@ -23,24 +23,24 @@ class Cors
         // 获取请求来源
         $origin = $request->header('origin', '');
 
-        // 从环境变量读取允许的来源白名单
-        $allowedOriginsConfig = env('CORS_ALLOWED_ORIGINS', '');
-        $allowedOrigins = !empty($allowedOriginsConfig)
-            ? array_map('trim', explode(',', $allowedOriginsConfig))
-            : [];
+        // 从配置文件读取CORS设置
+        $allowedOrigins = config('cors.allowed_origins', []);
+        $allowCredentials = config('cors.allow_credentials', true);
 
         $headers = [
-            'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-            'Access-Control-Allow-Headers'     => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
-            'Access-Control-Max-Age'           => '86400',
-            'Access-Control-Expose-Headers'    => 'Content-Length, Content-Type',
+            'Access-Control-Allow-Methods'     => config('cors.allowed_methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH'),
+            'Access-Control-Allow-Headers'     => config('cors.allowed_headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token'),
+            'Access-Control-Max-Age'           => (string)config('cors.max_age', 86400),
+            'Access-Control-Expose-Headers'    => config('cors.expose_headers', 'Content-Length, Content-Type'),
         ];
 
         // 安全的CORS配置
         if (!empty($allowedOrigins) && in_array($origin, $allowedOrigins)) {
-            // 白名单模式：允许指定来源并支持凭证
+            // 白名单模式：允许指定来源
             $headers['Access-Control-Allow-Origin'] = $origin;
-            $headers['Access-Control-Allow-Credentials'] = 'true';
+            if ($allowCredentials) {
+                $headers['Access-Control-Allow-Credentials'] = 'true';
+            }
         } elseif (empty($allowedOrigins)) {
             // 兼容模式：允许所有来源，但不支持凭证（避免浏览器策略冲突）
             $headers['Access-Control-Allow-Origin'] = '*';
@@ -48,13 +48,16 @@ class Cors
         } elseif (!empty($origin) && (strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false)) {
             // 开发环境兼容：允许所有localhost和127.0.0.1的请求
             $headers['Access-Control-Allow-Origin'] = $origin;
-            $headers['Access-Control-Allow-Credentials'] = 'true';
+            if ($allowCredentials) {
+                $headers['Access-Control-Allow-Credentials'] = 'true';
+            }
         } else {
-            // 拒绝不在白名单中的来源，但仍设置头以避免浏览器报错
-            // 在开发调试时，可以临时允许所有来源
-            if (env('APP_DEBUG', false)) {
+            // 拒绝不在白名单中的来源，但在开发模式下允许
+            if (config('app.debug', false)) {
                 $headers['Access-Control-Allow-Origin'] = $origin ?: '*';
-                $headers['Access-Control-Allow-Credentials'] = $origin ? 'true' : 'false';
+                if ($origin && $allowCredentials) {
+                    $headers['Access-Control-Allow-Credentials'] = 'true';
+                }
             }
         }
 

@@ -6,6 +6,7 @@ use app\BaseController;
 use app\common\Response;
 use app\model\AdminRole;
 use app\model\AdminUser;
+use app\traits\QueryFilterTrait;
 use think\Request;
 
 /**
@@ -13,41 +14,36 @@ use think\Request;
  */
 class Role extends BaseController
 {
+    use QueryFilterTrait;
     /**
      * 角色列表
      */
     public function index(Request $request)
     {
-        $page = $request->get('page', 1);
-        $pageSize = $request->get('pageSize', 10);
-        $name = $request->get('name', '');
-        $status = $request->get('status', '');
-
         // 构建查询
         $query = AdminRole::withCount(['users']);
 
-        // 搜索条件
-        if (!empty($name)) {
-            $query->where('name', 'like', '%' . $name . '%');
-        }
-        if ($status !== '') {
-            $query->where('status', $status);
-        }
+        // 定义过滤条件
+        $filters = [
+            'name' => ['operator' => 'like'],
+            'status' => ['operator' => '='],
+        ];
 
-        // 排序
-        $query->order(['sort' => 'asc', 'id' => 'asc']);
+        // 定义排序
+        $order = ['sort' => 'asc', 'id' => 'asc'];
 
-        // 分页
-        $list = $query->page($page, $pageSize)->select();
-        $total = AdminRole::when(!empty($name), function($query) use ($name) {
-            $query->where('name', 'like', '%' . $name . '%');
-        })
-        ->when($status !== '', function($query) use ($status) {
-            $query->where('status', $status);
-        })
-        ->count();
+        // 使用Trait的快速构建方法
+        $result = $this->buildListQuery($query, $filters, $order, $request);
 
-        return Response::paginate($list->toArray(), $total, $page, $pageSize);
+        // 确保list是数组
+        $list = is_array($result['list']) ? $result['list'] : $result['list']->toArray();
+
+        return Response::paginate(
+            $list,
+            $result['total'],
+            $request->get('page', 1),
+            $request->get('pageSize', 10)
+        );
     }
 
     /**
@@ -127,7 +123,7 @@ class Role extends BaseController
         }
 
         // 不能修改ID为1的超级管理员角色
-        if ($id == 1) {
+        if ((int)$id === 1) {
             return Response::error('不能修改超级管理员角色');
         }
 
@@ -144,11 +140,68 @@ class Role extends BaseController
         }
 
         try {
+            // 记录权限变更前的数据
+            $oldPermissions = $role->permissions ?? [];
+            $newPermissions = $data['permissions'] ?? $oldPermissions;
+
+            // 保存角色数据
             $role->save($data);
+
+            // 如果权限发生变更，记录日志
+            if (isset($data['permissions']) && $oldPermissions != $newPermissions) {
+                $this->logPermissionChange($role, $oldPermissions, $newPermissions, $request->user['id']);
+            }
+
+            // 清空该角色下所有用户的权限缓存
+            if (isset($data['permissions'])) {
+                $users = AdminUser::where('role_id', $id)->select();
+                foreach ($users as $user) {
+                    AdminUser::clearUserPermissionsCache($user->id);
+                }
+            }
+
             return Response::success([], '角色更新成功');
         } catch (\Exception $e) {
             return Response::error('角色更新失败：' . $e->getMessage());
         }
+    }
+
+    /**
+     * 记录权限变更日志
+     */
+    protected function logPermissionChange($role, $oldPermissions, $newPermissions, $operatorId)
+    {
+        // 计算权限差异
+        $added = is_array($newPermissions) && is_array($oldPermissions)
+            ? array_diff($newPermissions, $oldPermissions)
+            : [];
+        $removed = is_array($newPermissions) && is_array($oldPermissions)
+            ? array_diff($oldPermissions, $newPermissions)
+            : [];
+
+        // 构建日志内容
+        $changes = [];
+        if (!empty($added)) {
+            $changes[] = '新增权限: ' . implode(', ', $added);
+        }
+        if (!empty($removed)) {
+            $changes[] = '移除权限: ' . implode(', ', $removed);
+        }
+
+        $changeLog = implode('; ', $changes);
+
+        // 记录操作日志
+        \app\common\Logger::update(
+            \app\model\OperationLog::MODULE_ROLE,
+            "修改角色权限: {$role->name} - {$changeLog}",
+            $role->id,
+            json_encode([
+                'old_permissions' => $oldPermissions,
+                'new_permissions' => $newPermissions,
+                'added' => array_values($added),
+                'removed' => array_values($removed)
+            ])
+        );
     }
 
     /**
@@ -162,7 +215,7 @@ class Role extends BaseController
         }
 
         // 不能删除ID为1的超级管理员角色
-        if ($id == 1) {
+        if ((int)$id === 1) {
             return Response::error('不能删除超级管理员角色');
         }
 

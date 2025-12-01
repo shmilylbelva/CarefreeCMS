@@ -9,7 +9,7 @@ use think\model\concern\SoftDelete;
 /**
  * 专题模型
  */
-class Topic extends Model
+class Topic extends SiteModel
 {
     use SoftDelete;
 
@@ -28,16 +28,19 @@ class Topic extends Model
 
     /**
      * 关联文章（多对多）
+     * 使用统一的 relations 表
      */
     public function articles()
     {
         return $this->belongsToMany(
             Article::class,
-            TopicArticle::class,
-            'article_id',
-            'topic_id'
-        )->withField(['id', 'title', 'summary', 'cover_image', 'view_count', 'create_time'])
-         ->order('topic_articles.sort', 'asc');
+            'relations',
+            'target_id',
+            'source_id'
+        )->where('pivot.source_type', 'topic')
+         ->where('pivot.target_type', 'article')
+         ->withField(['id', 'title', 'summary', 'cover_image', 'view_count', 'create_time'])
+         ->order('pivot.sort', 'asc');
     }
 
     /**
@@ -54,15 +57,19 @@ class Topic extends Model
 
     /**
      * 添加文章到专题
+     * 使用统一的 Relation 模型
      */
     public function addArticle($articleId, $sort = 0, $isFeatured = 0)
     {
-        $topicArticle = new TopicArticle();
-        $topicArticle->topic_id = $this->id;
-        $topicArticle->article_id = $articleId;
-        $topicArticle->sort = $sort;
-        $topicArticle->is_featured = $isFeatured;
-        $topicArticle->save();
+        $relation = new Relation();
+        $relation->source_type = 'topic';
+        $relation->source_id = $this->id;
+        $relation->target_type = 'article';
+        $relation->target_id = $articleId;
+        $relation->sort = $sort;
+        $relation->extra = json_encode(['is_featured' => $isFeatured]);
+        $relation->site_id = $this->site_id ?? 1;
+        $relation->save();
 
         // 更新专题文章数量
         $this->updateArticleCount();
@@ -70,11 +77,14 @@ class Topic extends Model
 
     /**
      * 从专题移除文章
+     * 使用统一的 Relation 模型
      */
     public function removeArticle($articleId)
     {
-        TopicArticle::where('topic_id', $this->id)
-            ->where('article_id', $articleId)
+        Relation::where('source_type', 'topic')
+            ->where('source_id', $this->id)
+            ->where('target_type', 'article')
+            ->where('target_id', $articleId)
             ->delete();
 
         // 更新专题文章数量
@@ -83,11 +93,15 @@ class Topic extends Model
 
     /**
      * 批量设置专题文章
+     * 使用统一的 Relation 模型
      */
     public function setArticles($articleIds)
     {
         // 删除现有关联
-        TopicArticle::where('topic_id', $this->id)->delete();
+        Relation::where('source_type', 'topic')
+            ->where('source_id', $this->id)
+            ->where('target_type', 'article')
+            ->delete();
 
         // 添加新关联
         foreach ($articleIds as $index => $articleId) {
@@ -97,10 +111,14 @@ class Topic extends Model
 
     /**
      * 更新文章数量
+     * 使用统一的 Relation 模型
      */
     public function updateArticleCount()
     {
-        $count = TopicArticle::where('topic_id', $this->id)->count();
+        $count = Relation::where('source_type', 'topic')
+            ->where('source_id', $this->id)
+            ->where('target_type', 'article')
+            ->count();
         $this->article_count = $count;
         $this->save();
     }

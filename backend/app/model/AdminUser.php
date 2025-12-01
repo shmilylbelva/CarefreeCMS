@@ -3,12 +3,16 @@
 namespace app\model;
 
 use think\Model;
+use app\traits\Cacheable;
+use app\model\AdminRole;
 
 /**
  * 管理员用户模型
  */
 class AdminUser extends Model
 {
+    use Cacheable;
+
     // 设置表名
     protected $name = 'admin_users';
 
@@ -45,11 +49,41 @@ class AdminUser extends Model
     ];
 
     /**
+     * 缓存配置
+     */
+    protected static $cacheTag = 'admin_users';
+    protected static $cacheExpire = 3600; // 1小时
+
+    /**
+     * 模型事件：数据插入后
+     */
+    protected static function onAfterInsert($model)
+    {
+        static::clearCacheTag();
+    }
+
+    /**
+     * 模型事件：数据更新后
+     */
+    protected static function onAfterUpdate($model)
+    {
+        static::clearCacheTag();
+    }
+
+    /**
+     * 模型事件：数据删除后
+     */
+    protected static function onAfterDelete($model)
+    {
+        static::clearCacheTag();
+    }
+
+    /**
      * 关联角色
      */
     public function role()
     {
-        return $this->belongsTo(AdminRole::class, 'role_id');
+        return $this->belongsTo(AdminRole::class, 'role_id', 'id');
     }
 
     /**
@@ -101,5 +135,50 @@ class AdminUser extends Model
     {
         $status = [0 => '禁用', 1 => '启用'];
         return $status[$data['status']] ?? '未知';
+    }
+
+    /**
+     * 获取用户权限（带缓存）
+     *
+     * @param int $userId
+     * @return array
+     */
+    public static function getUserPermissions(int $userId): array
+    {
+        return static::cacheRemember("user_permissions:{$userId}", function () use ($userId) {
+            $user = static::with('role')->find($userId);
+
+            if (!$user || !$user->role) {
+                return [];
+            }
+
+            // 获取权限（AdminRole模型已自动将JSON转为数组）
+            $permissions = $user->role->permissions ?? [];
+            return is_array($permissions) ? $permissions : [];
+        }, 3600);
+    }
+
+    /**
+     * 检查用户是否有指定权限（带缓存）
+     *
+     * @param int $userId
+     * @param string $permission
+     * @return bool
+     */
+    public static function hasPermission(int $userId, string $permission): bool
+    {
+        $permissions = static::getUserPermissions($userId);
+        return in_array($permission, $permissions) || in_array('*', $permissions);
+    }
+
+    /**
+     * 清除用户权限缓存
+     *
+     * @param int $userId
+     * @return bool
+     */
+    public static function clearUserPermissionsCache(int $userId): bool
+    {
+        return static::cacheDelete("user_permissions:{$userId}");
     }
 }

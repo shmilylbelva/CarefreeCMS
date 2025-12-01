@@ -25,7 +25,7 @@ class Carefree extends TagLib
         'tag' => ['attr' => 'limit,order,id,empty', 'close' => 1],
 
         // 网站配置标签
-        'config' => ['attr' => 'name', 'close' => 0],
+        'config' => ['attr' => 'name,id', 'close' => 1],
 
         // 导航菜单标签
         'nav' => ['attr' => 'limit,id', 'close' => 1],
@@ -67,13 +67,13 @@ class Carefree extends TagLib
         'search' => ['attr' => 'action,placeholder,button,class', 'close' => 0],
 
         // 评论列表
-        'comment' => ['attr' => 'limit,aid,type,id,empty', 'close' => 1],
+        'comment' => ['attr' => 'limit,aid,articleid,type,orderby,id,empty', 'close' => 1],
 
         // 用户信息
         'userinfo' => ['attr' => 'uid,id', 'close' => 1],
 
         // 作者列表
-        'author' => ['attr' => 'limit,orderby,id,empty', 'close' => 1],
+        'author' => ['attr' => 'userid,limit,orderby,id,empty', 'close' => 1],
 
         // 归档列表
         'archive' => ['attr' => 'type,limit,format,id,empty', 'close' => 1],
@@ -82,7 +82,7 @@ class Carefree extends TagLib
         'seo' => ['attr' => 'title,keywords,description,image,type', 'close' => 0],
 
         // 社交分享
-        'share' => ['attr' => 'platforms,size,style', 'close' => 0],
+        'share' => ['attr' => 'url,title,summary,image,platforms,size,style', 'close' => 1],
 
         // 前台用户列表
         'frontuser' => ['attr' => 'limit,level,isvip,status,orderby,id,empty', 'close' => 1],
@@ -134,6 +134,75 @@ class Carefree extends TagLib
 
         // 随机图片标签
         'randomimg' => ['attr' => 'limit,source,id,empty', 'close' => 1],
+
+        // ========== 媒体相关标签 ==========
+        // 图库/相册标签
+        'gallery' => ['attr' => 'albumid,limit,orderby,columns,id,empty', 'close' => 1],
+
+        // 视频列表标签
+        'video' => ['attr' => 'catid,limit,orderby,featured,id,empty', 'close' => 1],
+
+        // 音频列表标签
+        'audio' => ['attr' => 'catid,limit,orderby,featured,id,empty', 'close' => 1],
+
+        // 下载列表标签
+        'download' => ['attr' => 'catid,limit,orderby,type,id,empty', 'close' => 1],
+
+        // ========== 互动相关标签 ==========
+        // 投票标签
+        'vote' => ['attr' => 'voteid,id,showresult', 'close' => 1],
+
+        // 测验/问答标签
+        'quiz' => ['attr' => 'quizid,id', 'close' => 1],
+
+        // 抽奖标签
+        'lottery' => ['attr' => 'lotteryid,id', 'close' => 1],
+
+        // ========== 实用工具标签 ==========
+        // 二维码生成标签
+        'qrcode' => ['attr' => 'content,size,logo,level', 'close' => 0],
+
+        // 日历标签
+        'calendar' => ['attr' => 'year,month,events,id', 'close' => 1],
+
+        // 站点地图标签
+        'sitemap' => ['attr' => 'type,format,id,empty', 'close' => 1],
+
+        // 天气信息标签
+        'weather' => ['attr' => 'city,days,unit', 'close' => 0],
+
+        // ========== AI推荐标签 ==========
+        // 智能推荐内容标签
+        'recommend' => ['attr' => 'type,userid,aid,limit,id,empty', 'close' => 1],
+
+        // 个性化推荐标签
+        'personalize' => ['attr' => 'userid,scene,limit,id,empty', 'close' => 1],
+
+        // ========== 表单相关标签 ==========
+        // 通用表单标签
+        'form' => ['attr' => 'formid,action,method,class,id', 'close' => 1],
+
+        // 表单字段标签
+        'formfield' => ['attr' => 'name,type,label,required,placeholder,options,value', 'close' => 0],
+
+        // 验证码标签
+        'captcha' => ['attr' => 'type,width,height,length', 'close' => 0],
+
+        // ========== 其他实用标签 ==========
+        // 多语言标签
+        'multilang' => ['attr' => 'key,lang,default', 'close' => 0],
+
+        // 缓存标签
+        'cache' => ['attr' => 'key,time,id', 'close' => 1],
+
+        // 条件标签
+        'condition' => ['attr' => 'if,id', 'close' => 1],
+
+        // 分组标签
+        'group' => ['attr' => 'data,by,id,key,empty', 'close' => 1],
+
+        // 通用foreach循环标签
+        'foreach' => ['attr' => 'from,item,key', 'close' => 1],
     ];
 
     /**
@@ -289,13 +358,24 @@ class Carefree extends TagLib
 
     /**
      * 网站配置标签
-     * {carefree:config name='site_name' /}
-     * {carefree:config name='seo_keywords' /}
+     * {carefree:config name='site_name' /}  - 直接输出
+     * {carefree:config name='site_logo' id='logo'}...{/carefree:config}  - 赋值给变量
      */
     public function tagConfig($tag, $content)
     {
         $name = $tag['name'] ?? '';
+        $id = $tag['id'] ?? '';
 
+        // 如果有id参数，将值赋给变量，并执行内部内容
+        if (!empty($id)) {
+            $parseStr = '<?php ';
+            $parseStr .= '$' . $id . ' = \app\service\tag\ConfigTagService::get("' . $name . '"); ';
+            $parseStr .= '?>';
+            $parseStr .= $content;
+            return $parseStr;
+        }
+
+        // 否则直接输出配置值
         $parseStr = '<?php ';
         $parseStr .= 'echo \app\service\tag\ConfigTagService::get("' . $name . '"); ';
         $parseStr .= '?>';
@@ -778,8 +858,10 @@ class Carefree extends TagLib
     public function tagComment($tag, $content)
     {
         $limit = $tag['limit'] ?? 10;
-        $aid = $tag['aid'] ?? 0;
+        // 支持 articleid 作为 aid 的别名
+        $aid = $tag['articleid'] ?? $tag['aid'] ?? 0;
         $type = $tag['type'] ?? 'latest';
+        $orderby = $tag['orderby'] ?? 'create_time desc';
         $id = $tag['id'] ?? 'comment';
         $empty = $tag['empty'] ?? '';
 
@@ -815,7 +897,7 @@ class Carefree extends TagLib
 
         if (!empty($empty)) {
             $parseStr .= 'else: ?>';
-            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= $empty;
             $parseStr .= '<?php ';
         }
 
@@ -882,36 +964,57 @@ class Carefree extends TagLib
      */
     public function tagAuthor($tag, $content)
     {
+        $userid = $tag['userid'] ?? '';
         $limit = $tag['limit'] ?? 10;
         $orderby = $tag['orderby'] ?? 'article';
         $id = $tag['id'] ?? 'author';
         $empty = $tag['empty'] ?? '';
 
-        $key = !empty($tag['key']) ? $tag['key'] : 'key';
-        $i = 'i';
-
         $parseStr = '<?php ';
-        $parseStr .= '$__authors__ = \app\service\tag\AuthorTagService::getList([';
-        $parseStr .= "'limit' => {$limit}, ";
-        $parseStr .= "'orderby' => '{$orderby}'";
-        $parseStr .= ']); ';
 
-        $parseStr .= 'if(!empty($__authors__)): ';
-        $parseStr .= 'foreach($__authors__ as $' . $key . ' => $' . $id . '): ';
-        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
-        $parseStr .= '?>';
-
-        $parseStr .= $content;
-
-        $parseStr .= '<?php endforeach; ';
-
-        if (!empty($empty)) {
-            $parseStr .= 'else: ?>';
-            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+        // 如果指定了userid，获取单个作者信息
+        if (!empty($userid)) {
+            $parseStr .= '$__author_data__ = \app\service\tag\AuthorTagService::getInfo(' . $userid . '); ';
+            $parseStr .= 'if(!empty($__author_data__)): ';
+            $parseStr .= '$' . $id . ' = $__author_data__; ';
+            $parseStr .= '?>';
+            $parseStr .= $content;
             $parseStr .= '<?php ';
-        }
 
-        $parseStr .= 'endif; ?>';
+            if (!empty($empty)) {
+                $parseStr .= 'else: ?>';
+                $parseStr .= $empty;
+                $parseStr .= '<?php ';
+            }
+
+            $parseStr .= 'endif; ?>';
+        } else {
+            // 获取作者列表
+            $key = !empty($tag['key']) ? $tag['key'] : 'key';
+            $i = 'i';
+
+            $parseStr .= '$__authors__ = \app\service\tag\AuthorTagService::getList([';
+            $parseStr .= "'limit' => {$limit}, ";
+            $parseStr .= "'orderby' => '{$orderby}'";
+            $parseStr .= ']); ';
+
+            $parseStr .= 'if(!empty($__authors__)): ';
+            $parseStr .= 'foreach($__authors__ as $' . $key . ' => $' . $id . '): ';
+            $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+            $parseStr .= '?>';
+
+            $parseStr .= $content;
+
+            $parseStr .= '<?php endforeach; ';
+
+            if (!empty($empty)) {
+                $parseStr .= 'else: ?>';
+                $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+                $parseStr .= '<?php ';
+            }
+
+            $parseStr .= 'endif; ?>';
+        }
 
         return $parseStr;
     }
@@ -1042,79 +1145,32 @@ class Carefree extends TagLib
      * @param array $tag 标签属性
      * @return string
      */
-    public function tagShare($tag)
+    public function tagShare($tag, $content)
     {
-        $platforms = $tag['platforms'] ?? 'wechat,weibo,qq,twitter,facebook';
-        $size = $tag['size'] ?? 'normal';
-        $style = $tag['style'] ?? 'icon';
+        $url = isset($tag['url']) ? $tag['url'] : '""';
+        $title = isset($tag['title']) ? $tag['title'] : '""';
+        $summary = isset($tag['summary']) ? $tag['summary'] : '""';
+        $image = isset($tag['image']) ? $tag['image'] : '""';
 
-        $platformList = explode(',', $platforms);
+        $parseStr = '<?php ';
+        $parseStr .= '$__share_url__ = ' . $url . '; ';
+        $parseStr .= '$__share_title__ = ' . $title . '; ';
+        $parseStr .= '$__share_summary__ = ' . $summary . '; ';
+        $parseStr .= '$__share_image__ = ' . $image . '; ';
+        $parseStr .= '$share = [';
+        $parseStr .= '"url" => $__share_url__,';
+        $parseStr .= '"title" => $__share_title__,';
+        $parseStr .= '"summary" => $__share_summary__,';
+        $parseStr .= '"image" => $__share_image__,';
+        $parseStr .= '"wechat_url" => "javascript:void(0)",';
+        $parseStr .= '"weibo_url" => "http://service.weibo.com/share/share.php?url=" . urlencode($__share_url__) . "&title=" . urlencode($__share_title__),';
+        $parseStr .= '"qq_url" => "http://connect.qq.com/widget/shareqq/index.html?url=" . urlencode($__share_url__) . "&title=" . urlencode($__share_title__),';
+        $parseStr .= '"twitter_url" => "https://twitter.com/intent/tweet?text=" . urlencode($__share_title__) . "&url=" . urlencode($__share_url__),';
+        $parseStr .= '"facebook_url" => "https://www.facebook.com/sharer/sharer.php?u=" . urlencode($__share_url__)';
+        $parseStr .= ']; ?>';
+        $parseStr .= $content;
 
-        $html = '<div class="social-share share-' . $style . ' share-' . $size . '">';
-
-        foreach ($platformList as $platform) {
-            $platform = trim($platform);
-
-            switch ($platform) {
-                case 'wechat':
-                    $html .= '<a href="javascript:;" class="share-wechat" title="分享到微信">';
-                    $html .= '<i class="icon-wechat"></i>';
-                    if ($style !== 'icon') {
-                        $html .= '<span>微信</span>';
-                    }
-                    $html .= '</a>';
-                    break;
-
-                case 'weibo':
-                    $html .= '<a href="javascript:;" class="share-weibo" title="分享到微博">';
-                    $html .= '<i class="icon-weibo"></i>';
-                    if ($style !== 'icon') {
-                        $html .= '<span>微博</span>';
-                    }
-                    $html .= '</a>';
-                    break;
-
-                case 'qq':
-                    $html .= '<a href="javascript:;" class="share-qq" title="分享到QQ">';
-                    $html .= '<i class="icon-qq"></i>';
-                    if ($style !== 'icon') {
-                        $html .= '<span>QQ</span>';
-                    }
-                    $html .= '</a>';
-                    break;
-
-                case 'twitter':
-                    $html .= '<a href="javascript:;" class="share-twitter" title="分享到Twitter">';
-                    $html .= '<i class="icon-twitter"></i>';
-                    if ($style !== 'icon') {
-                        $html .= '<span>Twitter</span>';
-                    }
-                    $html .= '</a>';
-                    break;
-
-                case 'facebook':
-                    $html .= '<a href="javascript:;" class="share-facebook" title="分享到Facebook">';
-                    $html .= '<i class="icon-facebook"></i>';
-                    if ($style !== 'icon') {
-                        $html .= '<span>Facebook</span>';
-                    }
-                    $html .= '</a>';
-                    break;
-
-                case 'linkedin':
-                    $html .= '<a href="javascript:;" class="share-linkedin" title="分享到LinkedIn">';
-                    $html .= '<i class="icon-linkedin"></i>';
-                    if ($style !== 'icon') {
-                        $html .= '<span>LinkedIn</span>';
-                    }
-                    $html .= '</a>';
-                    break;
-            }
-        }
-
-        $html .= '</div>';
-
-        return $html;
+        return $parseStr;
     }
 
     /**
@@ -1988,6 +2044,1011 @@ class Carefree extends TagLib
         }
 
         $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    // ========== 媒体相关标签实现 ==========
+
+    /**
+     * 图库/相册标签
+     * {carefree:gallery albumid='1' limit='12' orderby='sort' columns='4' id='photo'}
+     *     <div class="photo-item">
+     *         <img src="{$photo.thumb_url}" alt="{$photo.title}" data-original="{$photo.url}">
+     *         <p>{$photo.title}</p>
+     *     </div>
+     * {/carefree:gallery}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagGallery($tag, $content)
+    {
+        $albumid = $tag['albumid'] ?? 0;
+        $limit = $tag['limit'] ?? 12;
+        $orderby = $tag['orderby'] ?? 'sort asc';
+        $columns = $tag['columns'] ?? 4;
+        $id = $tag['id'] ?? 'photo';
+        $empty = $tag['empty'] ?? '';
+
+        $albumidVar = $this->autoBuildVar($albumid);
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__gallery__ = \app\service\tag\GalleryTagService::getList([';
+        $parseStr .= "'albumid' => " . $albumidVar . ", ";
+        $parseStr .= "'limit' => {$limit}, ";
+        $parseStr .= "'orderby' => '{$orderby}', ";
+        $parseStr .= "'columns' => {$columns}";
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__gallery__)): ';
+        $parseStr .= 'foreach($__gallery__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '$' . $id . '[\'col\'] = ($' . $key . ' % ' . $columns . ') + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 视频列表标签
+     * {carefree:video catid='1' limit='6' orderby='view_count desc' featured='1' id='video'}
+     *     <div class="video-item">
+     *         <video src="{$video.url}" poster="{$video.poster}" controls></video>
+     *         <h4>{$video.title}</h4>
+     *         <div class="video-stats">
+     *             <span>{$video.view_count} 次播放</span>
+     *             <span>{$video.duration}</span>
+     *         </div>
+     *     </div>
+     * {/carefree:video}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagVideo($tag, $content)
+    {
+        $catid = $tag['catid'] ?? 0;
+        $limit = $tag['limit'] ?? 6;
+        $orderby = $tag['orderby'] ?? 'create_time desc';
+        $featured = $tag['featured'] ?? '';
+        $id = $tag['id'] ?? 'video';
+        $empty = $tag['empty'] ?? '';
+
+        $catidVar = $this->autoBuildVar($catid);
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__videos__ = \app\service\tag\VideoTagService::getList([';
+        $parseStr .= "'catid' => " . $catidVar . ", ";
+        $parseStr .= "'limit' => {$limit}, ";
+        $parseStr .= "'orderby' => '{$orderby}', ";
+        $parseStr .= "'featured' => '{$featured}'";
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__videos__)): ';
+        $parseStr .= 'foreach($__videos__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 音频列表标签
+     * {carefree:audio catid='1' limit='10' orderby='create_time desc' id='audio'}
+     *     <div class="audio-item">
+     *         <audio src="{$audio.url}" controls></audio>
+     *         <h4>{$audio.title}</h4>
+     *         <p>{$audio.artist}</p>
+     *     </div>
+     * {/carefree:audio}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagAudio($tag, $content)
+    {
+        $catid = $tag['catid'] ?? 0;
+        $limit = $tag['limit'] ?? 10;
+        $orderby = $tag['orderby'] ?? 'create_time desc';
+        $featured = $tag['featured'] ?? '';
+        $id = $tag['id'] ?? 'audio';
+        $empty = $tag['empty'] ?? '';
+
+        $catidVar = $this->autoBuildVar($catid);
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__audios__ = \app\service\tag\AudioTagService::getList([';
+        $parseStr .= "'catid' => " . $catidVar . ", ";
+        $parseStr .= "'limit' => {$limit}, ";
+        $parseStr .= "'orderby' => '{$orderby}', ";
+        $parseStr .= "'featured' => '{$featured}'";
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__audios__)): ';
+        $parseStr .= 'foreach($__audios__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 下载列表标签
+     * {carefree:download catid='1' limit='10' type='pdf' id='download'}
+     *     <div class="download-item">
+     *         <a href="{$download.url}" download="{$download.filename}">
+     *             <i class="icon-download"></i>
+     *             {$download.title}
+     *         </a>
+     *         <span class="download-size">{$download.filesize}</span>
+     *         <span class="download-count">{$download.download_count} 次下载</span>
+     *     </div>
+     * {/carefree:download}
+     *
+     * type参数: pdf, doc, xls, zip, rar, mp3, mp4等文件类型
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagDownload($tag, $content)
+    {
+        $catid = $tag['catid'] ?? 0;
+        $limit = $tag['limit'] ?? 10;
+        $orderby = $tag['orderby'] ?? 'create_time desc';
+        $type = $tag['type'] ?? '';
+        $id = $tag['id'] ?? 'download';
+        $empty = $tag['empty'] ?? '';
+
+        $catidVar = $this->autoBuildVar($catid);
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__downloads__ = \app\service\tag\DownloadTagService::getList([';
+        $parseStr .= "'catid' => " . $catidVar . ", ";
+        $parseStr .= "'limit' => {$limit}, ";
+        $parseStr .= "'orderby' => '{$orderby}', ";
+        $parseStr .= "'type' => '{$type}'";
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__downloads__)): ';
+        $parseStr .= 'foreach($__downloads__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    // ========== 互动相关标签实现 ==========
+
+    /**
+     * 投票标签
+     * {carefree:vote voteid='1' showresult='0' id='option'}
+     *     <label>
+     *         <input type="radio" name="vote" value="{$option.id}">
+     *         {$option.title}
+     *         {if $showresult}
+     *             <span class="vote-percent">{$option.percent}%</span>
+     *             <span class="vote-count">({$option.vote_count}票)</span>
+     *         {/if}
+     *     </label>
+     * {/carefree:vote}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagVote($tag, $content)
+    {
+        $voteid = $tag['voteid'] ?? 0;
+        $showresult = $tag['showresult'] ?? '0';
+        $id = $tag['id'] ?? 'option';
+
+        $voteidVar = $this->autoBuildVar($voteid);
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__vote_options__ = \app\service\tag\VoteTagService::getOptions(' . $voteidVar . ', ' . $showresult . '); ';
+        $parseStr .= '$showresult = ' . $showresult . '; ';
+
+        $parseStr .= 'if(!empty($__vote_options__)): ';
+        $parseStr .= 'foreach($__vote_options__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 测验/问答标签
+     * {carefree:quiz quizid='1' id='question'}
+     *     <div class="quiz-question">
+     *         <h4>问题{$i}: {$question.title}</h4>
+     *         {loop $question.options as $opt}
+     *             <label>
+     *                 <input type="radio" name="q_{$question.id}" value="{$opt.id}">
+     *                 {$opt.content}
+     *             </label>
+     *         {/loop}
+     *     </div>
+     * {/carefree:quiz}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagQuiz($tag, $content)
+    {
+        $quizid = $tag['quizid'] ?? 0;
+        $id = $tag['id'] ?? 'question';
+
+        $quizidVar = $this->autoBuildVar($quizid);
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__quiz_questions__ = \app\service\tag\QuizTagService::getQuestions(' . $quizidVar . '); ';
+
+        $parseStr .= 'if(!empty($__quiz_questions__)): ';
+        $parseStr .= 'foreach($__quiz_questions__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 抽奖标签
+     * {carefree:lottery lotteryid='1' id='prize'}
+     *     <div class="lottery-prize">
+     *         <div class="prize-name">{$prize.name}</div>
+     *         <div class="prize-probability">中奖率: {$prize.probability}%</div>
+     *         <div class="prize-remain">剩余: {$prize.remain}/{$prize.total}</div>
+     *     </div>
+     * {/carefree:lottery}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagLottery($tag, $content)
+    {
+        $lotteryid = $tag['lotteryid'] ?? 0;
+        $id = $tag['id'] ?? 'prize';
+
+        $lotteryidVar = $this->autoBuildVar($lotteryid);
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__lottery_prizes__ = \app\service\tag\LotteryTagService::getPrizes(' . $lotteryidVar . '); ';
+
+        $parseStr .= 'if(!empty($__lottery_prizes__)): ';
+        $parseStr .= 'foreach($__lottery_prizes__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; endif; ?>';
+
+        return $parseStr;
+    }
+
+    // ========== 实用工具标签实现 ==========
+
+    /**
+     * 二维码生成标签
+     * {carefree:qrcode content='https://www.example.com' size='200' logo='/static/logo.png' level='H' /}
+     *
+     * size: 二维码大小(像素)，默认200
+     * logo: logo图片路径
+     * level: 纠错级别 L/M/Q/H，默认M
+     *
+     * @param array $tag 标签属性
+     * @return string
+     */
+    public function tagQrcode($tag)
+    {
+        $content = $tag['content'] ?? '';
+        $size = $tag['size'] ?? 200;
+        $logo = $tag['logo'] ?? '';
+        $level = $tag['level'] ?? 'M';
+
+        if (empty($content)) {
+            return '<!-- qrcode tag: content parameter is required -->';
+        }
+
+        // 使用autoBuildVar解析content参数
+        $contentVar = $this->autoBuildVar($content);
+
+        $parseStr = '<?php ';
+        $parseStr .= 'echo \app\service\tag\QrcodeTagService::generate([';
+        $parseStr .= "'content' => " . $contentVar . ", ";
+        $parseStr .= "'size' => {$size}, ";
+        $parseStr .= "'logo' => '{$logo}', ";
+        $parseStr .= "'level' => '{$level}'";
+        $parseStr .= ']); ';
+        $parseStr .= '?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 日历标签
+     * {carefree:calendar year='2025' month='1' events='$events' id='day'}
+     *     <td class="calendar-day {$day.class}">
+     *         <div class="day-number">{$day.date}</div>
+     *         {if $day.has_event}
+     *             <div class="event-indicator"></div>
+     *         {/if}
+     *     </td>
+     * {/carefree:calendar}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagCalendar($tag, $content)
+    {
+        $year = $tag['year'] ?? 'date("Y")';
+        $month = $tag['month'] ?? 'date("m")';
+        $events = $tag['events'] ?? '[]';
+        $id = $tag['id'] ?? 'day';
+
+        $yearVar = $this->autoBuildVar($year);
+        $monthVar = $this->autoBuildVar($month);
+        $eventsVar = $this->autoBuildVar($events);
+
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__calendar_days__ = \app\service\tag\CalendarTagService::getDays([';
+        $parseStr .= "'year' => " . $yearVar . ", ";
+        $parseStr .= "'month' => " . $monthVar . ", ";
+        $parseStr .= "'events' => " . $eventsVar;
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__calendar_days__)): ';
+        $parseStr .= 'foreach($__calendar_days__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 站点地图标签
+     * {carefree:sitemap type='all' format='tree' id='item'}
+     *     <li>
+     *         <a href="{$item.url}">{$item.title}</a>
+     *         {if $item.children}
+     *             <ul>{loop $item.children as $child}...</ul>
+     *         {/if}
+     *     </li>
+     * {/carefree:sitemap}
+     *
+     * type: all-所有, article-文章, category-分类, page-单页
+     * format: tree-树形, flat-平铺
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagSitemap($tag, $content)
+    {
+        $type = $tag['type'] ?? 'all';
+        $format = $tag['format'] ?? 'tree';
+        $id = $tag['id'] ?? 'item';
+        $empty = $tag['empty'] ?? '';
+
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__sitemap__ = \app\service\tag\SitemapTagService::get([';
+        $parseStr .= "'type' => '{$type}', ";
+        $parseStr .= "'format' => '{$format}'";
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__sitemap__)): ';
+        $parseStr .= 'foreach($__sitemap__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 天气信息标签
+     * {carefree:weather city='北京' days='7' unit='C' /}
+     *
+     * 输出当前城市的天气信息（需要配置天气API）
+     *
+     * @param array $tag 标签属性
+     * @return string
+     */
+    public function tagWeather($tag)
+    {
+        $city = $tag['city'] ?? '';
+        $days = $tag['days'] ?? 1;
+        $unit = $tag['unit'] ?? 'C';
+
+        $cityVar = $this->autoBuildVar($city);
+
+        $parseStr = '<?php ';
+        $parseStr .= 'echo \app\service\tag\WeatherTagService::render([';
+        $parseStr .= "'city' => " . $cityVar . ", ";
+        $parseStr .= "'days' => {$days}, ";
+        $parseStr .= "'unit' => '{$unit}'";
+        $parseStr .= ']); ';
+        $parseStr .= '?>';
+
+        return $parseStr;
+    }
+
+    // ========== AI推荐标签实现 ==========
+
+    /**
+     * 智能推荐内容标签
+     * {carefree:recommend type='article' userid='$user.id' aid='$article.id' limit='6' id='item'}
+     *     <div class="recommend-item">
+     *         <a href="{$item.url}">{$item.title}</a>
+     *         <div class="recommend-reason">{$item.reason}</div>
+     *     </div>
+     * {/carefree:recommend}
+     *
+     * type: article-文章推荐, product-产品推荐
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagRecommend($tag, $content)
+    {
+        $type = $tag['type'] ?? 'article';
+        $userid = $tag['userid'] ?? 0;
+        $aid = $tag['aid'] ?? 0;
+        $limit = $tag['limit'] ?? 6;
+        $id = $tag['id'] ?? 'item';
+        $empty = $tag['empty'] ?? '';
+
+        $useridVar = $this->autoBuildVar($userid);
+        $aidVar = $this->autoBuildVar($aid);
+
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__recommendations__ = \app\service\tag\RecommendTagService::get([';
+        $parseStr .= "'type' => '{$type}', ";
+        $parseStr .= "'userid' => " . $useridVar . ", ";
+        $parseStr .= "'aid' => " . $aidVar . ", ";
+        $parseStr .= "'limit' => {$limit}";
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__recommendations__)): ';
+        $parseStr .= 'foreach($__recommendations__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 个性化推荐标签
+     * {carefree:personalize userid='$user.id' scene='homepage' limit='10' id='item'}
+     *     <div class="personalize-item">
+     *         <a href="{$item.url}">{$item.title}</a>
+     *         <div class="match-score">匹配度: {$item.score}%</div>
+     *     </div>
+     * {/carefree:personalize}
+     *
+     * scene: homepage-首页, detail-详情页, category-分类页
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagPersonalize($tag, $content)
+    {
+        $userid = $tag['userid'] ?? 0;
+        $scene = $tag['scene'] ?? 'homepage';
+        $limit = $tag['limit'] ?? 10;
+        $id = $tag['id'] ?? 'item';
+        $empty = $tag['empty'] ?? '';
+
+        $useridVar = $this->autoBuildVar($userid);
+
+        $key = !empty($tag['key']) ? $tag['key'] : 'key';
+        $i = 'i';
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__personalize__ = \app\service\tag\PersonalizeTagService::get([';
+        $parseStr .= "'userid' => " . $useridVar . ", ";
+        $parseStr .= "'scene' => '{$scene}', ";
+        $parseStr .= "'limit' => {$limit}";
+        $parseStr .= ']); ';
+
+        $parseStr .= 'if(!empty($__personalize__)): ';
+        $parseStr .= 'foreach($__personalize__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    // ========== 表单相关标签实现 ==========
+
+    /**
+     * 通用表单标签
+     * {carefree:form formid='contact' action='/submit' method='post' class='contact-form'}
+     *     {carefree:formfield name='name' type='text' label='姓名' required='1' /}
+     *     {carefree:formfield name='email' type='email' label='邮箱' required='1' /}
+     *     {carefree:formfield name='message' type='textarea' label='留言' required='1' /}
+     *     {carefree:captcha /}
+     *     <button type="submit">提交</button>
+     * {/carefree:form}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagForm($tag, $content)
+    {
+        $formid = $tag['formid'] ?? '';
+        $action = $tag['action'] ?? '';
+        $method = $tag['method'] ?? 'post';
+        $class = $tag['class'] ?? 'carefree-form';
+        $id = $tag['id'] ?? $formid;
+
+        $parseStr = '<form ';
+        if (!empty($id)) {
+            $parseStr .= 'id="' . $id . '" ';
+        }
+        $parseStr .= 'action="' . $action . '" ';
+        $parseStr .= 'method="' . $method . '" ';
+        $parseStr .= 'class="' . $class . '">';
+
+        $parseStr .= $content;
+
+        $parseStr .= '</form>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 表单字段标签
+     * {carefree:formfield name='email' type='email' label='邮箱地址' required='1' placeholder='请输入邮箱' /}
+     * {carefree:formfield name='category' type='select' label='分类' options='选项1,选项2,选项3' /}
+     *
+     * @param array $tag 标签属性
+     * @return string
+     */
+    public function tagFormfield($tag)
+    {
+        $name = $tag['name'] ?? '';
+        $type = $tag['type'] ?? 'text';
+        $label = $tag['label'] ?? '';
+        $required = $tag['required'] ?? '0';
+        $placeholder = $tag['placeholder'] ?? '';
+        $options = $tag['options'] ?? '';
+        $value = $tag['value'] ?? '';
+
+        if (empty($name)) {
+            return '<!-- formfield tag: name parameter is required -->';
+        }
+
+        $valueVar = $value ? $this->autoBuildVar($value) : '""';
+
+        $parseStr = '<div class="form-field form-field-' . $type . '">';
+
+        if (!empty($label)) {
+            $parseStr .= '<label for="' . $name . '">' . $label;
+            if ($required == '1') {
+                $parseStr .= '<span class="required">*</span>';
+            }
+            $parseStr .= '</label>';
+        }
+
+        switch ($type) {
+            case 'textarea':
+                $parseStr .= '<?php $__field_value__ = ' . $valueVar . '; ?>';
+                $parseStr .= '<textarea name="' . $name . '" id="' . $name . '" ';
+                if ($required == '1') {
+                    $parseStr .= 'required ';
+                }
+                if (!empty($placeholder)) {
+                    $parseStr .= 'placeholder="' . htmlspecialchars($placeholder) . '" ';
+                }
+                $parseStr .= '><?php echo htmlspecialchars($__field_value__); ?></textarea>';
+                break;
+
+            case 'select':
+                $parseStr .= '<?php $__field_value__ = ' . $valueVar . '; ?>';
+                $parseStr .= '<select name="' . $name . '" id="' . $name . '" ';
+                if ($required == '1') {
+                    $parseStr .= 'required ';
+                }
+                $parseStr .= '>';
+
+                if (!empty($options)) {
+                    $optionList = explode(',', $options);
+                    foreach ($optionList as $option) {
+                        $option = trim($option);
+                        $parseStr .= '<option value="' . $option . '"';
+                        $parseStr .= '<?php if($__field_value__ == "' . $option . '") echo " selected"; ?>';
+                        $parseStr .= '>' . $option . '</option>';
+                    }
+                }
+                $parseStr .= '</select>';
+                break;
+
+            case 'radio':
+            case 'checkbox':
+                if (!empty($options)) {
+                    $parseStr .= '<?php $__field_value__ = ' . $valueVar . '; ?>';
+                    $optionList = explode(',', $options);
+                    foreach ($optionList as $option) {
+                        $option = trim($option);
+                        $parseStr .= '<label class="' . $type . '-label">';
+                        $parseStr .= '<input type="' . $type . '" name="' . $name;
+                        if ($type == 'checkbox') {
+                            $parseStr .= '[]';
+                        }
+                        $parseStr .= '" value="' . $option . '" ';
+                        $parseStr .= '<?php if($__field_value__ == "' . $option . '") echo "checked"; ?>';
+                        $parseStr .= '>';
+                        $parseStr .= $option;
+                        $parseStr .= '</label>';
+                    }
+                }
+                break;
+
+            default:
+                $parseStr .= '<?php $__field_value__ = ' . $valueVar . '; ?>';
+                $parseStr .= '<input type="' . $type . '" name="' . $name . '" id="' . $name . '" ';
+                $parseStr .= 'value="<?php echo htmlspecialchars($__field_value__); ?>" ';
+                if ($required == '1') {
+                    $parseStr .= 'required ';
+                }
+                if (!empty($placeholder)) {
+                    $parseStr .= 'placeholder="' . htmlspecialchars($placeholder) . '" ';
+                }
+                $parseStr .= '>';
+                break;
+        }
+
+        $parseStr .= '</div>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 验证码标签
+     * {carefree:captcha type='image' width='120' height='40' length='4' /}
+     *
+     * type: image-图片验证码, sms-短信验证码, slide-滑动验证码
+     *
+     * @param array $tag 标签属性
+     * @return string
+     */
+    public function tagCaptcha($tag)
+    {
+        $type = $tag['type'] ?? 'image';
+        $width = $tag['width'] ?? 120;
+        $height = $tag['height'] ?? 40;
+        $length = $tag['length'] ?? 4;
+
+        $parseStr = '<?php ';
+        $parseStr .= 'echo \app\service\tag\CaptchaTagService::render([';
+        $parseStr .= "'type' => '{$type}', ";
+        $parseStr .= "'width' => {$width}, ";
+        $parseStr .= "'height' => {$height}, ";
+        $parseStr .= "'length' => {$length}";
+        $parseStr .= ']); ';
+        $parseStr .= '?>';
+
+        return $parseStr;
+    }
+
+    // ========== 其他实用标签实现 ==========
+
+    /**
+     * 多语言标签
+     * {carefree:multilang key='site.welcome' lang='$current_lang' default='Welcome' /}
+     *
+     * @param array $tag 标签属性
+     * @return string
+     */
+    public function tagMultilang($tag)
+    {
+        $key = $tag['key'] ?? '';
+        $lang = $tag['lang'] ?? '';
+        $default = $tag['default'] ?? '';
+
+        if (empty($key)) {
+            return '<!-- multilang tag: key parameter is required -->';
+        }
+
+        $langVar = $lang ? $this->autoBuildVar($lang) : '""';
+
+        $parseStr = '<?php ';
+        $parseStr .= 'echo \app\service\tag\MultilangTagService::get("' . $key . '", ' . $langVar . ', "' . addslashes($default) . '"); ';
+        $parseStr .= '?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 缓存标签
+     * {carefree:cache key='hot_articles' time='3600'}
+     *     {carefree:article flag='hot' limit='10' /}
+     * {/carefree:cache}
+     *
+     * 将标签内容缓存指定时间
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagCache($tag, $content)
+    {
+        $key = $tag['key'] ?? '';
+        $time = $tag['time'] ?? 3600;
+
+        if (empty($key)) {
+            return '<!-- cache tag: key parameter is required -->' . $content;
+        }
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__cache_key__ = "tag_cache_' . $key . '"; ';
+        $parseStr .= '$__cache_content__ = \think\facade\Cache::get($__cache_key__); ';
+        $parseStr .= 'if(empty($__cache_content__)): ';
+        $parseStr .= 'ob_start(); ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php ';
+        $parseStr .= '$__cache_content__ = ob_get_clean(); ';
+        $parseStr .= '\think\facade\Cache::set($__cache_key__, $__cache_content__, ' . $time . '); ';
+        $parseStr .= 'endif; ';
+        $parseStr .= 'echo $__cache_content__; ';
+        $parseStr .= '?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 条件标签
+     * {carefree:condition if='$user.is_vip'}
+     *     <div class="vip-content">VIP专享内容</div>
+     * {/carefree:condition}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagCondition($tag, $content)
+    {
+        $condition = $tag['if'] ?? '';
+
+        if (empty($condition)) {
+            return '<!-- condition tag: if parameter is required -->';
+        }
+
+        $conditionVar = $this->autoBuildVar($condition);
+
+        $parseStr = '<?php if(' . $conditionVar . '): ?>';
+        $parseStr .= $content;
+        $parseStr .= '<?php endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 分组标签
+     * {carefree:group data='$articles' by='category_id' id='group' key='catid'}
+     *     <div class="group">
+     *         <h3>分类 {$catid}</h3>
+     *         {loop $group as $article}
+     *             <div>{$article.title}</div>
+     *         {/loop}
+     *     </div>
+     * {/carefree:group}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string
+     */
+    public function tagGroup($tag, $content)
+    {
+        $data = $tag['data'] ?? '';
+        $by = $tag['by'] ?? 'id';
+        $id = $tag['id'] ?? 'group';
+        $key = $tag['key'] ?? 'key';
+        $empty = $tag['empty'] ?? '';
+
+        if (empty($data)) {
+            return '<!-- group tag: data parameter is required -->';
+        }
+
+        $dataVar = $this->autoBuildVar($data);
+
+        $parseStr = '<?php ';
+        $parseStr .= '$__grouped__ = []; ';
+        $parseStr .= 'if(!empty(' . $dataVar . ') && is_array(' . $dataVar . ')): ';
+        $parseStr .= 'foreach(' . $dataVar . ' as $__item__): ';
+        $parseStr .= '$__group_key__ = $__item__["' . $by . '"] ?? "default"; ';
+        $parseStr .= '$__grouped__[$__group_key__][] = $__item__; ';
+        $parseStr .= 'endforeach; ';
+        $parseStr .= 'endif; ';
+
+        $parseStr .= 'if(!empty($__grouped__)): ';
+        $parseStr .= 'foreach($__grouped__ as $' . $key . ' => $' . $id . '): ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; ';
+
+        if (!empty($empty)) {
+            $parseStr .= 'else: ?>';
+            $parseStr .= '<div class="empty-state">' . $empty . '</div>';
+            $parseStr .= '<?php ';
+        }
+
+        $parseStr .= 'endif; ?>';
+
+        return $parseStr;
+    }
+
+    /**
+     * 通用foreach循环标签
+     * {carefree:foreach from="$list" item="item" key="key"}
+     *     {$item.field}
+     * {/carefree:foreach}
+     *
+     * @param array $tag 标签属性
+     * @param string $content 标签内容
+     * @return string 编译后的PHP代码
+     */
+    public function tagForeach($tag, $content)
+    {
+        // 获取参数
+        $from = $tag['from'] ?? '';
+        $item = $tag['item'] ?? 'item';
+        $key = $tag['key'] ?? 'key';
+
+        if (empty($from)) {
+            return '<!-- foreach tag: from parameter is required -->';
+        }
+
+        // 去掉from参数中的$符号（如果有）
+        $from = ltrim($from, '$');
+
+        // 转换点号语法为数组语法: nav.children => nav['children']
+        $from = preg_replace('/\.(\w+)/', "['$1']", $from);
+
+        // 构建PHP代码
+        $parseStr = '<?php ';
+        $parseStr .= 'if(isset($' . $from . ') && !empty($' . $from . ')): ';
+        $parseStr .= 'foreach($' . $from . ' as $' . $key . ' => $' . $item . '): ';
+        $parseStr .= '?>';
+
+        $parseStr .= $content;
+
+        $parseStr .= '<?php endforeach; endif; ?>';
 
         return $parseStr;
     }

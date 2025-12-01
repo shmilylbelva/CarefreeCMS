@@ -34,28 +34,23 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                {carefree:nav position='main' limit='20' id='nav' empty=''}
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link {if condition="$is_home"}active{/if}" href="/index.html">首页</a>
+                        <a class="nav-link {if condition="$nav.is_active"}active{/if}" href="{$nav.url}">
+                            {if condition="$nav.icon"}<i class="{$nav.icon}"></i>{/if}
+                            {$nav.title}
+                        </a>
+                        {if condition="$nav.children"}
+                        <ul class="dropdown-menu">
+                            {carefree:foreach from="$nav.children" item="child"}
+                            <li><a class="dropdown-item" href="{$child.url}">{$child.title}</a></li>
+                            {/carefree:foreach}
+                        </ul>
+                        {/if}
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about.html">关于我们</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/features.html">产品功能</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/articles.html">新闻动态</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact.html">联系我们</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/members.html">会员中心</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contribute.html">我要投稿</a>
-                    </li>
+                </ul>
+                {/carefree:nav}
                     <!-- 用户登录状态 -->
                     <li class="nav-item dropdown ms-lg-3" id="userDropdown" style="display: none;">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">

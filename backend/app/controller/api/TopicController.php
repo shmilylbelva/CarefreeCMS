@@ -4,7 +4,7 @@ declare (strict_types = 1);
 namespace app\controller\api;
 
 use app\model\Topic;
-use app\model\TopicArticle;
+use app\model\Relation;
 use app\model\Article;
 use think\Request;
 use think\facade\Validate;
@@ -24,8 +24,12 @@ class TopicController extends BaseController
         $keyword = $request->param('keyword', '');
         $status = $request->param('status', '');
         $isRecommended = $request->param('is_recommended', '');
+        $siteId = $request->param('site_id', '');
 
-        $query = Topic::order('sort', 'asc')
+        // 禁用自动站点过滤，允许查看所有站点
+        $query = Topic::withoutSiteScope()
+            ->with(['site'])
+            ->order('sort', 'asc')
             ->order('id', 'desc');
 
         // 关键词搜索
@@ -41,6 +45,11 @@ class TopicController extends BaseController
         // 推荐筛选
         if ($isRecommended !== '') {
             $query->where('is_recommended', $isRecommended);
+        }
+
+        // 站点筛选
+        if ($siteId !== '') {
+            $query->where('topics.site_id', $siteId);
         }
 
         $list = $query->paginate([
@@ -59,12 +68,29 @@ class TopicController extends BaseController
     /**
      * 获取所有专题（不分页）
      */
-    public function all()
+    public function all(Request $request)
     {
-        $list = Topic::where('status', Topic::STATUS_ENABLED)
+        $siteId = $request->param('site_id', '');
+        $siteIds = $request->param('site_ids', '');
+
+        $query = Topic::withoutSiteScope()
+            ->where('status', Topic::STATUS_ENABLED)
             ->order('sort', 'asc')
-            ->order('id', 'desc')
-            ->select();
+            ->order('id', 'desc');
+
+        // 支持多站点筛选（site_ids 参数优先）
+        if ($siteIds !== '') {
+            // site_ids 是逗号分隔的字符串，如 "1,2,3"
+            $siteIdArray = array_filter(array_map('intval', explode(',', $siteIds)));
+            if (!empty($siteIdArray)) {
+                $query->whereIn('topics.site_id', $siteIdArray);
+            }
+        } elseif ($siteId !== '') {
+            // 兼容单个 site_id 参数
+            $query->where('topics.site_id', $siteId);
+        }
+
+        $list = $query->select();
 
         return $this->success([
             'list' => $list,
@@ -76,7 +102,7 @@ class TopicController extends BaseController
      */
     public function read($id)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
@@ -90,6 +116,8 @@ class TopicController extends BaseController
      */
     public function save(Request $request)
     {
+        $allData = $request->post();
+
         $data = $request->only([
             'name',
             'slug',
@@ -104,10 +132,20 @@ class TopicController extends BaseController
             'sort',
         ]);
 
+        // 多站点支持：获取站点IDs（数组或单个值）
+        $siteIds = [];
+        if (isset($allData['site_ids']) && is_array($allData['site_ids']) && !empty($allData['site_ids'])) {
+            $siteIds = $allData['site_ids'];
+        } elseif (isset($allData['site_id'])) {
+            $siteIds = [$allData['site_id']];
+        } else {
+            $siteIds = [1];
+        }
+
         // 数据验证
         $validate = Validate::rule([
             'name' => 'require|max:100',
-            'slug' => 'require|max:100|regex:^[a-z0-9\-]+$|unique:topics',
+            'slug' => 'require|max:100|regex:^[a-z0-9\-]+$',
             'template' => 'max:100',
             'seo_title' => 'max:200',
             'seo_keywords' => 'max:255',
@@ -118,7 +156,6 @@ class TopicController extends BaseController
             'slug.require' => 'URL别名不能为空',
             'slug.max' => 'URL别名最多100个字符',
             'slug.regex' => 'URL别名只能包含小写字母、数字和连字符',
-            'slug.unique' => 'URL别名已存在',
         ]);
 
         if (!$validate->check($data)) {
@@ -139,10 +176,51 @@ class TopicController extends BaseController
             $data['sort'] = 0;
         }
 
-        $topic = new Topic();
-        $topic->save($data);
+        try {
+            $createdTopics = [];
+            $sourceId = null;
 
-        return $this->success($topic, '创建成功');
+            // 为每个站点创建专题副本
+            foreach ($siteIds as $index => $siteId) {
+                $topicData = $data;
+                $topicData['site_id'] = $siteId;
+
+                // 检查同 slug 专题
+                $exists = Topic::where('slug', $topicData['slug'])
+                    ->where('site_id', $siteId)
+                    ->find();
+                if ($exists) {
+                    throw new \Exception("站点ID {$siteId} 下已存在相同URL别名的专题");
+                }
+
+                // 第一个是主记录，后续记录设置 source_id
+                if ($index > 0 && $sourceId) {
+                    $topicData['source_id'] = $sourceId;
+                }
+
+                $topic = new Topic();
+                $topic->save($topicData);
+
+                // 第一个记录作为源记录
+                if ($index === 0) {
+                    $sourceId = $topic->id;
+                }
+
+                $createdTopics[] = $topic;
+            }
+
+            $message = count($createdTopics) > 1
+                ? "专题创建成功，已为 " . count($createdTopics) . " 个站点创建副本"
+                : '创建成功';
+
+            return $this->success([
+                'id' => $createdTopics[0]->id,
+                'count' => count($createdTopics),
+                'ids' => array_map(fn($t) => $t->id, $createdTopics)
+            ], $message);
+        } catch (\Exception $e) {
+            return $this->error('专题创建失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -150,10 +228,18 @@ class TopicController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
+        }
+
+        // 关键修复：确保模型实例也禁用站点过滤
+        $reflection = new \ReflectionObject($topic);
+        if ($reflection->hasProperty('multiSiteEnabled')) {
+            $property = $reflection->getProperty('multiSiteEnabled');
+            $property->setAccessible(true);
+            $property->setValue($topic, false);
         }
 
         $data = $request->only([
@@ -191,9 +277,21 @@ class TopicController extends BaseController
             return $this->error($validate->getError());
         }
 
-        $topic->save($data);
+        try {
+            // 使用Db类直接更新，确保WHERE条件精确，只更新指定ID的记录
+            $affected = \think\facade\Db::name('topics')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update($data);
 
-        return $this->success($topic, '更新成功');
+            if ($affected === 0) {
+                return $this->error('更新失败：未找到该记录或数据未改变');
+            }
+
+            return $this->success(['affected' => $affected], '更新成功');
+        } catch (\Exception $e) {
+            return $this->error('更新失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -201,19 +299,33 @@ class TopicController extends BaseController
      */
     public function delete($id)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
         }
 
         // 删除专题文章关联
-        TopicArticle::where('topic_id', $id)->delete();
+        Relation::where('source_type', 'topic')
+            ->where('source_id', $id)
+            ->where('target_type', 'article')
+            ->delete();
 
-        // 软删除专题
-        $topic->delete();
+        try {
+            // 使用Db类直接执行软删除，确保只删除指定ID的记录
+            $affected = \think\facade\Db::name('topics')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update(['deleted_at' => date('Y-m-d H:i:s')]);
 
-        return $this->success(null, '删除成功');
+            if ($affected === 0) {
+                return $this->error('专题删除失败：未找到该专题');
+            }
+
+            return $this->success(null, '删除成功');
+        } catch (\Exception $e) {
+            return $this->error('删除失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -224,18 +336,20 @@ class TopicController extends BaseController
         $page = $request->param('page', 1);
         $pageSize = $request->param('page_size', 10);
 
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
         }
 
         // 获取关联的文章ID
-        $topicArticles = TopicArticle::where('topic_id', $id)
+        $topicArticles = Relation::where('source_type', 'topic')
+            ->where('source_id', $id)
+            ->where('target_type', 'article')
             ->order('sort', 'asc')
             ->select();
 
-        $articleIds = $topicArticles->column('article_id');
+        $articleIds = $topicArticles->column('target_id');
 
         if (empty($articleIds)) {
             return $this->success([
@@ -247,7 +361,8 @@ class TopicController extends BaseController
         }
 
         // 查询文章详情
-        $query = Article::whereIn('id', $articleIds)
+        $query = Article::withoutSiteScope()
+            ->whereIn('id', $articleIds)
             ->with(['category', 'user'])
             ->order('id', 'desc');
 
@@ -258,9 +373,11 @@ class TopicController extends BaseController
 
         // 附加排序和精选信息
         foreach ($list->items() as &$article) {
-            $topicArticle = $topicArticles->where('article_id', $article->id)->first();
-            $article->topic_sort = $topicArticle ? $topicArticle->sort : 0;
-            $article->is_featured = $topicArticle ? $topicArticle->is_featured : 0;
+            $relation = $topicArticles->where('target_id', $article->id)->first();
+            $article->topic_sort = $relation ? $relation->sort : 0;
+            // extra字段已被ThinkPHP自动反序列化为数组
+            $extra = $relation && $relation->extra ? $relation->extra : [];
+            $article->is_featured = is_array($extra) ? ($extra['is_featured'] ?? 0) : 0;
         }
 
         return $this->success([
@@ -276,7 +393,7 @@ class TopicController extends BaseController
      */
     public function addArticle(Request $request, $id)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
@@ -287,14 +404,16 @@ class TopicController extends BaseController
         $isFeatured = $request->param('is_featured', 0);
 
         // 检查文章是否存在
-        $article = Article::find($articleId);
+        $article = Article::withoutSiteScope()->find($articleId);
         if (!$article) {
             return $this->error('文章不存在');
         }
 
         // 检查是否已关联
-        $exists = TopicArticle::where('topic_id', $id)
-            ->where('article_id', $articleId)
+        $exists = Relation::where('source_type', 'topic')
+            ->where('source_id', $id)
+            ->where('target_type', 'article')
+            ->where('target_id', $articleId)
             ->find();
 
         if ($exists) {
@@ -302,7 +421,16 @@ class TopicController extends BaseController
         }
 
         // 添加关联
-        $topic->addArticle($articleId, $sort, $isFeatured);
+        Relation::create([
+            'source_type' => 'topic',
+            'source_id' => $id,
+            'target_type' => 'article',
+            'target_id' => $articleId,
+            'sort' => $sort,
+            // ThinkPHP会自动序列化数组为JSON
+            'extra' => ['is_featured' => $isFeatured],
+            'site_id' => 1, // 默认站点ID，可根据需求调整
+        ]);
 
         return $this->success(null, '添加成功');
     }
@@ -310,18 +438,27 @@ class TopicController extends BaseController
     /**
      * 从专题移除文章
      */
-    public function removeArticle(Request $request, $id)
+    public function removeArticle(Request $request, $id, $article_id = null)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
         }
 
-        $articleId = $request->param('article_id');
+        // 支持两种方式：URL参数或body参数（向后兼容）
+        $articleId = $article_id ?? $request->param('article_id');
+
+        if (!$articleId) {
+            return $this->error('文章ID不能为空');
+        }
 
         // 移除关联
-        $topic->removeArticle($articleId);
+        Relation::where('source_type', 'topic')
+            ->where('source_id', $id)
+            ->where('target_type', 'article')
+            ->where('target_id', $articleId)
+            ->delete();
 
         return $this->success(null, '移除成功');
     }
@@ -331,7 +468,7 @@ class TopicController extends BaseController
      */
     public function setArticles(Request $request, $id)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
@@ -343,8 +480,27 @@ class TopicController extends BaseController
             return $this->error('文章ID必须是数组');
         }
 
-        // 批量设置
-        $topic->setArticles($articleIds);
+        // 删除原有关联
+        Relation::where('source_type', 'topic')
+            ->where('source_id', $id)
+            ->where('target_type', 'article')
+            ->delete();
+
+        // 批量添加新关联
+        if (!empty($articleIds)) {
+            $relations = [];
+            foreach ($articleIds as $index => $articleId) {
+                $relations[] = [
+                    'source_type' => 'topic',
+                    'source_id' => $id,
+                    'target_type' => 'article',
+                    'target_id' => $articleId,
+                    'sort' => $index,
+                    'site_id' => 1,
+                ];
+            }
+            (new Relation())->saveAll($relations);
+        }
 
         return $this->success(null, '设置成功');
     }
@@ -352,18 +508,23 @@ class TopicController extends BaseController
     /**
      * 更新文章在专题中的排序
      */
-    public function updateArticleSort(Request $request, $id)
+    public function updateArticleSort(Request $request, $id, $article_id = null)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
         }
 
-        $articleId = $request->param('article_id');
+        // 支持两种方式：URL参数或body参数（向后兼容）
+        $articleId = $article_id ?? $request->param('article_id');
         $sort = $request->param('sort', 0);
 
-        TopicArticle::updateArticleSort($id, $articleId, $sort);
+        if (!$articleId) {
+            return $this->error('文章ID不能为空');
+        }
+
+        Relation::updateTopicArticleSort($id, $articleId, $sort);
 
         return $this->success(null, '排序更新成功');
     }
@@ -371,18 +532,39 @@ class TopicController extends BaseController
     /**
      * 设置文章为精选
      */
-    public function setArticleFeatured(Request $request, $id)
+    public function setArticleFeatured(Request $request, $id, $article_id = null)
     {
-        $topic = Topic::find($id);
+        $topic = Topic::withoutSiteScope()->find($id);
 
         if (!$topic) {
             return $this->error('专题不存在');
         }
 
-        $articleId = $request->param('article_id');
+        // 支持两种方式：URL参数或body参数（向后兼容）
+        $articleId = $article_id ?? $request->param('article_id');
         $isFeatured = $request->param('is_featured', 1);
 
-        TopicArticle::setFeatured($id, $articleId, $isFeatured);
+        if (!$articleId) {
+            return $this->error('文章ID不能为空');
+        }
+
+        // 更新关联的精选状态
+        $relation = Relation::where('source_type', 'topic')
+            ->where('source_id', $id)
+            ->where('target_type', 'article')
+            ->where('target_id', $articleId)
+            ->find();
+
+        if (!$relation) {
+            return $this->error('文章不在该专题中');
+        }
+
+        // extra字段已被ThinkPHP自动反序列化为数组，无需json_decode
+        $extra = is_array($relation->extra) ? $relation->extra : [];
+        $extra['is_featured'] = $isFeatured;
+        // ThinkPHP会自动序列化为JSON，无需json_encode
+        $relation->extra = $extra;
+        $relation->save();
 
         return $this->success(null, '设置成功');
     }

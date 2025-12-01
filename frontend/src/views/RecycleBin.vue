@@ -4,7 +4,7 @@
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <h3>回收站</h3>
-          <div v-if="recycleBinEnabled">
+          <div>
             <el-button
               type="danger"
               :icon="Delete"
@@ -17,25 +17,25 @@
         </div>
       </template>
 
-      <!-- 回收站关闭提示 -->
+      <!-- 提示信息 -->
       <el-alert
-        v-if="!recycleBinEnabled"
-        title="回收站已关闭"
-        type="warning"
+        type="info"
         :closable="false"
         style="margin-bottom: 20px;"
+        title="回收站配置说明"
       >
         <template #default>
           <div style="line-height: 1.8;">
-            <p>回收站功能当前处于关闭状态。如需启用，请前往：</p>
+            <p>回收站功能现已调整为站点级别配置，每个站点可以独立设置。</p>
             <p>
-              <router-link to="/config" style="color: #E6A23C; text-decoration: underline; font-weight: bold;">
-                系统管理 > 基本信息 > 核心设置
+              如需配置回收站开关，请前往：
+              <router-link to="/site/list" style="color: #409EFF; text-decoration: underline; font-weight: bold;">
+                系统管理 > 站点管理 > 编辑站点 > 核心设置
               </router-link>
-              中开启"回收站功能"。
             </p>
-            <p style="margin-top: 10px; color: #909399; font-size: 13px;">
-              提示：关闭回收站后，删除的内容将直接永久删除，无法恢复。
+            <p style="margin-top: 5px; color: #909399; font-size: 13px;">
+              • 开启回收站：删除的内容将进入回收站，可恢复<br>
+              • 关闭回收站：删除的内容将直接永久删除，无法恢复
             </p>
           </div>
         </template>
@@ -43,7 +43,7 @@
 
       <!-- 统计信息 -->
       <el-alert
-        v-if="recycleBinEnabled && statistics"
+        v-if="statistics"
         :title="`回收站共有 ${statistics.total_count} 个项目`"
         type="info"
         :closable="false"
@@ -54,13 +54,14 @@
             <el-tag type="info" style="margin-right: 10px;">文章: {{ statistics.article_count }}</el-tag>
             <el-tag type="success" style="margin-right: 10px;">分类: {{ statistics.category_count }}</el-tag>
             <el-tag type="warning" style="margin-right: 10px;">标签: {{ statistics.tag_count }}</el-tag>
-            <el-tag type="danger">单页: {{ statistics.page_count }}</el-tag>
+            <el-tag type="danger" style="margin-right: 10px;">单页: {{ statistics.page_count }}</el-tag>
+            <el-tag>媒体: {{ statistics.media_count }}</el-tag>
           </div>
         </template>
       </el-alert>
 
       <!-- 筛选栏 -->
-      <el-form v-if="recycleBinEnabled" :inline="true" :model="searchForm" style="margin-bottom: 20px;">
+      <el-form :inline="true" :model="searchForm" style="margin-bottom: 20px;">
         <el-form-item label="类型">
           <el-select v-model="searchForm.type" placeholder="全部类型" @change="handleSearch" style="width: 150px;">
             <el-option label="全部" value="all" />
@@ -68,6 +69,7 @@
             <el-option label="分类" value="category" />
             <el-option label="标签" value="tag" />
             <el-option label="单页" value="page" />
+            <el-option label="媒体" value="media" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -87,7 +89,7 @@
       </el-form>
 
       <!-- 批量操作 -->
-      <div v-if="recycleBinEnabled && selectedItems.length > 0" style="margin-bottom: 10px;">
+      <div v-if="selectedItems.length > 0" style="margin-bottom: 10px;">
         <el-button type="success" size="small" @click="handleBatchRestore">
           批量恢复 ({{ selectedItems.length }})
         </el-button>
@@ -171,16 +173,15 @@ import {
   batchDestroy,
   clearRecycleBin
 } from '@/api/recycleBin'
-import { getConfig } from '@/api/config'
 
 const loading = ref(false)
-const recycleBinEnabled = ref(true) // 回收站是否启用
 const list = ref([])
 const statistics = ref({
   article_count: 0,
   category_count: 0,
   tag_count: 0,
   page_count: 0,
+  media_count: 0,
   total_count: 0
 })
 const currentPage = ref(1)
@@ -193,34 +194,22 @@ const searchForm = reactive({
   keyword: ''
 })
 
-// 检查回收站是否启用
-const checkRecycleBinStatus = async () => {
-  try {
-    const res = await getConfig()
-    recycleBinEnabled.value = res.data.recycle_bin_enable === 'open'
-  } catch (error) {
-    console.error('获取回收站配置失败:', error)
-    // 默认启用
-    recycleBinEnabled.value = true
-  }
-}
+// 回收站配置已迁移到站点级别，此处不再需要全局检查
+// 后端会根据每个站点的配置决定是否进入回收站
 
 // 加载数据
 const loadData = async () => {
-  // 如果回收站未启用，不加载数据
-  if (!recycleBinEnabled.value) {
-    return
-  }
-
   loading.value = true
   try {
+    const params = {
+      type: searchForm.type,
+      keyword: searchForm.keyword,
+      page: currentPage.value,
+      page_size: pageSize.value
+    }
+
     const [listRes, statsRes] = await Promise.all([
-      getRecycleBinList({
-        type: searchForm.type,
-        keyword: searchForm.keyword,
-        page: currentPage.value,
-        page_size: pageSize.value
-      }),
+      getRecycleBinList(params),
       getRecycleBinStatistics()
     ])
 
@@ -399,13 +388,13 @@ const getTypeTagColor = (type) => {
     article: 'primary',
     category: 'success',
     tag: 'warning',
-    page: 'danger'
+    page: 'danger',
+    media: 'info'
   }
   return colors[type] || 'info'
 }
 
-onMounted(async () => {
-  await checkRecycleBinStatus()
+onMounted(() => {
   loadData()
 })
 </script>

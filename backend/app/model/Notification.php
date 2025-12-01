@@ -84,7 +84,7 @@ class Notification extends Model
      */
     public function user()
     {
-        return $this->belongsTo(FrontUser::class, 'user_id');
+        return $this->belongsTo(FrontUser::class, 'user_id', 'id');
     }
 
     /**
@@ -92,7 +92,7 @@ class Notification extends Model
      */
     public function fromUser()
     {
-        return $this->belongsTo(FrontUser::class, 'from_user_id');
+        return $this->belongsTo(FrontUser::class, 'from_user_id', 'id');
     }
 
     /**

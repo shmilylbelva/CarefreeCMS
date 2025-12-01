@@ -22,7 +22,8 @@ class ArticleVersion extends BaseController
      */
     public function index(Request $request, $articleId)
     {
-        $article = ArticleModel::find($articleId);
+        // 查询文章，不受站点限制
+        $article = ArticleModel::withoutSiteScope()->find($articleId);
         if (!$article) {
             return Response::notFound('文章不存在');
         }
@@ -30,7 +31,9 @@ class ArticleVersion extends BaseController
         $page = (int) $request->get('page', 1);
         $pageSize = (int) $request->get('page_size', 20);
 
-        $query = ArticleVersionModel::with(['creator'])
+        // 查询版本列表，使用文章所属站点
+        $query = ArticleVersionModel::forSite($article->site_id)
+            ->with(['creator'])
             ->where('article_id', $articleId)
             ->order('version_number', 'desc');
 
@@ -45,7 +48,9 @@ class ArticleVersion extends BaseController
      */
     public function read($id)
     {
-        $version = ArticleVersionModel::with(['article', 'category', 'user', 'creator'])
+        // 查询版本，不受站点限制
+        $version = ArticleVersionModel::withoutSiteScope()
+            ->with(['article', 'category', 'user', 'creator'])
             ->find($id);
 
         if (!$version) {
@@ -67,8 +72,9 @@ class ArticleVersion extends BaseController
             return Response::error('请提供要对比的版本ID');
         }
 
-        $oldVersion = ArticleVersionModel::find($oldVersionId);
-        $newVersion = ArticleVersionModel::find($newVersionId);
+        // 查询版本，不受站点限制
+        $oldVersion = ArticleVersionModel::withoutSiteScope()->find($oldVersionId);
+        $newVersion = ArticleVersionModel::withoutSiteScope()->find($newVersionId);
 
         if (!$oldVersion || !$newVersion) {
             return Response::notFound('版本不存在');
@@ -105,12 +111,14 @@ class ArticleVersion extends BaseController
      */
     public function rollback(Request $request, $id)
     {
-        $version = ArticleVersionModel::find($id);
+        // 查询版本，不受站点限制
+        $version = ArticleVersionModel::withoutSiteScope()->find($id);
         if (!$version) {
             return Response::notFound('版本不存在');
         }
 
-        $article = ArticleModel::find($version->article_id);
+        // 查询文章，不受站点限制
+        $article = ArticleModel::withoutSiteScope()->find($version->article_id);
         if (!$article) {
             return Response::notFound('文章不存在');
         }
@@ -187,19 +195,32 @@ class ArticleVersion extends BaseController
      */
     public function delete($id)
     {
-        $version = ArticleVersionModel::find($id);
+        // 查询版本，不受站点限制
+        $version = ArticleVersionModel::withoutSiteScope()->find($id);
         if (!$version) {
             return Response::notFound('版本不存在');
         }
 
         // 检查是否是唯一版本（防止删除最后一个版本）
-        $versionCount = ArticleVersionModel::where('article_id', $version->article_id)->count();
+        $versionCount = ArticleVersionModel::forSite($version->site_id)
+            ->where('article_id', $version->article_id)
+            ->count();
         if ($versionCount <= 1) {
             return Response::error('不能删除文章的最后一个版本');
         }
 
         try {
-            $version->delete();
+            $versionId = $version->id;
+
+            // 使用Db类直接删除，确保WHERE条件精确
+            $affected = \think\facade\Db::name('article_versions')
+                ->where('id', '=', $versionId)
+                ->limit(1)
+                ->delete();
+
+            if ($affected === 0) {
+                throw new \Exception('版本删除失败：未找到该版本');
+            }
 
             // 记录日志
             Logger::delete(OperationLog::MODULE_ARTICLE, '文章版本', $id);
@@ -224,9 +245,11 @@ class ArticleVersion extends BaseController
         try {
             // 检查每个版本是否可以删除
             foreach ($ids as $id) {
-                $version = ArticleVersionModel::find($id);
+                $version = ArticleVersionModel::withoutSiteScope()->find($id);
                 if ($version) {
-                    $versionCount = ArticleVersionModel::where('article_id', $version->article_id)->count();
+                    $versionCount = ArticleVersionModel::forSite($version->site_id)
+                        ->where('article_id', $version->article_id)
+                        ->count();
                     if ($versionCount <= 1) {
                         return Response::error("文章「{$version->title}」只有一个版本，不能删除");
                     }
@@ -250,17 +273,24 @@ class ArticleVersion extends BaseController
      */
     public function statistics($articleId)
     {
-        $article = ArticleModel::find($articleId);
+        // 查询文章，不受站点限制
+        $article = ArticleModel::withoutSiteScope()->find($articleId);
         if (!$article) {
             return Response::notFound('文章不存在');
         }
 
-        $versionCount = ArticleVersionModel::where('article_id', $articleId)->count();
-        $latestVersion = ArticleVersionModel::where('article_id', $articleId)
+        // 查询版本统计，使用文章所属站点
+        $versionCount = ArticleVersionModel::forSite($article->site_id)
+            ->where('article_id', $articleId)
+            ->count();
+
+        $latestVersion = ArticleVersionModel::forSite($article->site_id)
+            ->where('article_id', $articleId)
             ->order('version_number', 'desc')
             ->find();
 
-        $firstVersion = ArticleVersionModel::where('article_id', $articleId)
+        $firstVersion = ArticleVersionModel::forSite($article->site_id)
+            ->where('article_id', $articleId)
             ->order('version_number', 'asc')
             ->find();
 

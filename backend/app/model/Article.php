@@ -2,15 +2,15 @@
 
 namespace app\model;
 
-use think\Model;
 use think\model\concern\SoftDelete;
+use app\traits\Cacheable;
 
 /**
  * 文章模型
  */
-class Article extends Model
+class Article extends SiteModel
 {
-    use SoftDelete;
+    use SoftDelete, Cacheable;
 
     protected $name = 'articles';
 
@@ -36,6 +36,51 @@ class Article extends Model
         'reward_points' => 'integer',
     ];
 
+    // 字段默认值
+    protected $insert = [
+        'view_count'    => 0,
+        'like_count'    => 0,
+        'comment_count' => 0,
+        'is_top'        => 0,
+        'is_recommend'  => 0,
+        'is_hot'        => 0,
+        'sort'          => 0,
+        'status'        => 0,
+        'is_contribute' => 0,
+        'audit_status'  => 0,
+        'reward_points' => 0,
+    ];
+
+    /**
+     * 缓存配置
+     */
+    protected static $cacheTag = 'articles';
+    protected static $cacheExpire = 1800; // 30分钟（文章变化频繁，缓存时间较短）
+
+    /**
+     * 模型事件：数据插入后
+     */
+    protected static function onAfterInsert($model)
+    {
+        static::clearCacheTag();
+    }
+
+    /**
+     * 模型事件：数据更新后
+     */
+    protected static function onAfterUpdate($model)
+    {
+        static::clearCacheTag();
+    }
+
+    /**
+     * 模型事件：数据删除后
+     */
+    protected static function onAfterDelete($model)
+    {
+        static::clearCacheTag();
+    }
+
     /**
      * 关联分类
      */
@@ -54,51 +99,66 @@ class Article extends Model
 
     /**
      * 关联标签（多对多）
+     * 使用统一的 relations 表
      */
     public function tags()
     {
-        return $this->belongsToMany(Tag::class, ArticleTag::class, 'tag_id', 'article_id');
+        return $this->belongsToMany(Tag::class, 'relations', 'source_id', 'target_id')
+            ->where('pivot.source_type', 'article')
+            ->where('pivot.target_type', 'tag');
     }
 
     /**
      * 关联所有分类（主分类+副分类）
+     * 使用统一的 relations 表
      */
     public function categories()
     {
-        return $this->belongsToMany(Category::class, ArticleCategory::class, 'category_id', 'article_id')
-            ->withField('is_main');
+        return $this->belongsToMany(Category::class, 'relations', 'source_id', 'target_id')
+            ->where('pivot.source_type', 'article')
+            ->where('pivot.target_type', 'category')
+            ->withField('relation_type');
     }
 
     /**
      * 获取主分类
+     * 使用统一的 relations 表
      */
     public function mainCategory()
     {
         return $this->hasOneThrough(
             Category::class,
-            ArticleCategory::class,
-            'article_id',
+            'relations',
+            'source_id',
             'id',
             'id',
-            'category_id'
-        )->where('article_categories.is_main', 1);
+            'target_id'
+        )->where('pivot.source_type', 'article')
+         ->where('pivot.target_type', 'category')
+         ->where('pivot.relation_type', 'main');
     }
 
     /**
      * 获取副分类列表
+     * 使用统一的 relations 表
      */
     public function subCategories()
     {
-        return $this->belongsToMany(Category::class, ArticleCategory::class, 'category_id', 'article_id')
-            ->where('article_categories.is_main', 0);
+        return $this->belongsToMany(Category::class, 'relations', 'source_id', 'target_id')
+            ->where('pivot.source_type', 'article')
+            ->where('pivot.target_type', 'category')
+            ->where('pivot.relation_type', 'sub');
     }
 
     /**
      * 关联专题（多对多）
+     * 使用统一的 relations 表
      */
     public function topics()
     {
-        return $this->belongsToMany(Topic::class, TopicArticle::class, 'topic_id', 'article_id');
+        return $this->belongsToMany(Topic::class, 'relations', 'target_id', 'source_id')
+            ->where('pivot.source_type', 'topic')
+            ->where('pivot.target_type', 'article');
     }
 
     /**
@@ -139,6 +199,16 @@ class Article extends Model
     public function searchIsRecommendAttr($query, $value)
     {
         $query->where('is_recommend', $value);
+    }
+
+    /**
+     * 搜索器：站点ID
+     */
+    public function searchSiteIdAttr($query, $value)
+    {
+        if ($value !== '' && $value !== null) {
+            $query->where('site_id', $value);
+        }
     }
 
     /**

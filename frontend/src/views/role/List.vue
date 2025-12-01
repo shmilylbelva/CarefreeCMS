@@ -220,7 +220,7 @@ const fetchRoles = async () => {
   try {
     const params = {
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,
       ...searchForm
     }
     const res = await getRoleList(params)

@@ -9,7 +9,7 @@ use think\model\concern\SoftDelete;
 /**
  * 广告模型
  */
-class Ad extends Model
+class Ad extends SiteModel
 {
     use SoftDelete;
 
@@ -33,10 +33,11 @@ class Ad extends Model
 
     /**
      * 关联广告位
+     * 使用统一的 Group 模型
      */
     public function position()
     {
-        return $this->belongsTo(AdPosition::class, 'position_id', 'id');
+        return $this->belongsTo(Group::class, 'position_id', 'id');
     }
 
     /**

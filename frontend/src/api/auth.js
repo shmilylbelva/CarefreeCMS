@@ -25,11 +25,11 @@ export function getUserInfo() {
   })
 }
 
-// 修改密码
+// 修改密码 (使用RESTful PATCH方式)
 export function changePassword(data) {
   return request({
-    url: '/auth/change-password',
-    method: 'post',
+    url: '/auth/password',
+    method: 'patch',
     data
   })
 }

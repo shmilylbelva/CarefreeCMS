@@ -23,10 +23,16 @@ class LinkController extends BaseController
         $groupId = $request->param('group_id', '');
         $status = $request->param('status', '');
         $isHome = $request->param('is_home', '');
+        $siteId = $request->param('site_id', '');
 
-        $query = Link::with(['group'])
+        $query = Link::withoutSiteScope()->with(['group', 'site'])
             ->order('sort', 'asc')
             ->order('id', 'desc');
+
+        // 站点筛选
+        if ($siteId !== '') {
+            $query->where('links.site_id', (int) $siteId);
+        }
 
         // 关键词搜索
         if (!empty($keyword)) {
@@ -66,7 +72,7 @@ class LinkController extends BaseController
      */
     public function read($id)
     {
-        $link = Link::with(['group'])->find($id);
+        $link = Link::withoutSiteScope()->with(['group'])->find($id);
 
         if (!$link) {
             return $this->error('链接不存在');
@@ -121,10 +127,13 @@ class LinkController extends BaseController
             $data['is_home'] = 0;
         }
 
-        $link = new Link();
-        $link->save($data);
-
-        return $this->success($link, '创建成功');
+        try {
+            $link = new Link();
+            $link->save($data);
+            return $this->success($link, '创建成功');
+        } catch (\Exception $e) {
+            return $this->error('创建失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -132,7 +141,7 @@ class LinkController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $link = Link::find($id);
+        $link = Link::withoutSiteScope()->find($id);
 
         if (!$link) {
             return $this->error('链接不存在');
@@ -168,9 +177,21 @@ class LinkController extends BaseController
             return $this->error($validate->getError());
         }
 
-        $link->save($data);
+        try {
+            // 使用Db类直接更新，确保WHERE条件精确，只更新指定ID的记录
+            $affected = \think\facade\Db::name('links')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update($data);
 
-        return $this->success($link, '更新成功');
+            if ($affected === 0) {
+                return $this->error('更新失败：未找到该链接或数据未改变');
+            }
+
+            return $this->success(['affected' => $affected], '更新成功');
+        } catch (\Exception $e) {
+            return $this->error('更新失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -178,16 +199,27 @@ class LinkController extends BaseController
      */
     public function delete($id)
     {
-        $link = Link::find($id);
+        $link = Link::withoutSiteScope()->find($id);
 
         if (!$link) {
             return $this->error('链接不存在');
         }
 
-        // 软删除
-        $link->delete();
+        try {
+            // 使用Db类直接执行软删除，确保只删除指定ID的记录
+            $affected = \think\facade\Db::name('links')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update(['deleted_at' => date('Y-m-d H:i:s')]);
 
-        return $this->success(null, '删除成功');
+            if ($affected === 0) {
+                return $this->error('链接删除失败：未找到该链接');
+            }
+
+            return $this->success(null, '删除成功');
+        } catch (\Exception $e) {
+            return $this->error('删除失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -195,7 +227,7 @@ class LinkController extends BaseController
      */
     public function audit(Request $request, $id)
     {
-        $link = Link::find($id);
+        $link = Link::withoutSiteScope()->find($id);
 
         if (!$link) {
             return $this->error('链接不存在');

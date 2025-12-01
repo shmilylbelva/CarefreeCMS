@@ -5,17 +5,40 @@
         <div class="card-header">
           <h2>
             <el-icon><Document /></el-icon>
-            Carefree 模板标签使用教程
+            Carefree 模板标签使用教程 v2.0.0
           </h2>
+          <el-button-group>
+            <el-button type="primary" link @click="openCompleteGuide">
+              <el-icon><Reading /></el-icon> 查看完整文档
+            </el-button>
+            <el-button type="success" link @click="openQuickReference">
+              <el-icon><Tickets /></el-icon> 快速参考手册
+            </el-button>
+          </el-button-group>
         </div>
       </template>
       <el-alert
         title="关于 Carefree 模板标签"
         type="info"
-        description="Carefree 模板标签是本 CMS 系统提供的自定义模板标签库，用于在模板中快速调用系统数据。所有标签都支持服务端渲染，有利于 SEO 优化。目前共提供 40 个功能标签。"
         :closable="false"
         show-icon
-      />
+      >
+        <template #default>
+          <p><strong>Carefree 模板标签库 v2.0.0</strong> - 本 CMS 系统提供的自定义模板标签库，用于在模板中快速调用系统数据。</p>
+          <p>✅ 所有标签支持服务端渲染，有利于 SEO 优化</p>
+          <p>🎯 <strong>目前共提供 53 个功能标签</strong>，包含：</p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>基础内容标签（文章、分类、标签等）</li>
+            <li><strong>⭐ 媒体管理</strong>（相册、视频、音频、下载）</li>
+            <li><strong>⭐ 互动功能</strong>（投票、测验、抽奖）</li>
+            <li><strong>⭐ 实用工具</strong>（二维码、日历、地图、天气）</li>
+            <li><strong>⭐ AI推荐</strong>（智能推荐、个性化内容）</li>
+            <li><strong>⭐ 表单验证</strong>（动态表单、验证码）</li>
+            <li><strong>⭐ 高级功能</strong>（多语言、缓存、条件判断）</li>
+          </ul>
+          <el-tag type="success" size="small">v2.0新增16个标签</el-tag>
+        </template>
+      </el-alert>
     </el-card>
 
     <el-card class="content-card">
@@ -133,6 +156,22 @@
                 <el-icon><PictureFilled /></el-icon>
                 <span>幻灯片</span>
               </el-menu-item>
+              <el-menu-item index="gallery">
+                <el-icon><Picture /></el-icon>
+                <span>相册图库 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="video">
+                <el-icon><VideoPlay /></el-icon>
+                <span>视频列表 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="audio">
+                <el-icon><Headset /></el-icon>
+                <span>音频列表 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="download">
+                <el-icon><Download /></el-icon>
+                <span>文件下载 ⭐</span>
+              </el-menu-item>
               <el-menu-item index="ad">
                 <el-icon><Promotion /></el-icon>
                 <span>广告</span>
@@ -152,6 +191,18 @@
               <el-menu-item index="comment">
                 <el-icon><ChatLineRound /></el-icon>
                 <span>评论列表</span>
+              </el-menu-item>
+              <el-menu-item index="vote">
+                <el-icon><Checked /></el-icon>
+                <span>投票系统 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="quiz">
+                <el-icon><QuestionFilled /></el-icon>
+                <span>在线测验 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="lottery">
+                <el-icon><Present /></el-icon>
+                <span>抽奖活动 ⭐</span>
               </el-menu-item>
               <el-menu-item index="search">
                 <el-icon><Search /></el-icon>
@@ -193,6 +244,70 @@
                 <el-icon><Edit /></el-icon>
                 <span>投稿列表</span>
               </el-menu-item>
+              <el-menu-item index="oauth">
+                <el-icon><Connection /></el-icon>
+                <span>第三方登录</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <!-- 实用工具标签 ⭐新增 -->
+            <el-sub-menu index="utility">
+              <template #title>
+                <el-icon><Tools /></el-icon>
+                <span>实用工具 ⭐</span>
+              </template>
+              <el-menu-item index="qrcode">
+                <el-icon><Stamp /></el-icon>
+                <span>二维码生成</span>
+              </el-menu-item>
+              <el-menu-item index="calendar">
+                <el-icon><Calendar /></el-icon>
+                <span>事件日历</span>
+              </el-menu-item>
+              <el-menu-item index="sitemap">
+                <el-icon><Menu /></el-icon>
+                <span>站点地图</span>
+              </el-menu-item>
+              <el-menu-item index="weather">
+                <el-icon><Sunny /></el-icon>
+                <span>天气预报</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <!-- AI推荐标签 ⭐新增 -->
+            <el-sub-menu index="ai">
+              <template #title>
+                <el-icon><MagicStick /></el-icon>
+                <span>AI推荐 ⭐</span>
+              </template>
+              <el-menu-item index="recommend">
+                <el-icon><Star /></el-icon>
+                <span>智能推荐</span>
+              </el-menu-item>
+              <el-menu-item index="personalize">
+                <el-icon><User /></el-icon>
+                <span>个性化内容</span>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <!-- 表单验证标签 ⭐新增 -->
+            <el-sub-menu index="form">
+              <template #title>
+                <el-icon><Edit /></el-icon>
+                <span>表单验证 ⭐</span>
+              </template>
+              <el-menu-item index="form">
+                <el-icon><Document /></el-icon>
+                <span>通用表单</span>
+              </el-menu-item>
+              <el-menu-item index="formfield">
+                <el-icon><Edit /></el-icon>
+                <span>表单字段</span>
+              </el-menu-item>
+              <el-menu-item index="captcha">
+                <el-icon><PictureFilled /></el-icon>
+                <span>验证码</span>
+              </el-menu-item>
             </el-sub-menu>
 
             <!-- 扩展标签 -->
@@ -220,6 +335,22 @@
               <el-menu-item index="hotwords">
                 <el-icon><Sunny /></el-icon>
                 <span>热门关键词</span>
+              </el-menu-item>
+              <el-menu-item index="multilang">
+                <el-icon><ChatDotRound /></el-icon>
+                <span>多语言 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="cache">
+                <el-icon><Timer /></el-icon>
+                <span>缓存标签 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="condition">
+                <el-icon><Select /></el-icon>
+                <span>条件标签 ⭐</span>
+              </el-menu-item>
+              <el-menu-item index="group">
+                <el-icon><Grid /></el-icon>
+                <span>分组标签 ⭐</span>
               </el-menu-item>
               <el-menu-item index="pagelist">
                 <el-icon><DCaret /></el-icon>
@@ -1263,6 +1394,102 @@
             </el-card>
           </div>
 
+          <!-- OAuth第三方登录 -->
+          <div v-show="activeSection === 'oauth'" class="tag-section">
+            <h3>carefree:oauth - 第三方登录按钮</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于在登录页面显示第三方登录按钮（微信、QQ、微博、GitHub等），支持自定义样式。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="[
+              {name: 'id', required: '是', default: '-', description: '循环变量名'},
+              {name: 'platform', required: '否', default: '-', description: '指定平台：wechat, qq, weibo, github，不指定则显示所有启用的平台'},
+              {name: 'empty', required: '否', default: '-', description: '无启用平台时显示的内容'}
+            ]" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">可用字段</el-divider>
+            <div style="margin-bottom: 15px;">
+              <el-tag class="config-tag">platform</el-tag>
+              <el-tag class="config-tag">platform_name</el-tag>
+              <el-tag class="config-tag">auth_url</el-tag>
+              <el-tag class="config-tag">sort_order</el-tag>
+            </div>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例 1：显示所有第三方登录按钮</div>
+              <pre><code>{{`<div class="oauth-login">
+    <h3>第三方登录</h3>
+    {carefree:oauth id='oauth'}
+    <a href="{$oauth.auth_url}" class="oauth-btn oauth-{$oauth.platform}">
+        <i class="icon-{$oauth.platform}"></i>
+        {$oauth.platform_name}
+    </a>
+    {\carefree:oauth}
+</div>`}}</code></pre>
+            </el-card>
+
+            <el-card class="code-card">
+              <div class="code-header">示例 2：只显示微信登录</div>
+              <pre><code>{{`{carefree:oauth platform='wechat' id='oauth'}
+<a href="{$oauth.auth_url}" class="wechat-login-btn">
+    <img src="/static/images/wechat-icon.png" alt="微信登录">
+    使用微信登录
+</a>
+{\carefree:oauth}`}}</code></pre>
+            </el-card>
+
+            <el-card class="code-card">
+              <div class="code-header">示例 3：带图标的登录按钮</div>
+              <pre><code>{{`<div class="social-login">
+    <div class="divider">或使用以下方式登录</div>
+    <div class="oauth-buttons">
+        {carefree:oauth id='oauth'}
+        <a href="{$oauth.auth_url}" class="social-btn" title="{$oauth.platform_name}">
+            <img src="/static/images/{$oauth.platform}.svg" alt="{$oauth.platform_name}">
+        </a>
+        {\carefree:oauth}
+    </div>
+</div>
+
+<style>
+.oauth-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+.social-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+.social-btn:hover {
+    transform: scale(1.1);
+}
+</style>`}}</code></pre>
+            </el-card>
+
+            <el-alert
+              title="使用提示"
+              type="warning"
+              :closable="false"
+              show-icon>
+              <p>1. 第三方登录需要在后台"系统管理 → OAuth配置"中配置相应平台的AppID和AppSecret</p>
+              <p>2. auth_url为授权登录地址，用户点击后会跳转到第三方平台进行授权</p>
+              <p>3. 平台标识：wechat(微信)、qq(QQ)、weibo(微博)、github(GitHub)</p>
+              <p>4. 建议配合CSS样式设计美观的登录按钮，提升用户体验</p>
+            </el-alert>
+          </div>
+
           <!-- 友情链接 -->
           <div v-show="activeSection === 'link'" class="tag-section">
             <h3>carefree:link - 获取友情链接</h3>
@@ -1786,6 +2013,1004 @@ $this->assign('categories', $categories);
               </template>
             </el-alert>
           </div>
+
+          <!-- 相册图库 ⭐新增 -->
+          <div v-show="activeSection === 'gallery'" class="tag-section">
+            <h3>carefree:gallery - 相册图库</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于获取相册中的照片列表，支持按相册ID筛选、多列布局等。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="galleryParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：瀑布流相册</div>
+              <pre><code>{{`<div class="photo-gallery">
+    {carefree:gallery albumid='1' limit='20' columns='4' id='photo'}
+    <div class="photo-item">
+        <a href="{$photo.image_url}" data-lightbox="gallery">
+            <img src="{$photo.thumb_url}" alt="{$photo.title}">
+            <div class="photo-info">
+                <h4>{$photo.title}</h4>
+                <p>{$photo.description}</p>
+            </div>
+        </a>
+    </div>
+    {/carefree:gallery}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 视频列表 ⭐新增 -->
+          <div v-show="activeSection === 'video'" class="tag-section">
+            <h3>carefree:video - 视频列表</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于获取视频内容列表，支持按分类筛选、精选推荐等。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="videoParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：精选视频列表</div>
+              <pre><code>{{`<div class="video-list">
+    {carefree:video catid='5' featured='1' limit='8' id='video'}
+    <div class="video-item">
+        <div class="video-thumb">
+            <img src="{$video.cover_image}" alt="{$video.title}">
+            <span class="duration">{$video.duration}</span>
+            <div class="play-btn"><i class="icon-play"></i></div>
+        </div>
+        <h4>{$video.title}</h4>
+        <div class="video-meta">
+            <span><i class="icon-view"></i> {$video.view_count}</span>
+            <span><i class="icon-time"></i> {$video.publish_time|date='Y-m-d'}</span>
+        </div>
+    </div>
+    {/carefree:video}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 音频列表 ⭐新增 -->
+          <div v-show="activeSection === 'audio'" class="tag-section">
+            <h3>carefree:audio - 音频列表</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于获取音频内容列表，支持播客、音乐等音频资源管理。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="audioParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：播客列表</div>
+              <pre><code>{{`<div class="audio-list">
+    {carefree:audio catid='3' limit='10' orderby='publish_time desc' id='audio'}
+    <div class="audio-item">
+        <div class="audio-cover">
+            <img src="{$audio.cover_image}" alt="{$audio.title}">
+        </div>
+        <div class="audio-info">
+            <h4>{$audio.title}</h4>
+            <p>{$audio.description}</p>
+            <div class="audio-meta">
+                <span class="duration">{$audio.duration}</span>
+                <span class="author">{$audio.author}</span>
+            </div>
+            <audio controls>
+                <source src="{$audio.file_url}" type="audio/mpeg">
+            </audio>
+        </div>
+    </div>
+    {/carefree:audio}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 文件下载 ⭐新增 -->
+          <div v-show="activeSection === 'download'" class="tag-section">
+            <h3>carefree:download - 文件下载</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于获取可下载文件列表，支持按类型筛选、文件分类管理。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="downloadParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：软件下载列表</div>
+              <pre><code>{{`<div class="download-list">
+    {carefree:download type='software' limit='15' id='file'}
+    <div class="download-item">
+        <div class="file-icon">
+            <i class="icon-{$file.file_type}"></i>
+        </div>
+        <div class="file-info">
+            <h4>{$file.title}</h4>
+            <p>{$file.description}</p>
+            <div class="file-meta">
+                <span class="size">{$file.file_size}</span>
+                <span class="downloads">{$file.download_count} 次下载</span>
+                <span class="version">v{$file.version}</span>
+            </div>
+        </div>
+        <a href="{$file.download_url}" class="btn-download" download>
+            <i class="icon-download"></i> 下载
+        </a>
+    </div>
+    {/carefree:download}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 投票系统 ⭐新增 -->
+          <div v-show="activeSection === 'vote'" class="tag-section">
+            <h3>carefree:vote - 投票系统</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于显示投票/问卷调查，支持单选、多选，实时查看投票结果。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="voteParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：在线投票</div>
+              <pre><code>{{`<div class="vote-container">
+    {carefree:vote voteid='1' showresult='1' id='vote'}
+    <h3>{$vote.title}</h3>
+    <p>{$vote.description}</p>
+    <form action="/api/vote/submit" method="post">
+        <input type="hidden" name="vote_id" value="{$vote.id}">
+        {volist name="vote.options" id="option"}
+        <div class="vote-option">
+            <input type="{$vote.type}" name="option[]" value="{$option.id}" id="opt_{$option.id}">
+            <label for="opt_{$option.id}">
+                {$option.title}
+                {if condition="$vote.show_result"}
+                <span class="percentage">({$option.percentage}%)</span>
+                <div class="progress-bar" style="width: {$option.percentage}%"></div>
+                {/if}
+            </label>
+        </div>
+        {/volist}
+        <button type="submit" class="btn-submit">提交投票</button>
+        <p class="vote-stats">共 {$vote.total_votes} 人参与</p>
+    </form>
+    {/carefree:vote}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 在线测验 ⭐新增 -->
+          <div v-show="activeSection === 'quiz'" class="tag-section">
+            <h3>carefree:quiz - 在线测验</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于创建在线测验/考试，支持题目管理、自动评分。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="quizParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：知识测验</div>
+              <pre><code>{{`<div class="quiz-container">
+    {carefree:quiz quizid='1' id='quiz'}
+    <div class="quiz-header">
+        <h2>{$quiz.title}</h2>
+        <p>{$quiz.description}</p>
+        <div class="quiz-info">
+            <span>题目数：{$quiz.question_count}</span>
+            <span>总分：{$quiz.total_score}</span>
+            <span>时限：{$quiz.time_limit}分钟</span>
+        </div>
+    </div>
+    <form action="/api/quiz/submit" method="post" class="quiz-form">
+        {volist name="quiz.questions" id="question" key="qnum"}
+        <div class="question-item">
+            <h4>第{$qnum}题：{$question.title} ({$question.score}分)</h4>
+            {if condition="$question.type == 'choice'"}
+            <div class="options">
+                {volist name="question.options" id="opt"}
+                <label>
+                    <input type="radio" name="answer[{$question.id}]" value="{$opt.id}">
+                    {$opt.content}
+                </label>
+                {/volist}
+            </div>
+            {elseif condition="$question.type == 'text'/}
+            <textarea name="answer[{$question.id}]" rows="4"></textarea>
+            {/if}
+        </div>
+        {/volist}
+        <button type="submit" class="btn-submit">提交答案</button>
+    </form>
+    {/carefree:quiz}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 抽奖活动 ⭐新增 -->
+          <div v-show="activeSection === 'lottery'" class="tag-section">
+            <h3>carefree:lottery - 抽奖活动</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于创建抽奖活动，支持奖品管理、中奖概率设置、抽奖记录。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="lotteryParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：九宫格抽奖</div>
+              <pre><code>{{`<div class="lottery-container">
+    {carefree:lottery lotteryid='1' id='lottery'}
+    <div class="lottery-header">
+        <h2>{$lottery.title}</h2>
+        <p>剩余抽奖次数：<span class="chance">{$lottery.user_chances}</span></p>
+    </div>
+    <div class="lottery-grid">
+        {volist name="lottery.prizes" id="prize" key="i"}
+        <div class="lottery-cell" data-prize-id="{$prize.id}">
+            <img src="{$prize.image}" alt="{$prize.name}">
+            <p>{$prize.name}</p>
+        </div>
+        {/volist}
+    </div>
+    <button class="btn-lottery" onclick="startLottery({$lottery.id})">
+        开始抽奖
+    </button>
+    <div class="lottery-records">
+        <h4>中奖记录</h4>
+        <ul>
+        {volist name="lottery.records" id="record"}
+            <li>{$record.username} 抽中了 {$record.prize_name}</li>
+        {/volist}
+        </ul>
+    </div>
+    {/carefree:lottery}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 二维码生成 ⭐新增 -->
+          <div v-show="activeSection === 'qrcode'" class="tag-section">
+            <h3>carefree:qrcode - 二维码生成</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于生成二维码，支持自定义内容、尺寸、Logo、纠错级别。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="qrcodeParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：文章分享二维码</div>
+              <pre><code>{{`<!-- 简单二维码 -->
+<div class="qrcode">
+    {carefree:qrcode content='https://www.example.com' size='200' /}
+</div>
+
+<!-- 带Logo的二维码 -->
+<div class="qrcode-with-logo">
+    {carefree:qrcode
+        content='{$article.url}'
+        size='300'
+        logo='/assets/logo.png'
+        level='H'
+    /}
+    <p>扫码查看文章</p>
+</div>
+
+<!-- 动态生成二维码 -->
+<div class="share-qrcode">
+    <h4>分享到微信</h4>
+    {carefree:qrcode content='https://www.example.com/article/{$article.id}.html' size='250' /}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 日历事件 ⭐新增 -->
+          <div v-show="activeSection === 'calendar'" class="tag-section">
+            <h3>carefree:calendar - 日历事件</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于显示日历和事件，支持按年月筛选、事件标记。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="calendarParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：活动日历</div>
+              <pre><code>{{`<div class="calendar-container">
+    {carefree:calendar year='2025' month='1' events='1' id='calendar'}
+    <div class="calendar-header">
+        <h3>{$calendar.year}年{$calendar.month}月</h3>
+    </div>
+    <table class="calendar-table">
+        <thead>
+            <tr>
+                <th>日</th><th>一</th><th>二</th><th>三</th>
+                <th>四</th><th>五</th><th>六</th>
+            </tr>
+        </thead>
+        <tbody>
+        {volist name="calendar.weeks" id="week"}
+            <tr>
+            {volist name="week" id="day"}
+                <td class="{$day.is_today ? 'today' : ''} {$day.has_event ? 'has-event' : ''}">
+                    <span class="day-number">{$day.day}</span>
+                    {if condition="$day.events"}
+                    <div class="events">
+                        {volist name="day.events" id="event"}
+                        <span class="event-dot" title="{$event.title}"></span>
+                        {/volist}
+                    </div>
+                    {/if}
+                </td>
+            {/volist}
+            </tr>
+        {/volist}
+        </tbody>
+    </table>
+    {/carefree:calendar}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 站点地图 ⭐新增 -->
+          <div v-show="activeSection === 'sitemap'" class="tag-section">
+            <h3>carefree:sitemap - 站点地图</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于生成站点地图，支持HTML和XML格式，SEO优化。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="sitemapParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：HTML站点地图</div>
+              <pre><code>{{`<div class="sitemap">
+    <h1>网站地图</h1>
+    {carefree:sitemap type='all' format='html' id='item'}
+    <div class="sitemap-section">
+        <h3>{$item.category}</h3>
+        <ul>
+        {volist name="item.links" id="link"}
+            <li>
+                <a href="{$link.url}" title="{$link.title}">
+                    {$link.title}
+                </a>
+                <span class="update-time">{$link.update_time|date='Y-m-d'}</span>
+            </li>
+        {/volist}
+        </ul>
+    </div>
+    {/carefree:sitemap}
+</div>`}}</code></pre>
+            </el-card>
+
+            <el-card class="code-card">
+              <div class="code-header">示例：XML站点地图（用于SEO）</div>
+              <pre><code>{{`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{carefree:sitemap type='all' format='xml' id='url'}
+    <url>
+        <loc>{$url.loc}</loc>
+        <lastmod>{$url.lastmod}</lastmod>
+        <changefreq>{$url.changefreq}</changefreq>
+        <priority>{$url.priority}</priority>
+    </url>
+{/carefree:sitemap}
+</urlset>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 天气信息 ⭐新增 -->
+          <div v-show="activeSection === 'weather'" class="tag-section">
+            <h3>carefree:weather - 天气信息</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于显示天气信息，支持多城市、多天预报、温度单位切换。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="weatherParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：7天天气预报</div>
+              <pre><code>{{`<div class="weather-widget">
+    {carefree:weather city='beijing' days='7' unit='celsius' /}
+    <div class="weather-current">
+        <h3>{$weather.city}</h3>
+        <div class="temp">{$weather.current.temp}°{$weather.unit}</div>
+        <div class="condition">
+            <img src="{$weather.current.icon}" alt="{$weather.current.text}">
+            <span>{$weather.current.text}</span>
+        </div>
+        <div class="details">
+            <span>湿度：{$weather.current.humidity}%</span>
+            <span>风速：{$weather.current.wind_speed}km/h</span>
+        </div>
+    </div>
+    <div class="weather-forecast">
+        {volist name="weather.forecast" id="day"}
+        <div class="forecast-day">
+            <span class="date">{$day.date|date='m-d'}</span>
+            <img src="{$day.icon}" alt="{$day.text}">
+            <span class="temp-range">{$day.temp_min}° / {$day.temp_max}°</span>
+        </div>
+        {/volist}
+    </div>
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 智能推荐 ⭐新增 -->
+          <div v-show="activeSection === 'recommend'" class="tag-section">
+            <h3>carefree:recommend - 智能推荐</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>基于用户行为和内容相似度的AI智能推荐系统，支持协同过滤、内容推荐。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="recommendParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：相关文章推荐</div>
+              <pre><code>{{`<!-- 基于当前文章的相似推荐 -->
+<div class="related-articles">
+    <h4>您可能还喜欢</h4>
+    {carefree:recommend type='similar' aid='{$article.id}' limit='6' id='rec'}
+    <div class="recommend-item">
+        <a href="{$rec.url}">
+            <img src="{$rec.cover_image}" alt="{$rec.title}">
+            <h5>{$rec.title}</h5>
+            <div class="score">匹配度：{$rec.similarity_score}%</div>
+        </a>
+    </div>
+    {/carefree:recommend}
+</div>
+
+<!-- 基于用户行为的个性化推荐 -->
+<div class="personalized-feed">
+    <h3>为你推荐</h3>
+    {carefree:recommend type='user' userid='{$user.id}' limit='10' id='item'}
+    <article class="feed-item">
+        <h4><a href="{$item.url}">{$item.title}</a></h4>
+        <p>{$item.summary}</p>
+        <div class="reason">推荐理由：{$item.reason}</div>
+    </article>
+    {/carefree:recommend}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 个性化内容 ⭐新增 -->
+          <div v-show="activeSection === 'personalize'" class="tag-section">
+            <h3>carefree:personalize - 个性化内容</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>根据用户画像和偏好提供个性化内容，支持多场景定制。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="personalizeParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：首页个性化推荐</div>
+              <pre><code>{{`<div class="personalized-homepage">
+    {carefree:personalize userid='{$user.id}' scene='homepage' limit='20' id='content'}
+    <div class="content-card">
+        <span class="tag">{$content.type}</span>
+        <h3><a href="{$content.url}">{$content.title}</a></h3>
+        <p>{$content.description}</p>
+        <div class="meta">
+            <span class="score">推荐指数：{$content.score}</span>
+            <span class="tags">
+                {volist name="content.matched_tags" id="tag"}
+                <em>#{$tag}</em>
+                {/volist}
+            </span>
+        </div>
+    </div>
+    {/carefree:personalize}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 动态表单 ⭐新增 -->
+          <div v-show="activeSection === 'form'" class="tag-section">
+            <h3>carefree:form - 动态表单</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于创建动态表单，支持各种字段类型、验证规则、自动生成。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="formParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：联系表单</div>
+              <pre><code>{{`{carefree:form formid='contact' action='/api/form/submit' method='post' class='contact-form' id='form'}
+<div class="form-container">
+    <h3>{$form.title}</h3>
+    <p>{$form.description}</p>
+
+    {volist name="form.fields" id="field"}
+    <div class="form-group {$field.required ? 'required' : ''}">
+        <label for="{$field.name}">{$field.label}</label>
+
+        {if condition="$field.type == 'text'"}
+        <input type="text" id="{$field.name}" name="{$field.name}"
+               placeholder="{$field.placeholder}"
+               {$field.required ? 'required' : ''}>
+
+        {elseif condition="$field.type == 'textarea'"/}
+        <textarea id="{$field.name}" name="{$field.name}"
+                  rows="{$field.rows|default='4'}"
+                  placeholder="{$field.placeholder}"
+                  {$field.required ? 'required' : ''}></textarea>
+
+        {elseif condition="$field.type == 'select'"/}
+        <select id="{$field.name}" name="{$field.name}" {$field.required ? 'required' : ''}>
+            <option value="">请选择</option>
+            {volist name="field.options" id="opt"}
+            <option value="{$opt.value}">{$opt.label}</option>
+            {/volist}
+        </select>
+
+        {elseif condition="$field.type == 'checkbox'"/}
+        <div class="checkbox-group">
+            {volist name="field.options" id="opt"}
+            <label>
+                <input type="checkbox" name="{$field.name}[]" value="{$opt.value}">
+                {$opt.label}
+            </label>
+            {/volist}
+        </div>
+        {/if}
+
+        {if condition="$field.help_text"}
+        <small class="help-text">{$field.help_text}</small>
+        {/if}
+    </div>
+    {/volist}
+
+    <button type="submit" class="btn-submit">提交</button>
+</div>
+{/carefree:form}`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 表单字段 ⭐新增 -->
+          <div v-show="activeSection === 'formfield'" class="tag-section">
+            <h3>carefree:formfield - 表单字段</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于快速生成单个表单字段，简化表单创建流程。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="formfieldParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：快速创建表单字段</div>
+              <pre><code>{{`<form action="/api/register" method="post">
+    <!-- 文本输入框 -->
+    {carefree:formfield
+        name='username'
+        type='textbox'
+        label='用户名'
+        required='1'
+        placeholder='请输入用户名'
+    /}
+
+    <!-- 密码框 -->
+    {carefree:formfield
+        name='password'
+        type='textbox'
+        label='密码'
+        required='1'
+        placeholder='请输入密码'
+    /}
+
+    <!-- 下拉选择 -->
+    {carefree:formfield
+        name='gender'
+        type='combobox'
+        label='性别'
+        options='男,女,保密'
+        value='保密'
+    /}
+
+    <!-- 复选框 -->
+    {carefree:formfield
+        name='agree'
+        type='checkbox'
+        label='同意用户协议'
+        required='1'
+    /}
+
+    <button type="submit">注册</button>
+</form>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 验证码 ⭐新增 -->
+          <div v-show="activeSection === 'captcha'" class="tag-section">
+            <h3>carefree:captcha - 验证码</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于生成各类验证码，支持图片验证码、短信验证码、邮件验证码。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="captchaParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：图片验证码</div>
+              <pre><code>{{`<form action="/api/login" method="post">
+    <div class="form-group">
+        <label>用户名</label>
+        <input type="text" name="username" required>
+    </div>
+
+    <div class="form-group">
+        <label>密码</label>
+        <input type="password" name="password" required>
+    </div>
+
+    <div class="form-group captcha-group">
+        <label>验证码</label>
+        <div class="captcha-input">
+            <input type="text" name="captcha" required placeholder="请输入验证码">
+            {carefree:captcha type='image' width='120' height='40' length='4' /}
+            <img src="{$captcha.url}"
+                 alt="验证码"
+                 class="captcha-image"
+                 onclick="this.src='{$captcha.url}?'+Math.random()">
+            <input type="hidden" name="captcha_key" value="{$captcha.key}">
+        </div>
+        <span class="refresh" onclick="refreshCaptcha()">刷新</span>
+    </div>
+
+    <button type="submit">登录</button>
+</form>`}}</code></pre>
+            </el-card>
+
+            <el-card class="code-card">
+              <div class="code-header">示例：短信验证码</div>
+              <pre><code>{{`<div class="phone-verify">
+    {carefree:captcha type='sms' length='6' /}
+    <input type="tel" name="phone" placeholder="手机号" required>
+    <button type="button"
+            onclick="sendSms('{$captcha.key}')"
+            class="btn-send-code">
+        发送验证码
+    </button>
+    <input type="text"
+           name="sms_code"
+           placeholder="验证码"
+           maxlength="6"
+           required>
+    <input type="hidden" name="captcha_key" value="{$captcha.key}">
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 多语言 ⭐新增 -->
+          <div v-show="activeSection === 'multilang'" class="tag-section">
+            <h3>carefree:multilang - 多语言支持</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于实现网站国际化，支持多语言翻译、自动语言切换。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="multilangParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：多语言网站</div>
+              <pre><code>{{`<!-- 页面标题 -->
+<h1>{carefree:multilang key='site.welcome' default='欢迎访问' /}</h1>
+
+<!-- 导航菜单 -->
+<nav>
+    <a href="/">{carefree:multilang key='nav.home' default='首页' /}</a>
+    <a href="/about">{carefree:multilang key='nav.about' default='关于' /}</a>
+    <a href="/contact">{carefree:multilang key='nav.contact' default='联系' /}</a>
+</nav>
+
+<!-- 指定语言 -->
+<p>{carefree:multilang key='greeting' lang='en' default='Hello' /}</p>
+<p>{carefree:multilang key='greeting' lang='zh-cn' default='你好' /}</p>
+<p>{carefree:multilang key='greeting' lang='ja' default='こんにちは' /}</p>
+
+<!-- 表单标签 -->
+<form>
+    <label>{carefree:multilang key='form.username' /}</label>
+    <input type="text" placeholder="{carefree:multilang key='form.username.placeholder' /}">
+
+    <label>{carefree:multilang key='form.email' /}</label>
+    <input type="email" placeholder="{carefree:multilang key='form.email.placeholder' /}">
+
+    <button>{carefree:multilang key='form.submit' default='提交' /}</button>
+</form>
+
+<!-- 语言切换器 -->
+<div class="lang-switcher">
+    {volist name=":app\service\tag\MultilangTagService::getSupportedLangs()" id="lang"}
+    <a href="?lang={$lang.code}" class="{$lang.is_current ? 'active' : ''}">
+        {$lang.name}
+    </a>
+    {/volist}
+</div>`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 缓存标签 ⭐新增 -->
+          <div v-show="activeSection === 'cache'" class="tag-section">
+            <h3>carefree:cache - 缓存标签</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于缓存模板片段，提升页面性能，减少数据库查询。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="cacheParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：缓存侧边栏内容</div>
+              <pre><code>{{`<!-- 缓存热门文章（1小时） -->
+{carefree:cache key='sidebar_hot_articles' time='3600'}
+<div class="hot-articles">
+    <h4>热门文章</h4>
+    {carefree:article orderby='view_count desc' limit='10' id='hot'}
+    <div class="hot-item">
+        <a href="{$hot.url}">{$hot.title}</a>
+        <span class="views">{$hot.view_count}</span>
+    </div>
+    {/carefree:article}
+</div>
+{/carefree:cache}
+
+<!-- 缓存标签云（24小时） -->
+{carefree:cache key='sidebar_tag_cloud' time='86400'}
+<div class="tag-cloud">
+    <h4>标签云</h4>
+    {carefree:tagcloud limit='30' id='tag'}
+    <a href="{$tag.url}" style="font-size: {$tag.font_size}px">
+        {$tag.name}
+    </a>
+    {/carefree:tagcloud}
+</div>
+{/carefree:cache}
+
+<!-- 缓存分类导航（永久，手动清除） -->
+{carefree:cache key='header_nav' time='0'}
+<nav class="category-nav">
+    {carefree:category type='article' parentid='0' id='cat'}
+    <a href="{$cat.url}">{$cat.name}</a>
+    {/carefree:category}
+</nav>
+{/carefree:cache}`}}</code></pre>
+            </el-card>
+
+            <el-alert type="warning" :closable="false" show-icon>
+              <p><strong>性能提示</strong>：缓存标签非常适合缓存以下内容：</p>
+              <ul>
+                <li>导航菜单、分类列表等不常变化的内容</li>
+                <li>热门文章、推荐内容等查询成本较高的数据</li>
+                <li>复杂的统计数据、排行榜等</li>
+                <li>第三方API获取的数据（如天气、股票等）</li>
+              </ul>
+            </el-alert>
+          </div>
+
+          <!-- 条件标签 ⭐新增 -->
+          <div v-show="activeSection === 'condition'" class="tag-section">
+            <h3>carefree:condition - 条件标签</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于条件判断和分支逻辑，支持复杂表达式。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="conditionParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：根据条件显示不同内容</div>
+              <pre><code>{{`<!-- 判断用户登录状态 -->
+{carefree:condition if='$user.id > 0'}
+<div class="user-info">
+    <span>欢迎，{$user.username}</span>
+    <a href="/logout">退出</a>
+</div>
+{else}
+<div class="login-btns">
+    <a href="/login">登录</a>
+    <a href="/register">注册</a>
+</div>
+{/carefree:condition}
+
+<!-- 判断文章分类 -->
+{carefree:condition if='$article.catid == 1'}
+<div class="article-tech">
+    <!-- 技术类文章的特殊样式 -->
+</div>
+{elseif condition='$article.catid == 2'/}
+<div class="article-life">
+    <!-- 生活类文章的特殊样式 -->
+</div>
+{else}
+<div class="article-other">
+    <!-- 其他分类的样式 -->
+</div>
+{/carefree:condition}
+
+<!-- 复杂条件判断 -->
+{carefree:condition if='$article.view_count > 1000 && $article.is_featured == 1'}
+<span class="badge hot">热门精选</span>
+{/carefree:condition}
+
+<!-- 判断时间 -->
+{carefree:condition if='strtotime($article.create_time) > time() - 86400'}
+<span class="badge new">新文章</span>
+{/carefree:condition}`}}</code></pre>
+            </el-card>
+          </div>
+
+          <!-- 分组标签 ⭐新增 -->
+          <div v-show="activeSection === 'group'" class="tag-section">
+            <h3>carefree:group - 分组标签</h3>
+            <el-divider content-position="left">标签说明</el-divider>
+            <p>用于对数据进行分组展示，支持按字段分组、多级分组。</p>
+
+            <el-divider content-position="left">参数说明</el-divider>
+            <el-table :data="groupParams" border>
+              <el-table-column prop="name" label="参数名" width="150" />
+              <el-table-column prop="required" label="必填" width="100" />
+              <el-table-column prop="default" label="默认值" width="150" />
+              <el-table-column prop="description" label="说明" />
+            </el-table>
+
+            <el-divider content-position="left">使用示例</el-divider>
+            <el-card class="code-card">
+              <div class="code-header">示例：按分类分组显示文章</div>
+              <pre><code>{{`<!-- 获取所有文章 -->
+{assign name="articles" value=":app\service\tag\ArticleTagService::getList(['limit' => 50])" /}
+
+<!-- 按分类分组 -->
+{carefree:group data='$articles' by='category_name' id='group'}
+<div class="article-group">
+    <h3 class="group-title">{$group.key}</h3>
+    <div class="article-list">
+        {volist name="group.items" id="article"}
+        <div class="article-item">
+            <h4><a href="{$article.url}">{$article.title}</a></h4>
+            <p>{$article.summary}</p>
+            <span class="date">{$article.publish_time|date='Y-m-d'}</span>
+        </div>
+        {/volist}
+    </div>
+    <p class="group-count">共 {$group.count} 篇文章</p>
+</div>
+{/carefree:group}`}}</code></pre>
+            </el-card>
+
+            <el-card class="code-card">
+              <div class="code-header">示例：按年份分组展示归档</div>
+              <pre><code>{{`{assign name="articles" value=":app\service\tag\ArticleTagService::getList(['limit' => 0, 'orderby' => 'publish_time desc'])" /}
+
+{carefree:group data='$articles' by='year' id='yearGroup'}
+<div class="archive-year">
+    <h2>{$yearGroup.key}年</h2>
+
+    <!-- 按月份再分组 -->
+    {carefree:group data='$yearGroup.items' by='month' id='monthGroup'}
+    <div class="archive-month">
+        <h4>{$monthGroup.key}月 ({$monthGroup.count}篇)</h4>
+        <ul>
+            {volist name="monthGroup.items" id="article"}
+            <li>
+                <span class="date">{$article.publish_time|date='m-d'}</span>
+                <a href="{$article.url}">{$article.title}</a>
+            </li>
+            {/volist}
+        </ul>
+    </div>
+    {/carefree:group}
+</div>
+{/carefree:group}`}}</code></pre>
+            </el-card>
+          </div>
+
         </el-main>
       </el-container>
     </el-card>
@@ -1831,13 +3056,36 @@ import {
   Calendar,
   Sunny,
   DCaret,
-  QuestionFilled
+  QuestionFilled,
+  // 新增icon
+  VideoPlay,
+  Headset,
+  Download,
+  Checked,
+  Present,
+  Stamp,
+  MagicStick,
+  Star,
+  Timer,
+  Select
 } from '@element-plus/icons-vue'
 
 const activeSection = ref('config')
 
 const handleMenuSelect = (key) => {
   activeSection.value = key
+}
+
+// 打开完整文档
+const openCompleteGuide = () => {
+  const docsUrl = '/docs/carefree-taglib/CAREFREE_TAGLIB_COMPLETE_GUIDE.md'
+  window.open(docsUrl, '_blank')
+}
+
+// 打开快速参考
+const openQuickReference = () => {
+  const docsUrl = '/docs/carefree-taglib/CAREFREE_QUICK_REFERENCE_V2.md'
+  window.open(docsUrl, '_blank')
 }
 
 // 文章标签参数
@@ -1906,6 +3154,174 @@ const linkParams = [
   { name: 'id', required: '是', default: '-', description: '循环变量名' },
   { name: 'group', required: '否', default: 'home', description: '分组名称' },
   { name: 'limit', required: '否', default: '20', description: '返回数量' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// ========== 新增标签参数 ⭐ ==========
+
+// 相册图库标签参数
+const galleryParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'albumid', required: '否', default: '-', description: '相册ID' },
+  { name: 'limit', required: '否', default: '20', description: '返回数量' },
+  { name: 'orderby', required: '否', default: 'create_time desc', description: '排序方式' },
+  { name: 'columns', required: '否', default: '4', description: '列数（用于布局）' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// 视频列表标签参数
+const videoParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'catid', required: '否', default: '-', description: '分类ID' },
+  { name: 'limit', required: '否', default: '10', description: '返回数量' },
+  { name: 'orderby', required: '否', default: 'publish_time desc', description: '排序方式' },
+  { name: 'featured', required: '否', default: '0', description: '是否精选：1-是，0-否' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// 音频列表标签参数
+const audioParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'catid', required: '否', default: '-', description: '分类ID' },
+  { name: 'limit', required: '否', default: '10', description: '返回数量' },
+  { name: 'orderby', required: '否', default: 'publish_time desc', description: '排序方式' },
+  { name: 'featured', required: '否', default: '0', description: '是否精选：1-是，0-否' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// 文件下载标签参数
+const downloadParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'catid', required: '否', default: '-', description: '分类ID' },
+  { name: 'type', required: '否', default: '-', description: '文件类型：software-软件，document-文档，media-媒体' },
+  { name: 'limit', required: '否', default: '15', description: '返回数量' },
+  { name: 'orderby', required: '否', default: 'download_count desc', description: '排序方式' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// 投票系统标签参数
+const voteParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'voteid', required: '是', default: '-', description: '投票ID' },
+  { name: 'showresult', required: '否', default: '0', description: '是否显示结果：1-是，0-否' }
+]
+
+// 在线测验标签参数
+const quizParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'quizid', required: '是', default: '-', description: '测验ID' }
+]
+
+// 抽奖活动标签参数
+const lotteryParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'lotteryid', required: '是', default: '-', description: '抽奖活动ID' }
+]
+
+// 二维码生成标签参数
+const qrcodeParams = [
+  { name: 'content', required: '是', default: '-', description: '二维码内容（URL或文本）' },
+  { name: 'size', required: '否', default: '200', description: '尺寸（像素）' },
+  { name: 'logo', required: '否', default: '-', description: 'Logo图片URL' },
+  { name: 'level', required: '否', default: 'L', description: '纠错级别：L、M、Q、H' }
+]
+
+// 日历事件标签参数
+const calendarParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'year', required: '否', default: '当前年', description: '年份' },
+  { name: 'month', required: '否', default: '当前月', description: '月份' },
+  { name: 'events', required: '否', default: '1', description: '是否包含事件：1-是，0-否' }
+]
+
+// 站点地图标签参数
+const sitemapParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'type', required: '否', default: 'all', description: '类型：all-全部，article-文章，page-单页' },
+  { name: 'format', required: '否', default: 'html', description: '格式：html、xml' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// 天气信息标签参数
+const weatherParams = [
+  { name: 'city', required: '是', default: 'beijing', description: '城市名称或代码' },
+  { name: 'days', required: '否', default: '3', description: '预报天数：1-7' },
+  { name: 'unit', required: '否', default: 'celsius', description: '温度单位：celsius-摄氏，fahrenheit-华氏' }
+]
+
+// 智能推荐标签参数
+const recommendParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'type', required: '是', default: 'similar', description: '推荐类型：similar-相似内容，user-基于用户，hot-热门推荐' },
+  { name: 'userid', required: '否', default: '-', description: '用户ID（type=user时必填）' },
+  { name: 'aid', required: '否', default: '-', description: '文章ID（type=similar时必填）' },
+  { name: 'limit', required: '否', default: '6', description: '返回数量' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// 个性化内容标签参数
+const personalizeParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'userid', required: '是', default: '-', description: '用户ID' },
+  { name: 'scene', required: '否', default: 'homepage', description: '场景：homepage-首页，detail-详情页，sidebar-侧边栏' },
+  { name: 'limit', required: '否', default: '10', description: '返回数量' },
+  { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
+]
+
+// 动态表单标签参数
+const formParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'formid', required: '是', default: '-', description: '表单ID' },
+  { name: 'action', required: '否', default: '-', description: '提交地址' },
+  { name: 'method', required: '否', default: 'post', description: '提交方式：post、get' },
+  { name: 'class', required: '否', default: '-', description: 'CSS类名' }
+]
+
+// 表单字段标签参数
+const formfieldParams = [
+  { name: 'name', required: '是', default: '-', description: '字段名称' },
+  { name: 'type', required: '是', default: 'textbox', description: '字段类型：textbox、checkbox、radio、combobox、slider' },
+  { name: 'label', required: '否', default: '-', description: '字段标签' },
+  { name: 'required', required: '否', default: '0', description: '是否必填：1-是，0-否' },
+  { name: 'placeholder', required: '否', default: '-', description: '占位提示文本' },
+  { name: 'options', required: '否', default: '-', description: '选项（用于select、checkbox、radio）' },
+  { name: 'value', required: '否', default: '-', description: '默认值' }
+]
+
+// 验证码标签参数
+const captchaParams = [
+  { name: 'type', required: '否', default: 'image', description: '类型：image-图片，sms-短信，email-邮件' },
+  { name: 'width', required: '否', default: '120', description: '宽度（仅image类型）' },
+  { name: 'height', required: '否', default: '40', description: '高度（仅image类型）' },
+  { name: 'length', required: '否', default: '4', description: '验证码长度' }
+]
+
+// 多语言标签参数
+const multilangParams = [
+  { name: 'key', required: '是', default: '-', description: '翻译键' },
+  { name: 'lang', required: '否', default: '当前语言', description: '语言代码：zh-cn、en、ja等' },
+  { name: 'default', required: '否', default: 'key', description: '默认值（未找到翻译时显示）' }
+]
+
+// 缓存标签参数
+const cacheParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'key', required: '是', default: '-', description: '缓存键名（唯一标识）' },
+  { name: 'time', required: '否', default: '3600', description: '缓存时间（秒），0为永久缓存' }
+]
+
+// 条件标签参数
+const conditionParams = [
+  { name: 'id', required: '否', default: '-', description: '循环变量名' },
+  { name: 'if', required: '是', default: '-', description: '条件表达式（PHP语法）' }
+]
+
+// 分组标签参数
+const groupParams = [
+  { name: 'id', required: '是', default: '-', description: '循环变量名' },
+  { name: 'data', required: '是', default: '-', description: '要分组的数据数组' },
+  { name: 'by', required: '是', default: '-', description: '分组依据字段' },
+  { name: 'key', required: '否', default: 'key', description: '分组键的变量名' },
   { name: 'empty', required: '否', default: '-', description: '空数据时显示的内容' }
 ]
 </script>

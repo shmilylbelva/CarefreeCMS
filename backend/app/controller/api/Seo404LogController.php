@@ -163,7 +163,17 @@ class Seo404LogController extends BaseController
             return $this->error('日志不存在');
         }
 
-        $log->delete();
+        $logId = $log->id;
+
+        // 使用Db类直接删除，确保WHERE条件精确
+        $affected = \think\facade\Db::name('seo_404_logs')
+            ->where('id', '=', $logId)
+            ->limit(1)
+            ->delete();
+
+        if ($affected === 0) {
+            return $this->error('日志删除失败：未找到该日志');
+        }
 
         return $this->success(null, '删除成功');
     }

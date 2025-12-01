@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/utils/auth'
 import { useUserStore } from '@/store/user'
+import { usePermissionStore } from '@/store/permission'
 import { ElMessage } from 'element-plus'
 
 // 路由配置
@@ -27,103 +28,133 @@ const routes = [
         path: 'articles',
         name: 'ArticleList',
         component: () => import('@/views/article/List.vue'),
-        meta: { title: '文章列表' }
+        meta: { title: '文章列表', permission: 'article.view' }
       },
       {
         path: 'articles/create',
         name: 'ArticleCreate',
         component: () => import('@/views/article/Edit.vue'),
-        meta: { title: '创建文章' }
+        meta: { title: '创建文章', permission: 'article.create' }
       },
       {
         path: 'articles/edit/:id',
         name: 'ArticleEdit',
         component: () => import('@/views/article/Edit.vue'),
-        meta: { title: '编辑文章' }
+        meta: { title: '编辑文章', permission: 'article.edit' }
       },
       {
         path: 'categories',
         name: 'CategoryList',
         component: () => import('@/views/category/List.vue'),
-        meta: { title: '分类管理' }
+        meta: { title: '分类管理', permission: 'category.view' }
       },
       {
         path: 'tags',
         name: 'TagList',
         component: () => import('@/views/tag/List.vue'),
-        meta: { title: '标签管理' }
+        meta: { title: '标签管理', permission: 'tag.view' }
       },
       {
         path: 'article-flags',
         name: 'ArticleFlagList',
         component: () => import('@/views/articleFlag/List.vue'),
-        meta: { title: '文章属性管理' }
+        meta: { title: '文章属性管理', permission: 'article.view' }
       },
       {
         path: 'pages',
         name: 'PageList',
         component: () => import('@/views/page/List.vue'),
-        meta: { title: '单页管理' }
+        meta: { title: '单页管理', permission: 'page.view' }
       },
       {
         path: 'pages/create',
         name: 'PageCreate',
         component: () => import('@/views/page/Edit.vue'),
-        meta: { title: '创建单页' }
+        meta: { title: '创建单页', permission: 'page.create' }
       },
       {
         path: 'pages/edit/:id',
         name: 'PageEdit',
         component: () => import('@/views/page/Edit.vue'),
-        meta: { title: '编辑单页' }
+        meta: { title: '编辑单页', permission: 'page.edit' }
       },
       {
         path: 'media',
         name: 'MediaList',
         component: () => import('@/views/media/List.vue'),
-        meta: { title: '媒体库' }
+        meta: { title: '媒体库', permission: 'media.view' }
+      },
+      {
+        path: 'media/storage',
+        name: 'StorageConfig',
+        component: () => import('@/components/MediaLibrary/StorageConfig.vue'),
+        meta: { title: '存储配置', permission: 'media.storage' }
+      },
+      {
+        path: 'media/queue',
+        name: 'QueueMonitor',
+        component: () => import('@/components/MediaLibrary/QueueMonitor.vue'),
+        meta: { title: '队列监控', permission: 'media.queue' }
+      },
+      {
+        path: 'media/ai-generate',
+        name: 'AiImageGenerate',
+        component: () => import('@/views/media/AiGenerate.vue'),
+        meta: { title: 'AI图片生成', permission: 'media.ai' }
+      },
+      {
+        path: 'media/watermark',
+        name: 'MediaWatermark',
+        component: () => import('@/views/media/Watermark.vue'),
+        meta: { title: '水印管理', permission: 'media.watermark' }
+      },
+      {
+        path: 'media/thumbnail',
+        name: 'MediaThumbnail',
+        component: () => import('@/views/media/Thumbnail.vue'),
+        meta: { title: '缩略图管理', permission: 'media.thumbnail' }
       },
       {
         path: 'build',
         name: 'StaticBuild',
         component: () => import('@/views/build/Index.vue'),
-        meta: { title: '静态生成' }
+        meta: { title: '静态生成', permission: 'build.view' }
       },
       {
         path: 'sitemap',
         name: 'SitemapIndex',
         component: () => import('@/views/sitemap/Index.vue'),
-        meta: { title: 'Sitemap生成' }
+        meta: { title: 'Sitemap生成', permission: 'sitemap.view' }
+      },
+      {
+        path: 'sites',
+        name: 'SiteList',
+        component: () => import('@/views/site/List.vue'),
+        meta: { title: '多站点管理', permission: 'site.view' }
+      },
+      {
+        path: 'template-packages',
+        name: 'TemplatePackageList',
+        component: () => import('@/views/templatePackage/List.vue'),
+        meta: { title: '模板包管理', permission: 'template.view' }
+      },
+      {
+        path: 'template-types',
+        name: 'TemplateTypeList',
+        component: () => import('@/views/templateType/index.vue'),
+        meta: { title: '模板类型管理', permission: 'template.view' }
       },
       {
         path: 'users',
-        name: 'UserList',
-        component: () => import('@/views/user/List.vue'),
-        meta: { title: '用户管理' }
-      },
-      {
-        path: 'roles',
-        name: 'RoleList',
-        component: () => import('@/views/role/List.vue'),
-        meta: { title: '角色管理' }
-      },
-      {
-        path: 'config',
-        name: 'SystemConfig',
-        component: () => import('@/views/config/Index.vue'),
-        meta: { title: '基本信息' }
+        name: 'UserPermission',
+        component: () => import('@/views/user/Permission.vue'),
+        meta: { title: '用户权限', permission: 'user.view' }
       },
       {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
         meta: { title: '个人信息' }
-      },
-      {
-        path: 'logs',
-        name: 'OperationLogs',
-        component: () => import('@/views/log/List.vue'),
-        meta: { title: '操作日志' }
       },
       {
         path: 'recycle-bin',
@@ -148,6 +179,31 @@ const routes = [
         name: 'TopicList',
         component: () => import('@/views/topic/List.vue'),
         meta: { title: '专题管理' }
+      },
+      // ========== 评论管理 ==========
+      {
+        path: 'comments',
+        name: 'CommentList',
+        component: () => import('@/views/comment/List.vue'),
+        meta: { title: '评论管理' }
+      },
+      {
+        path: 'comment-statistics',
+        name: 'CommentStatistics',
+        component: () => import('@/views/comment/Statistics.vue'),
+        meta: { title: '评论统计' }
+      },
+      {
+        path: 'comment-reports',
+        name: 'CommentReports',
+        component: () => import('@/views/comment/Reports.vue'),
+        meta: { title: '举报管理' }
+      },
+      {
+        path: 'comment-emojis',
+        name: 'CommentEmojis',
+        component: () => import('@/views/comment/Emojis.vue'),
+        meta: { title: '表情管理' }
       },
       {
         path: 'links',
@@ -197,6 +253,37 @@ const routes = [
         component: () => import('@/views/seo/Tools.vue'),
         meta: { title: 'SEO工具' }
       },
+      // AI文章生成
+      {
+        path: 'ai-providers',
+        name: 'AiProviderList',
+        component: () => import('@/views/ai/ProviderList.vue'),
+        meta: { title: 'AI厂商管理', permission: 'ai_provider.view' }
+      },
+      {
+        path: 'ai-models',
+        name: 'AiModelList',
+        component: () => import('@/views/ai/ModelList.vue'),
+        meta: { title: 'AI模型管理', permission: 'ai_model.view' }
+      },
+      {
+        path: 'ai-prompts',
+        name: 'AiPromptTemplateList',
+        component: () => import('@/views/ai/PromptTemplateList.vue'),
+        meta: { title: '提示词模板', permission: 'ai_prompt.view' }
+      },
+      {
+        path: 'ai-configs',
+        name: 'AiConfigList',
+        component: () => import('@/views/ai/ConfigList.vue'),
+        meta: { title: 'AI配置管理', permission: 'ai_config.view' }
+      },
+      {
+        path: 'ai-tasks',
+        name: 'AiTaskList',
+        component: () => import('@/views/ai/TaskList.vue'),
+        meta: { title: 'AI文章生成', permission: 'ai_article.view' }
+      },
       {
         path: 'database',
         name: 'Database',
@@ -214,6 +301,30 @@ const routes = [
         name: 'SystemLogs',
         component: () => import('@/views/system/Logs.vue'),
         meta: { title: '系统日志' }
+      },
+      {
+        path: 'cron-jobs',
+        name: 'CronJobs',
+        component: () => import('@/views/system/CronJob.vue'),
+        meta: { title: '定时任务' }
+      },
+      {
+        path: 'oauth-config',
+        name: 'OAuthConfig',
+        component: () => import('@/views/system/OAuthConfig.vue'),
+        meta: { title: 'OAuth配置' }
+      },
+      {
+        path: 'sensitive-words',
+        name: 'SensitiveWords',
+        component: () => import('@/views/system/SensitiveWords.vue'),
+        meta: { title: '敏感词管理' }
+      },
+      {
+        path: 'content-violations',
+        name: 'ContentViolations',
+        component: () => import('@/views/system/ContentViolations.vue'),
+        meta: { title: '违规记录' }
       },
       {
         path: 'template-editor',
@@ -320,6 +431,17 @@ router.beforeEach(async (to, from, next) => {
           next(`/login?redirect=${to.path}`)
         }
       } else {
+        // 检查页面权限
+        if (to.meta.permission) {
+          const permissionStore = usePermissionStore()
+          const hasPermission = permissionStore.hasPermission(to.meta.permission)
+
+          if (!hasPermission) {
+            ElMessage.error('您没有权限访问此页面')
+            next('/dashboard')
+            return
+          }
+        }
         next()
       }
     }

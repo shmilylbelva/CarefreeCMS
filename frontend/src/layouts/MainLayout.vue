@@ -23,6 +23,7 @@
             <span>内容管理</span>
           </template>
           <el-menu-item index="/articles">文章列表</el-menu-item>
+          <el-menu-item index="/ai-tasks">批量生成文章</el-menu-item>
           <el-menu-item index="/categories">分类管理</el-menu-item>
           <el-menu-item index="/tags">标签管理</el-menu-item>
           <el-menu-item index="/article-flags">文章属性</el-menu-item>
@@ -39,23 +40,28 @@
           <span>媒体库</span>
         </el-menu-item>
 
+        <el-sub-menu v-if="hasAnyAiPermission" index="ai">
+          <template #title>
+            <el-icon><MagicStick /></el-icon>
+            <span>AI管理</span>
+          </template>
+          <el-menu-item v-if="hasPermission('ai_provider.view')" index="/ai-providers">AI厂商管理</el-menu-item>
+          <el-menu-item v-if="hasPermission('ai_model.view')" index="/ai-models">AI模型管理</el-menu-item>
+          <el-menu-item v-if="hasPermission('ai_prompt.view')" index="/ai-prompts">提示词模板</el-menu-item>
+          <el-menu-item v-if="hasPermission('ai_config.view')" index="/ai-configs">AI配置管理</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu index="seo">
           <template #title>
             <el-icon><TrendCharts /></el-icon>
             <span>SEO管理</span>
           </template>
-          <el-menu-item index="/seo-settings">SEO设置</el-menu-item>
           <el-menu-item index="/build">静态生成</el-menu-item>
           <el-menu-item index="/sitemap">Sitemap生成</el-menu-item>
-          <el-sub-menu index="seo-tools-menu">
-            <template #title>
-              <span>SEO工具</span>
-            </template>
-            <el-menu-item index="/seo-redirects">URL重定向</el-menu-item>
-            <el-menu-item index="/seo-404-logs">404监控</el-menu-item>
-            <el-menu-item index="/seo-robots">Robots.txt</el-menu-item>
-            <el-menu-item index="/seo-tools">SEO分析工具</el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/seo-redirects">URL重定向</el-menu-item>
+          <el-menu-item index="/seo-404-logs">404监控</el-menu-item>
+          <el-menu-item index="/seo-robots">Robots.txt</el-menu-item>
+          <el-menu-item index="/seo-tools">SEO分析工具</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="member">
@@ -67,11 +73,24 @@
           <el-menu-item index="/member-levels">会员等级</el-menu-item>
         </el-sub-menu>
 
+        <el-sub-menu index="comment">
+          <template #title>
+            <el-icon><ChatDotRound /></el-icon>
+            <span>评论管理</span>
+          </template>
+          <el-menu-item index="/comments">评论列表</el-menu-item>
+          <el-menu-item index="/comment-statistics">评论统计</el-menu-item>
+          <el-menu-item index="/comment-reports">举报管理</el-menu-item>
+          <el-menu-item index="/comment-emojis">表情管理</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu index="template">
           <template #title>
             <el-icon><Files /></el-icon>
             <span>模板管理</span>
           </template>
+          <el-menu-item index="/template-packages">模板包管理</el-menu-item>
+          <el-menu-item index="/template-types">模板类型管理</el-menu-item>
           <el-menu-item index="/template-editor">模板编辑器</el-menu-item>
           <el-menu-item index="/template-tags">模板标签教程</el-menu-item>
         </el-sub-menu>
@@ -81,22 +100,14 @@
             <el-icon><Setting /></el-icon>
             <span>系统管理</span>
           </template>
-          <el-menu-item index="/config">基本信息</el-menu-item>
-          <el-menu-item index="/users">用户管理</el-menu-item>
-          <el-menu-item index="/roles">角色管理</el-menu-item>
+          <el-menu-item index="/sites">多站点管理</el-menu-item>
+          <el-menu-item index="/users">用户权限</el-menu-item>
           <el-menu-item index="/notifications">消息通知</el-menu-item>
           <el-menu-item index="/sms-service">短信服务</el-menu-item>
           <el-menu-item index="/content-models">内容模型</el-menu-item>
-          <el-menu-item index="/custom-fields">自定义字段</el-menu-item>
           <el-menu-item index="/database">数据库管理</el-menu-item>
           <el-menu-item index="/cache">缓存管理</el-menu-item>
-          <el-sub-menu index="logs">
-            <template #title>
-              <span>系统日志</span>
-            </template>
-            <el-menu-item index="/system-logs">运行日志</el-menu-item>
-            <el-menu-item index="/logs">操作日志</el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/system-logs">运行日志</el-menu-item>
           <el-menu-item index="/recycle-bin">回收站</el-menu-item>
         </el-sub-menu>
       </el-menu>
@@ -147,18 +158,37 @@ import {
   Tools,
   Files,
   User,
-  ArrowDown
+  ArrowDown,
+  ChatDotRound,
+  MagicStick
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
+import { usePermissionStore } from '@/store/permission'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 
 // 当前激活的菜单
 const activeMenu = computed(() => {
   const { path } = route
   return path
+})
+
+// 权限检查方法
+const hasPermission = (permission) => {
+  return permissionStore.hasPermission(permission)
+}
+
+// 检查是否有任意AI权限
+const hasAnyAiPermission = computed(() => {
+  return hasPermission('ai_config.view') ||
+         hasPermission('ai_provider.view') ||
+         hasPermission('ai_model.view') ||
+         hasPermission('ai_prompt.view') ||
+         hasPermission('ai_article.view') ||
+         hasPermission('ai_image.view')
 })
 
 // 下拉菜单命令处理

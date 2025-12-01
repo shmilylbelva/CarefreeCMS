@@ -3,6 +3,17 @@
     <el-card>
       <!-- 搜索栏 -->
       <el-form :inline="true" :model="searchForm">
+        <el-form-item label="所属站点">
+          <el-select v-model="searchForm.site_id" placeholder="选择站点" clearable @clear="handleSearch" style="width: 200px;">
+            <el-option label="全部站点" :value="null" />
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="标题">
           <el-input v-model="searchForm.title" placeholder="请输入标题" clearable @clear="handleSearch" />
         </el-form-item>
@@ -24,6 +35,11 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="标题" min-width="200" />
         <el-table-column prop="slug" label="URL别名" min-width="150" />
+        <el-table-column label="所属站点" width="120">
+          <template #default="{ row }">
+            <el-tag size="small">{{ row.site?.name || '-' }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="template" label="模板" width="120" />
         <el-table-column prop="sort" label="排序" width="100" />
         <el-table-column prop="status" label="状态" width="100">
@@ -62,12 +78,15 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPages, deletePage } from '@/api/page'
+import { getSiteOptions } from '@/api/site'
 
 const router = useRouter()
 const loading = ref(false)
 const tableData = ref([])
+const siteOptions = ref([])
 
 const searchForm = reactive({
+  site_id: null,
   title: '',
   status: ''
 })
@@ -88,6 +107,9 @@ const loadData = async () => {
       title: searchForm.title,
       status: searchForm.status
     }
+    if (searchForm.site_id) {
+      params.site_id = searchForm.site_id
+    }
     const res = await getPages(params)
     tableData.value = res.data.list
     pagination.total = res.data.total
@@ -95,6 +117,16 @@ const loadData = async () => {
     ElMessage.error('加载数据失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 获取站点选项
+const fetchSiteOptions = async () => {
+  try {
+    const res = await getSiteOptions()
+    siteOptions.value = res.data || []
+  } catch (error) {
+    console.error('获取站点列表失败:', error)
   }
 }
 
@@ -106,6 +138,7 @@ const handleSearch = () => {
 
 // 重置
 const handleReset = () => {
+  searchForm.site_id = null
   searchForm.title = ''
   searchForm.status = ''
   pagination.page = 1
@@ -151,6 +184,7 @@ const handlePageChange = () => {
 }
 
 onMounted(() => {
+  fetchSiteOptions()
   loadData()
 })
 </script>

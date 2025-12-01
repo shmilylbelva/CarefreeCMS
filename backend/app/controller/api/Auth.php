@@ -119,6 +119,17 @@ class Auth extends BaseController
             return Response::error('用户不存在');
         }
 
+        // 准备角色和权限信息
+        $roleData = null;
+        if ($user->role) {
+            $roleData = [
+                'id'          => $user->role->id,
+                'name'        => $user->role->name,
+                'permissions' => $user->role->permissions,
+                'description' => $user->role->description ?? '',
+            ];
+        }
+
         return Response::success([
             'id'         => $user->id,
             'username'   => $user->username,
@@ -128,13 +139,59 @@ class Auth extends BaseController
             'avatar'     => $user->avatar,
             'role_id'    => $user->role_id,
             'role_name'  => $user->role->name ?? '',
+            'role'       => $roleData,
             'status'     => $user->status,
             'status_text'=> $user->status_text,
         ]);
     }
 
     /**
+     * 修改密码（RESTful方式 - PATCH /auth/password）
+     */
+    public function updatePassword(Request $request)
+    {
+        $userId = $request->user['id'] ?? 0;
+        $data = $request->patch();
+
+        $oldPassword = $data['old_password'] ?? '';
+        $newPassword = $data['new_password'] ?? '';
+
+        if (!$userId) {
+            return Response::unauthorized();
+        }
+
+        if (empty($oldPassword) || empty($newPassword)) {
+            return Response::error('旧密码和新密码不能为空');
+        }
+
+        if (strlen($newPassword) < 6) {
+            return Response::error('新密码长度不能少于6位');
+        }
+
+        // 查询用户
+        $user = AdminUser::find($userId);
+        if (!$user) {
+            return Response::error('用户不存在');
+        }
+
+        // 验证旧密码
+        if (!$user->checkPassword($oldPassword)) {
+            return Response::error('旧密码错误');
+        }
+
+        // 更新密码
+        $user->password = $newPassword;
+        $user->save();
+
+        // 记录修改密码日志
+        Logger::changePassword();
+
+        return Response::success([], '密码修改成功');
+    }
+
+    /**
      * 修改密码
+     * @deprecated 使用 PATCH /auth/password 替代
      */
     public function changePassword(Request $request)
     {

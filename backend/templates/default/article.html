@@ -1,72 +1,251 @@
-{extend name="layout" /}
+{extend name="default/layout" /}
+
+{block name="title"}{$article.title} - {$site.site_name|default='国产CMS'}{/block}
+{block name="keywords"}{$article.keywords|default=''}{/block}
+{block name="description"}{$article.summary|default=''}{/block}
+
+{block name="css"}
+<link rel="stylesheet" href="{$base_url}/assets/css/article.css">
+{/block}
 
 {block name="content"}
-<div class="content-box">
-    <article>
-        <header style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
-            <h1 style="font-size: 32px; margin-bottom: 15px;">{$article.title}</h1>
-            <div style="color: #999; font-size: 14px;">
-                <span>分类：
-                    <a href="/category/{$article.category_id}.html" style="color: #409EFF; text-decoration: none;">
-                        {$article.category.name ?: '未分类'}
-                    </a>
-                </span>
-                <span style="margin-left: 20px;">作者：{$article.user.real_name ?: ($article.author ?: '管理员')}</span>
-                <span style="margin-left: 20px;">发布时间：{$article.publish_time ?: $article.create_time}</span>
-                <span style="margin-left: 20px;">浏览量：{$article.view_count}</span>
-            </div>
-            {notempty name="article.tags"}
-            <div style="margin-top: 10px;">
-                标签：
-                {volist name="article.tags" id="tag"}
-                <a href="/tag/{$tag.id}.html" style="display: inline-block; background: #f0f0f0; color: #666; padding: 3px 10px; border-radius: 3px; text-decoration: none; margin-right: 5px; font-size: 12px;">
-                    {$tag.name}
-                </a>
-                {/volist}
-            </div>
-            {/notempty}
-        </header>
+<article class="article-detail">
+    <!-- 面包屑导航 -->
+    {carefree:breadcrumb separator='/' id='crumb'}
+    <div class="breadcrumb">
+        <a href="{$crumb.url}">{$crumb.title}</a>
+        <span class="separator">/</span>
+    </div>
+    {/carefree:breadcrumb}
 
-        <div class="article-content" style="line-height: 1.8; color: #333; font-size: 16px;">
-            {$article.content|raw}
+    <!-- 文章头部 -->
+    <header class="article-header">
+        {if condition="!empty($article['flag'])"}
+        <span class="article-flag {$article.flag|lower}">{$article.flag}</span>
+        {/if}
+
+        <h1 class="article-title">{$article.title}</h1>
+
+        <div class="article-meta">
+            <span class="author">
+                <i class="icon-user"></i>
+                作者：{$article.author}
+            </span>
+            <span class="date">
+                <i class="icon-calendar"></i>
+                发布时间：{$article.publish_time|date='Y-m-d H:i:s'}
+            </span>
+            {if condition="isset($article['category_id'])"}
+            <span class="category">
+                <i class="icon-folder"></i>
+                分类：<a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
+            </span>
+            {/if}
+            <span class="views">
+                <i class="icon-eye"></i>
+                浏览：{$article.views}
+            </span>
         </div>
 
-        <footer style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #eee;">
-            <div style="display: flex; justify-content: space-between;">
-                {notempty name="prev"}
-                <div>
-                    上一篇：<a href="/article/{$prev.id}.html" style="color: #409EFF; text-decoration: none;">{$prev.title}</a>
-                </div>
-                {/notempty}
-                {notempty name="next"}
-                <div>
-                    下一篇：<a href="/article/{$next.id}.html" style="color: #409EFF; text-decoration: none;">{$next.title}</a>
-                </div>
-                {/notempty}
-            </div>
-        </footer>
-    </article>
-</div>
+        {if condition="!empty($article['tags'])"}
+        <div class="article-tags">
+            <i class="icon-tag"></i>
+            标签：
+            {carefree:foreach from="$article.tags" item="tag"}
+            <a href="{$base_url}/tag/{$tag.id}.html" class="tag">{$tag.name}</a>
+            {/carefree:foreach}
+        </div>
+        {/if}
+    </header>
 
-<style>
-    .article-content p {
-        margin-bottom: 15px;
-    }
-    .article-content img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 20px auto;
-    }
-    .article-content h2 {
-        margin-top: 30px;
-        margin-bottom: 15px;
-        font-size: 24px;
-    }
-    .article-content h3 {
-        margin-top: 25px;
-        margin-bottom: 10px;
-        font-size: 20px;
-    }
-</style>
+    <!-- 文章内容 -->
+    <div class="article-content">
+        {if condition="!empty($article['cover_image'])"}
+        <div class="article-cover">
+            <img src="{$article.cover_image}" alt="{$article.title}">
+        </div>
+        {/if}
+
+        <div class="article-body">
+            {$article.content|raw}
+        </div>
+    </div>
+
+    <!-- 文章底部 -->
+    <footer class="article-footer">
+        <!-- 版权声明 -->
+        {if condition="isset($article['copyright_type']) && $article['copyright_type'] == 'original'"}
+        <div class="article-copyright">
+            <p><strong>版权声明：</strong>本文为原创文章，版权归作者所有，转载请注明出处。</p>
+        </div>
+        {elseif condition="isset($article['copyright_type']) && $article['copyright_type'] == 'reprint'" /}
+        <div class="article-copyright">
+            <p><strong>版权声明：</strong>本文转载自 {$article.source_name}，原文链接：<a href="{$article.source_url}" target="_blank">{$article.source_url}</a></p>
+        </div>
+        {/if}
+
+        <!-- 分享按钮 -->
+        <div class="article-share">
+            <span class="share-label">分享到：</span>
+            <div class="share-buttons">
+                <a href="javascript:void(0)" class="share-btn wechat" title="分享到微信" data-type="wechat">
+                    <i class="icon-wechat"></i>微信
+                </a>
+                <a href="http://service.weibo.com/share/share.php?url={$base_url}/article/{$article.id}.html&title={$article.title}" target="_blank" class="share-btn weibo" title="分享到微博" data-type="weibo">
+                    <i class="icon-weibo"></i>微博
+                </a>
+                <a href="http://connect.qq.com/widget/shareqq/index.html?url={$base_url}/article/{$article.id}.html&title={$article.title}" target="_blank" class="share-btn qq" title="分享到QQ" data-type="qq">
+                    <i class="icon-qq"></i>QQ
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 上一篇/下一篇导航 -->
+    {carefree:prevnext aid='$article.id' catid='$article.category_id' type='same'}
+    <div class="article-navigation">
+        {if condition="isset($prev)"}
+        <a href="{$base_url}/article/{$prev.id}.html" class="nav-prev">
+            <span class="nav-label">上一篇</span>
+            <span class="nav-title">{$prev.title}</span>
+        </a>
+        {else /}
+        <span class="nav-disabled">没有上一篇了</span>
+        {/if}
+
+        {if condition="isset($next)"}
+        <a href="{$base_url}/article/{$next.id}.html" class="nav-next">
+            <span class="nav-label">下一篇</span>
+            <span class="nav-title">{$next.title}</span>
+        </a>
+        {else /}
+        <span class="nav-disabled">没有下一篇了</span>
+        {/if}
+    </div>
+    {/carefree:prevnext}
+
+    <!-- 相关文章 -->
+    {carefree:related aid='$article.id' limit='6' type='tag' id='related'}
+    <div class="related-articles">
+        <h3 class="section-title">相关文章</h3>
+        <div class="related-list">
+            <article class="related-item">
+                {if condition="!empty($related['cover_image'])"}
+                <div class="related-thumbnail">
+                    <a href="{$base_url}/article/{$related.id}.html">
+                        <img src="{$related.cover_image}" alt="{$related.title}">
+                    </a>
+                </div>
+                {/if}
+                <div class="related-content">
+                    <h4 class="related-title">
+                        <a href="{$base_url}/article/{$related.id}.html">{$related.title}</a>
+                    </h4>
+                    <div class="related-meta">
+                        <span class="date">{$related.publish_time|date='Y-m-d'}</span>
+                        <span class="views">{$related.views|default=0} 阅读</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+    {/carefree:related}
+
+    <!-- 评论区 -->
+    <div class="comments-section">
+        {carefree:comment articleid='$article.id' limit='20' id='comment'}
+        <h3 class="section-title">评论 (<span id="commentCount">{$comment_total|default=0}</span>)</h3>
+
+        <!-- 发表评论表单 -->
+        <div class="comment-form">
+            <textarea id="commentContent" rows="4" placeholder="写下你的评论..."></textarea>
+            <button id="submitCommentBtn" class="btn-submit">发表评论</button>
+        </div>
+
+        <!-- 评论列表 -->
+        <div class="comments-list">
+            <div class="comment-item">
+                <div class="comment-avatar">
+                    <img src="{$comment.user.avatar|default='/assets/images/default-avatar.png'}" alt="{$comment.user.username|default='匿名'}">
+                </div>
+                <div class="comment-content">
+                    <div class="comment-header">
+                        <span class="comment-author">{$comment.user.username|default='匿名'}</span>
+                        <span class="comment-time">{$comment.create_time|date='Y-m-d H:i'}</span>
+                    </div>
+                    <p class="comment-text">{$comment.content}</p>
+                    <div class="comment-actions">
+                        <a href="javascript:void(0)" class="comment-reply">回复</a>
+                        <a href="javascript:void(0)" class="comment-like">赞 ({$comment.like_count|default=0})</a>
+                    </div>
+
+                    <!-- 子评论/回复 -->
+                    {if condition="isset($comment['replies']) && !empty($comment['replies'])"}
+                    <div class="comment-replies">
+                        {carefree:foreach from="$comment.replies" item="reply"}
+                        <div class="comment-item reply-item">
+                            <div class="comment-avatar">
+                                <img src="{$reply.user.avatar|default='/assets/images/default-avatar.png'}" alt="{$reply.user.username|default='匿名'}">
+                            </div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <span class="comment-author">{$reply.user.username|default='匿名'}</span>
+                                    {if condition="isset($reply['reply_to_user'])"}
+                                    <span class="reply-to">回复 {$reply.reply_to_user.username}</span>
+                                    {/if}
+                                    <span class="comment-time">{$reply.create_time|date='Y-m-d H:i'}</span>
+                                </div>
+                                <p class="comment-text">{$reply.content}</p>
+                            </div>
+                        </div>
+                        {/carefree:foreach}
+                    </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+        {/carefree:comment}
+    </div>
+</article>
+{/block}
+
+{block name="js"}
+<!-- 如需代码高亮功能，请添加 highlight.js 库 -->
+<!-- <script src="/assets/js/highlight.min.js"></script> -->
+<script src="/assets/js/article.js"></script>
+<script>
+    // 代码高亮（需要先引入 highlight.js）
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     document.querySelectorAll('pre code').forEach(function(block) {
+    //         hljs.highlightBlock(block);
+    //     });
+    // });
+
+    // 分享功能
+    document.querySelectorAll('.share-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var type = this.dataset.type;
+            var url = encodeURIComponent(window.location.href);
+            var title = encodeURIComponent(document.title);
+            var shareUrl = '';
+
+            switch(type) {
+                case 'weibo':
+                    shareUrl = 'http://service.weibo.com/share/share.php?url=' + url + '&title=' + title;
+                    break;
+                case 'qq':
+                    shareUrl = 'http://connect.qq.com/widget/shareqq/index.html?url=' + url + '&title=' + title;
+                    break;
+                case 'wechat':
+                    // 显示二维码
+                    alert('请使用微信扫描二维码分享');
+                    return;
+            }
+
+            if (shareUrl) {
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+        });
+    });
+</script>
 {/block}

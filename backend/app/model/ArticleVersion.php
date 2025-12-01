@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 文章版本模型
  */
-class ArticleVersion extends Model
+class ArticleVersion extends SiteModel
 {
     protected $name = 'article_versions';
 
@@ -119,6 +119,7 @@ class ArticleVersion extends Model
         }
 
         $version = new self();
+        $version->site_id         = $article->site_id;  // 使用文章所属的站点ID
         $version->article_id      = $article->id;
         $version->version_number  = $versionNumber;
         $version->title           = $article->title;

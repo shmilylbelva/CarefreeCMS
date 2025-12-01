@@ -8,7 +8,7 @@ use think\Model;
 /**
  * URL重定向规则模型
  */
-class SeoRedirect extends Model
+class SeoRedirect extends SiteModel
 {
     protected $name = 'seo_redirects';
 

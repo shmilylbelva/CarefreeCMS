@@ -9,7 +9,7 @@ use think\model\concern\SoftDelete;
 /**
  * 幻灯片模型
  */
-class Slider extends Model
+class Slider extends SiteModel
 {
     use SoftDelete;
 
@@ -32,10 +32,11 @@ class Slider extends Model
 
     /**
      * 关联分组
+     * 使用统一的 Group 模型
      */
     public function group()
     {
-        return $this->belongsTo(SliderGroup::class, 'group_id', 'id');
+        return $this->belongsTo(Group::class, 'group_id', 'id');
     }
 
     /**

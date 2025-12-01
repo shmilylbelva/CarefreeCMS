@@ -5,7 +5,7 @@
         <div class="card-header">
           <h2>逍遥内容管理系统</h2>
           <p class="subtitle">CarefreeCMS</p>
-          <p class="version">v1.3.0</p>
+          <p class="version">v2.0.0</p>
           <p class="version">默认用户名:admin 密码：admin123</p>
         </div>
       </template>
@@ -69,11 +69,13 @@ const loginForm = reactive({
 
 const loginRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { max: 50, message: '用户名长度不能超过50位', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
+    { max: 128, message: '密码长度不能超过128位', trigger: 'blur' }
   ]
 }
 

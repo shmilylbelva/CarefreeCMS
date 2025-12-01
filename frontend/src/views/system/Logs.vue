@@ -70,6 +70,111 @@
         </el-card>
       </el-tab-pane>
 
+      <!-- 操作日志 -->
+      <el-tab-pane label="操作日志" name="operation">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <el-form :inline="true" :model="operationFilters">
+                <el-form-item label="用户名">
+                  <el-input v-model="operationFilters.username" placeholder="请输入用户名" clearable style="width: 150px;" />
+                </el-form-item>
+                <el-form-item label="模块">
+                  <el-select v-model="operationFilters.module" placeholder="请选择模块" clearable style="width: 150px;">
+                    <el-option
+                      v-for="module in modules"
+                      :key="module.value"
+                      :label="module.label"
+                      :value="module.value"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="操作类型">
+                  <el-select v-model="operationFilters.action" placeholder="请选择操作类型" clearable style="width: 150px;">
+                    <el-option
+                      v-for="action in actions"
+                      :key="action.value"
+                      :label="action.label"
+                      :value="action.value"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="状态">
+                  <el-select v-model="operationFilters.status" placeholder="请选择状态" clearable style="width: 120px;">
+                    <el-option label="成功" :value="1" />
+                    <el-option label="失败" :value="0" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="日期范围">
+                  <el-date-picker
+                    v-model="operationDateRange"
+                    type="daterange"
+                    range-separator="至"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                    value-format="YYYY-MM-DD"
+                    style="width: 240px;"
+                  />
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="loadOperationLogs" :icon="Search">搜索</el-button>
+                  <el-button @click="resetOperationFilters">重置</el-button>
+                  <el-button type="danger" @click="handleBatchDelete('operation')">批量删除</el-button>
+                  <el-button type="warning" @click="showCleanDialog('operation')">清空日志</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+          </template>
+
+          <el-table :data="operationLogs" border stripe @selection-change="handleOperationSelection">
+            <el-table-column type="selection" width="55" />
+            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="username" label="操作用户" width="120" />
+            <el-table-column prop="module" label="模块" width="100">
+              <template #default="{ row }">
+                {{ getModuleName(row.module) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="action" label="操作类型" width="100">
+              <template #default="{ row }">
+                {{ getActionName(row.action) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="description" label="操作描述" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="ip" label="IP地址" width="140" />
+            <el-table-column prop="status" label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 1 ? 'success' : 'danger'">
+                  {{ row.status === 1 ? '成功' : '失败' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="execute_time" label="执行时间" width="100">
+              <template #default="{ row }">
+                {{ row.execute_time }}ms
+              </template>
+            </el-table-column>
+            <el-table-column prop="create_time" label="操作时间" width="180" />
+            <el-table-column label="操作" width="100" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" size="small" @click="handleViewDetail(row, 'operation')">详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <el-pagination
+            v-model:current-page="operationPagination.page"
+            v-model:page-size="operationPagination.page_size"
+            :total="operationPagination.total"
+            :page-sizes="[20, 50, 100, 200]"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleOperationSizeChange"
+            @current-change="loadOperationLogs"
+            class="mt-4"
+          />
+        </el-card>
+      </el-tab-pane>
+
       <!-- 登录日志 -->
       <el-tab-pane label="登录日志" name="login">
         <el-card shadow="never">
@@ -203,26 +308,55 @@
     </el-tabs>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="detailVisible" :title="detailTitle" width="700px">
-      <el-descriptions :column="1" border>
-        <el-descriptions-item v-for="(value, key) in detailData" :key="key" :label="key">
-          <pre v-if="typeof value === 'object'">{{ JSON.stringify(value, null, 2) }}</pre>
-          <span v-else>{{ value }}</span>
-        </el-descriptions-item>
-      </el-descriptions>
+    <el-dialog v-model="detailVisible" :title="detailTitle" width="900px">
+      <el-tabs v-if="currentLog" type="border-card">
+        <el-tab-pane label="基本信息">
+          <el-descriptions :column="1" border>
+            <el-descriptions-item v-for="(value, key) in detailData" :key="key" :label="getFieldLabel(key)">
+              <pre v-if="typeof value === 'object'">{{ JSON.stringify(value, null, 2) }}</pre>
+              <span v-else>{{ value }}</span>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-tab-pane>
+
+        <el-tab-pane label="变更对比" v-if="hasChanges(currentLog)">
+          <el-alert type="info" :closable="false" style="margin-bottom: 15px;">
+            <template #title>
+              变更字段：{{ currentLog.changed_fields || '无' }}
+            </template>
+          </el-alert>
+          <el-table :data="getChanges(currentLog)" border stripe>
+            <el-table-column prop="field" label="字段名" width="150" />
+            <el-table-column label="修改前" min-width="250">
+              <template #default="{ row }">
+                <div style="word-break: break-all; white-space: pre-wrap;">{{ formatValue(row.oldValue) }}</div>
+              </template>
+            </el-table-column>
+            <el-table-column label="修改后" min-width="250">
+              <template #default="{ row }">
+                <div style="word-break: break-all; white-space: pre-wrap;">{{ formatValue(row.newValue) }}</div>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div v-if="!hasChanges(currentLog)" style="text-align: center; padding: 40px; color: #909399;">
+            <el-icon size="48"><DocumentCopy /></el-icon>
+            <p style="margin-top: 10px;">暂无变更记录</p>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </el-dialog>
 
     <!-- 清理对话框 -->
     <el-dialog v-model="cleanVisible" title="清理旧日志" width="400px">
       <el-form>
         <el-form-item label="保留天数">
-          <el-input-number v-model="cleanDays" :min="1" :max="365" />
+          <el-input-number v-model="cleanDays" :min="7" :max="365" />
           <el-text type="info" class="ml-2">将删除指定天数之前的日志</el-text>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="cleanVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCleanLogs">确定</el-button>
+        <el-button type="primary" @click="handleCleanLogs" :loading="cleaning">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -231,21 +365,25 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { Search, DocumentCopy } from '@element-plus/icons-vue'
 import {
   getSystemLogs,
-  getLoginLogs,
-  getSecurityLogs,
   deleteSystemLog,
-  deleteLoginLog,
-  deleteSecurityLog,
   batchDeleteSystemLogs,
-  batchDeleteLoginLogs,
-  batchDeleteSecurityLogs,
-  cleanOldLogs
+  cleanOldLogs,
+  deleteLoginLog,
+  batchDeleteLoginLogs
 } from '@/api/log'
+import {
+  getOperationLogs,
+  getModules,
+  getActions,
+  clearLogs
+} from '@/api/operationLog'
+import request from '@/api/request'
 
 const activeTab = ref('system')
+const cleaning = ref(false)
 
 // 系统日志
 const systemLogs = ref([])
@@ -260,6 +398,24 @@ const systemPagination = reactive({
   total: 0
 })
 const selectedSystemLogs = ref([])
+
+// 操作日志
+const operationLogs = ref([])
+const operationFilters = reactive({
+  username: '',
+  module: '',
+  action: '',
+  status: ''
+})
+const operationPagination = reactive({
+  page: 1,
+  page_size: 20,
+  total: 0
+})
+const selectedOperationLogs = ref([])
+const operationDateRange = ref([])
+const modules = ref([])
+const actions = ref([])
 
 // 登录日志
 const loginLogs = ref([])
@@ -293,17 +449,21 @@ const selectedSecurityLogs = ref([])
 const detailVisible = ref(false)
 const detailTitle = ref('')
 const detailData = ref({})
+const currentLog = ref(null)
 const cleanVisible = ref(false)
 const cleanDays = ref(30)
 const cleanLogType = ref('system')
 
 onMounted(() => {
   loadSystemLogs()
+  loadOperationOptions()
 })
 
 const handleTabChange = (tab) => {
   if (tab === 'system') {
     loadSystemLogs()
+  } else if (tab === 'operation') {
+    loadOperationLogs()
   } else if (tab === 'login') {
     loadLoginLogs()
   } else if (tab === 'security') {
@@ -312,33 +472,114 @@ const handleTabChange = (tab) => {
 }
 
 const loadSystemLogs = async () => {
-  const { data } = await getSystemLogs({
-    page: systemPagination.page,
-    per_page: systemPagination.per_page,
-    ...systemFilters
-  })
-  systemLogs.value = data.list
-  systemPagination.total = data.total
+  try {
+    const { data } = await getSystemLogs({
+      page: systemPagination.page,
+      per_page: systemPagination.per_page,
+      ...systemFilters
+    })
+    systemLogs.value = data.list || data.data || []
+    systemPagination.total = data.total
+  } catch (error) {
+    console.error('加载系统日志失败:', error)
+    systemLogs.value = []
+  }
+}
+
+const loadOperationLogs = async () => {
+  try {
+    const params = {
+      page: operationPagination.page,
+      page_size: operationPagination.page_size,
+      username: operationFilters.username,
+      module: operationFilters.module,
+      action: operationFilters.action,
+      status: operationFilters.status
+    }
+
+    if (operationDateRange.value && operationDateRange.value.length === 2) {
+      params.start_date = operationDateRange.value[0]
+      params.end_date = operationDateRange.value[1]
+    }
+
+    const res = await getOperationLogs(params)
+    operationLogs.value = res.data.list || []
+    operationPagination.total = res.data.total || 0
+  } catch (error) {
+    console.error('加载操作日志失败:', error)
+    operationLogs.value = []
+  }
+}
+
+const loadOperationOptions = async () => {
+  try {
+    const [modulesRes, actionsRes] = await Promise.all([
+      getModules(),
+      getActions()
+    ])
+    modules.value = Array.isArray(modulesRes.data) ? modulesRes.data : []
+    actions.value = Array.isArray(actionsRes.data) ? actionsRes.data : []
+  } catch (error) {
+    console.error('加载选项失败:', error)
+    modules.value = []
+    actions.value = []
+  }
 }
 
 const loadLoginLogs = async () => {
-  const { data } = await getLoginLogs({
-    page: loginPagination.page,
-    per_page: loginPagination.per_page,
-    ...loginFilters
-  })
-  loginLogs.value = data.list
-  loginPagination.total = data.total
+  try {
+    const { data } = await getOperationLogs({
+      page: loginPagination.page,
+      per_page: loginPagination.per_page,
+      module: 'auth',
+      action: 'login',
+      username: loginFilters.username,
+      status: loginFilters.status,
+      ip: loginFilters.ip
+    })
+    loginLogs.value = (data.list || []).map(log => ({
+      id: log.id,
+      username: log.username,
+      ip: log.ip,
+      location: log.location || '-',
+      status: log.status === 1 ? 'success' : 'failed',
+      fail_reason: log.status === 0 ? (log.description || '登录失败') : '',
+      login_time: log.create_time
+    }))
+    loginPagination.total = data.total
+  } catch (error) {
+    console.error('加载登录日志失败:', error)
+    loginLogs.value = []
+  }
 }
 
 const loadSecurityLogs = async () => {
-  const { data } = await getSecurityLogs({
-    page: securityPagination.page,
-    per_page: securityPagination.per_page,
-    ...securityFilters
-  })
-  securityLogs.value = data.list
-  securityPagination.total = data.total
+  try {
+    const { data } = await getSystemLogs({
+      page: securityPagination.page,
+      per_page: securityPagination.per_page,
+      category: 'security',
+      keyword: securityFilters.type,
+      level: securityFilters.level,
+      ip: securityFilters.ip
+    })
+    securityLogs.value = ((data.list || data.data || []).map(log => ({
+      id: log.id,
+      type: log.message?.includes('SQL') ? 'sql_injection' :
+            log.message?.includes('XSS') ? 'xss_attack' :
+            log.message?.includes('CSRF') ? 'csrf_attack' :
+            log.message?.includes('暴力') ? 'brute_force' : log.category,
+      level: log.level || 'low',
+      ip: log.ip,
+      description: log.message,
+      is_blocked: log.level === 'error' || log.level === 'critical',
+      create_time: log.create_time
+    })))
+    securityPagination.total = data.total
+  } catch (error) {
+    console.error('加载安全日志失败:', error)
+    securityLogs.value = []
+  }
 }
 
 const resetSystemFilters = () => {
@@ -347,6 +588,16 @@ const resetSystemFilters = () => {
   systemFilters.keyword = ''
   systemPagination.page = 1
   loadSystemLogs()
+}
+
+const resetOperationFilters = () => {
+  operationFilters.username = ''
+  operationFilters.module = ''
+  operationFilters.action = ''
+  operationFilters.status = ''
+  operationDateRange.value = []
+  operationPagination.page = 1
+  loadOperationLogs()
 }
 
 const resetLoginFilters = () => {
@@ -369,6 +620,10 @@ const handleSystemSelection = (selection) => {
   selectedSystemLogs.value = selection
 }
 
+const handleOperationSelection = (selection) => {
+  selectedOperationLogs.value = selection
+}
+
 const handleLoginSelection = (selection) => {
   selectedLoginLogs.value = selection
 }
@@ -381,15 +636,16 @@ const handleDelete = async (id, type) => {
   try {
     await ElMessageBox.confirm('确定要删除这条日志吗？', '提示', { type: 'warning' })
 
-    if (type === 'system') {
+    if (type === 'system' || type === 'security') {
       await deleteSystemLog(id)
-      loadSystemLogs()
+      if (type === 'system') {
+        loadSystemLogs()
+      } else {
+        loadSecurityLogs()
+      }
     } else if (type === 'login') {
       await deleteLoginLog(id)
       loadLoginLogs()
-    } else if (type === 'security') {
-      await deleteSecurityLog(id)
-      loadSecurityLogs()
     }
 
     ElMessage.success('删除成功')
@@ -402,15 +658,15 @@ const handleDelete = async (id, type) => {
 
 const handleBatchDelete = async (type) => {
   let selected
-  if (type === 'system') {
-    selected = selectedSystemLogs.value
+  if (type === 'system' || type === 'security') {
+    selected = type === 'system' ? selectedSystemLogs.value : selectedSecurityLogs.value
   } else if (type === 'login') {
     selected = selectedLoginLogs.value
-  } else if (type === 'security') {
-    selected = selectedSecurityLogs.value
+  } else if (type === 'operation') {
+    selected = selectedOperationLogs.value
   }
 
-  if (selected.length === 0) {
+  if (!selected || selected.length === 0) {
     ElMessage.warning('请选择要删除的日志')
     return
   }
@@ -420,15 +676,23 @@ const handleBatchDelete = async (type) => {
 
     const ids = selected.map(item => item.id)
 
-    if (type === 'system') {
+    if (type === 'system' || type === 'security') {
       await batchDeleteSystemLogs({ ids })
-      loadSystemLogs()
+      if (type === 'system') {
+        loadSystemLogs()
+      } else {
+        loadSecurityLogs()
+      }
     } else if (type === 'login') {
       await batchDeleteLoginLogs({ ids })
       loadLoginLogs()
-    } else if (type === 'security') {
-      await batchDeleteSecurityLogs({ ids })
-      loadSecurityLogs()
+    } else if (type === 'operation') {
+      await request({
+        url: '/operation-log/batch-delete',
+        method: 'post',
+        data: { ids }
+      })
+      loadOperationLogs()
     }
 
     ElMessage.success('删除成功')
@@ -440,7 +704,14 @@ const handleBatchDelete = async (type) => {
 }
 
 const handleViewDetail = (row, type) => {
-  detailTitle.value = type === 'system' ? '系统日志详情' : '安全日志详情'
+  currentLog.value = row
+  if (type === 'system') {
+    detailTitle.value = '系统日志详情'
+  } else if (type === 'operation') {
+    detailTitle.value = '操作日志详情'
+  } else if (type === 'security') {
+    detailTitle.value = '安全日志详情'
+  }
   detailData.value = { ...row }
   detailVisible.value = true
 }
@@ -452,23 +723,42 @@ const showCleanDialog = (type) => {
 
 const handleCleanLogs = async () => {
   try {
-    const { data } = await cleanOldLogs({
-      days: cleanDays.value,
-      log_type: cleanLogType.value
-    })
-    ElMessage.success(`成功清理 ${data.count} 条日志`)
-    cleanVisible.value = false
+    cleaning.value = true
 
-    if (cleanLogType.value === 'system') {
-      loadSystemLogs()
-    } else if (cleanLogType.value === 'login') {
-      loadLoginLogs()
-    } else if (cleanLogType.value === 'security') {
-      loadSecurityLogs()
+    if (cleanLogType.value === 'operation') {
+      // 操作日志使用自己的清理API
+      await clearLogs(cleanDays.value)
+      ElMessage.success('清理成功')
+      loadOperationLogs()
+    } else {
+      // 系统日志、登录日志、安全日志使用通用清理API
+      const { data } = await cleanOldLogs({
+        days: cleanDays.value,
+        log_type: cleanLogType.value
+      })
+      ElMessage.success(`成功清理 ${data.count} 条日志`)
+
+      if (cleanLogType.value === 'system') {
+        loadSystemLogs()
+      } else if (cleanLogType.value === 'login') {
+        loadLoginLogs()
+      } else if (cleanLogType.value === 'security') {
+        loadSecurityLogs()
+      }
     }
+
+    cleanVisible.value = false
   } catch (error) {
-    ElMessage.error('清理失败')
+    ElMessage.error(error.message || '清理失败')
+  } finally {
+    cleaning.value = false
   }
+}
+
+const handleOperationSizeChange = (size) => {
+  operationPagination.page_size = size
+  operationPagination.page = 1
+  loadOperationLogs()
 }
 
 const getLevelType = (level) => {
@@ -501,6 +791,123 @@ const getSecurityLevelType = (level) => {
     critical: 'danger'
   }
   return types[level] || ''
+}
+
+const getModuleName = (module) => {
+  if (!Array.isArray(modules.value)) return module
+  const item = modules.value.find(m => m.value === module)
+  return item ? item.label : module
+}
+
+const getActionName = (action) => {
+  if (!Array.isArray(actions.value)) return action
+  const item = actions.value.find(a => a.value === action)
+  return item ? item.label : action
+}
+
+const getFieldLabel = (key) => {
+  const labels = {
+    id: 'ID',
+    username: '用户名',
+    module: '模块',
+    action: '操作类型',
+    description: '操作描述',
+    ip: 'IP地址',
+    user_agent: '用户代理',
+    request_method: '请求方法',
+    request_url: '请求URL',
+    request_params: '请求参数',
+    status: '状态',
+    error_msg: '错误信息',
+    execute_time: '执行时间',
+    create_time: '创建时间',
+    level: '级别',
+    category: '分类',
+    message: '消息',
+    method: '方法',
+    url: 'URL',
+    context: '上下文'
+  }
+  return labels[key] || key
+}
+
+const hasChanges = (log) => {
+  return log && (log.old_values || log.new_values || log.changed_fields)
+}
+
+const getChanges = (log) => {
+  if (!log || !log.old_values || !log.new_values) {
+    return []
+  }
+
+  try {
+    const oldValues = JSON.parse(log.old_values)
+    const newValues = JSON.parse(log.new_values)
+    const changes = []
+
+    const fieldNames = {
+      'title': '标题',
+      'category_id': '分类ID',
+      'status': '状态',
+      'is_top': '置顶',
+      'is_recommend': '推荐',
+      'is_hot': '热门',
+      'summary': '摘要',
+      'seo_keywords': 'SEO关键词',
+      'seo_description': 'SEO描述'
+    }
+
+    const statusMap = {
+      0: '草稿',
+      1: '已发布',
+      2: '待审核',
+      3: '已下线'
+    }
+
+    const booleanMap = {
+      0: '否',
+      1: '是'
+    }
+
+    for (const key in oldValues) {
+      const field = fieldNames[key] || key
+      let oldValue = oldValues[key]
+      let newValue = newValues[key]
+
+      if (key === 'status') {
+        oldValue = statusMap[oldValue] || oldValue
+        newValue = statusMap[newValue] || newValue
+      } else if (['is_top', 'is_recommend', 'is_hot'].includes(key)) {
+        oldValue = booleanMap[oldValue] || oldValue
+        newValue = booleanMap[newValue] || newValue
+      }
+
+      changes.push({
+        field,
+        oldValue,
+        newValue
+      })
+    }
+
+    return changes
+  } catch (e) {
+    console.error('解析变更数据失败:', e)
+    return []
+  }
+}
+
+const formatValue = (value) => {
+  if (value === null || value === undefined) {
+    return '(空)'
+  }
+  if (value === '') {
+    return '(空字符串)'
+  }
+  return value
+}
+
+const loadLoginStats = () => {
+  ElMessage.info('登录统计功能开发中...')
 }
 </script>
 

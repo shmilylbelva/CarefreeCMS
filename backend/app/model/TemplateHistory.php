@@ -29,7 +29,7 @@ class TemplateHistory extends Model
      */
     public function user()
     {
-        return $this->belongsTo(\app\model\AdminUser::class, 'user_id');
+        return $this->belongsTo(\app\model\AdminUser::class, 'user_id', 'id');
     }
 
     /**

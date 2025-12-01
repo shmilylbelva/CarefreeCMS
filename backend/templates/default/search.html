@@ -1,0 +1,103 @@
+{extend name="default/layout" /}
+
+{block name="title"}搜索：{$keyword} - {$site.site_name|default='国产CMS'}{/block}
+
+{block name="content"}
+<div class="search-page">
+    <div class="search-header">
+        <h1>搜索结果</h1>
+        <div class="search-form">
+            <form action="/search" method="get">
+                <input type="text" name="q" value="{$keyword}" placeholder="输入关键词搜索..." autofocus>
+                <button type="submit">搜索</button>
+            </form>
+        </div>
+        {if condition="$keyword"}
+        <p class="search-info">
+            关键词 "<strong>{$keyword}</strong>" 共找到 <strong>{$total}</strong> 条结果
+        </p>
+        {/if}
+    </div>
+
+    {if condition="$articles"}
+    <div class="search-results">
+        {carefree:foreach from="$articles" item="article"}
+        <article class="search-item">
+            <h3 class="article-title">
+                <a href="/article/{$article.id}">{$article.title|highlight(keyword)|raw}</a>
+            </h3>
+
+            {if condition="!empty($article['summary'])"}
+            <p class="article-excerpt">{$article.summary}</p>
+            {/if}
+
+            <div class="article-meta">
+                {if condition="isset($article['category_id'])"}
+                <span class="category">
+                    <i class="icon-folder"></i>
+                    <a href="/category/{$article.category_id}">{$article.category_name|default='未分类'}</a>
+                </span>
+                {/if}
+                <span class="date">
+                    <i class="icon-calendar"></i>
+                    {$article.publish_time|date='Y-m-d'}
+                </span>
+                <span class="views">
+                    <i class="icon-eye"></i>
+                    {$article.views} 阅读
+                </span>
+            </div>
+        </article>
+        {/carefree:foreach}
+    </div>
+
+    <!-- 分页 -->
+    {if condition="$pages > 1"}
+    <div class="pagination">
+        {if condition="$page > 1"}
+        <a href="?q={$keyword}&page={$page - 1}" class="page-link prev">上一页</a>
+        {/if}
+
+        {for start="1" end="$pages" name="p"}
+        {if condition="$p == $page"}
+        <span class="page-link active">{$p}</span>
+        {else /}
+        <a href="?q={$keyword}&page={$p}" class="page-link">{$p}</a>
+        {/if}
+        {/for}
+
+        {if condition="$page < $pages"}
+        <a href="?q={$keyword}&page={$page + 1}" class="page-link next">下一页</a>
+        {/if}
+    </div>
+    {/if}
+
+    {else /}
+    <div class="empty-state">
+        {if condition="$keyword"}
+        <p>未找到与 "{$keyword}" 相关的内容</p>
+        <p class="tips">建议：</p>
+        <ul class="tips-list">
+            <li>检查输入的关键词是否正确</li>
+            <li>尝试使用更简短或更通用的关键词</li>
+            <li>尝试使用不同的关键词</li>
+        </ul>
+        {else /}
+        <p>请输入关键词进行搜索</p>
+        {/if}
+    </div>
+    {/if}
+
+    <!-- 热门搜索 -->
+    {if condition="$hot_keywords"}
+    <div class="hot-keywords">
+        <h3>热门搜索</h3>
+        <div class="keyword-tags">
+            {carefree:foreach from="$hot_keywords" item="kw"}
+            <a href="/search?q={$kw}" class="keyword-tag">{$kw}</a>
+            {/carefree:foreach}
+        </div>
+    </div>
+    {/if}
+</div>
+{/block}

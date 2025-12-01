@@ -168,7 +168,7 @@ const fetchMedia = async () => {
   try {
     const params = {
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,
       filename: searchForm.filename,
       type: searchForm.type
     }
@@ -179,7 +179,7 @@ const fetchMedia = async () => {
     }
 
     const res = await request({
-      url: '/media/list',
+      url: '/media',
       method: 'get',
       params
     })

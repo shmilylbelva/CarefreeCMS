@@ -94,6 +94,67 @@ class AuthorTagService
     }
 
     /**
+     * 获取单个作者基本信息（不包含文章列表）
+     *
+     * @param int $authorId 作者ID
+     * @return array|null
+     */
+    public static function getInfo($authorId)
+    {
+        if ($authorId <= 0) {
+            return null;
+        }
+
+        $cacheKey = 'author_info_' . $authorId;
+        $result = Cache::get($cacheKey);
+
+        if ($result !== false) {
+            return $result;
+        }
+
+        // 获取作者基本信息
+        $author = Db::table('users')
+            ->alias('u')
+            ->field('u.id, u.username, u.real_name, u.avatar, u.bio, u.email, u.create_time, u.role_id, r.name as role_name')
+            ->leftJoin('roles r', 'u.role_id = r.id')
+            ->where('u.id', $authorId)
+            ->where('u.status', 1)
+            ->find();
+
+        if (!$author) {
+            Cache::set($cacheKey, null, 1800);
+            return null;
+        }
+
+        // 获取统计信息
+        $author['article_count'] = Db::table('articles')
+            ->where('user_id', $authorId)
+            ->where('status', 1)
+            ->count();
+
+        $author['like_count'] = Db::table('articles')
+            ->where('user_id', $authorId)
+            ->where('status', 1)
+            ->sum('like_count') ?: 0;
+
+        $author['follower_count'] = 0; // 暂时设为0，待实现粉丝功能
+
+        // 处理作者数据
+        $author['display_name'] = !empty($author['real_name']) ? $author['real_name'] : $author['username'];
+
+        if (empty($author['avatar'])) {
+            $author['avatar'] = '/static/default-avatar.png';
+        }
+
+        $author['url'] = '/author/' . $author['id'] . '.html';
+
+        // 缓存30分钟
+        Cache::set($cacheKey, $author, 1800);
+
+        return $author;
+    }
+
+    /**
      * 获取单个作者信息（包含文章列表）
      *
      * @param int $authorId 作者ID

@@ -8,7 +8,7 @@ use think\Model;
 /**
  * SEO关键词排名追踪模型
  */
-class SeoKeywordRanking extends Model
+class SeoKeywordRanking extends SiteModel
 {
     protected $name = 'seo_keyword_rankings';
 

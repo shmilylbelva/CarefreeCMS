@@ -1,0 +1,117 @@
+<!-- 搜索框 -->
+<div class="sidebar-widget search-widget">
+    <h3 class="widget-title">站内搜索</h3>
+    <div class="widget-content">
+        <form action="{$base_url}/search" method="get" class="search-form">
+            <input type="text" name="q" placeholder="输入关键词..." value="{$keyword}">
+            <button type="submit"><i class="icon-search"></i></button>
+        </form>
+    </div>
+</div>
+
+<!-- 热门文章 -->
+{if condition="$hot_articles"}
+<div class="sidebar-widget hot-articles-widget">
+    <h3 class="widget-title">热门文章</h3>
+    <div class="widget-content">
+        <ul class="article-list-small">
+            {carefree:foreach from="$hot_articles" item="article"}
+            <li class="article-item-small">
+                {if condition="!empty($article['cover_image'])"}
+                <a href="{$base_url}/article/{$article.id}.html" class="article-thumb">
+                    <img src="{$article.cover_image}" alt="{$article.title}">
+                </a>
+                {/if}
+                <div class="article-info">
+                    <h4><a href="{$base_url}/article/{$article.id}.html">{$article.title}</a></h4>
+                    <span class="views">{$article.views} 阅读</span>
+                </div>
+            </li>
+            {/carefree:foreach}
+        </ul>
+    </div>
+</div>
+{/if}
+
+<!-- 最新文章 -->
+{if condition="$latest_articles"}
+<div class="sidebar-widget latest-articles-widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-content">
+        <ul class="article-list-simple">
+            {carefree:foreach from="$latest_articles" item="article"}
+            <li>
+                <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
+                <span class="date">{$article.publish_time|date='m-d'}</span>
+            </li>
+            {/carefree:foreach}
+        </ul>
+    </div>
+</div>
+{/if}
+
+<!-- 分类导航 -->
+{if condition="$categories"}
+<div class="sidebar-widget category-widget">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget-content">
+        <ul class="category-list">
+            {carefree:foreach from="$categories" item="category"}
+            <li>
+                <a href="{$base_url}/category/{$category.id}.html">
+                    <span class="category-name">{$category.name}</span>
+                    <span class="category-count">{$category.article_count}</span>
+                </a>
+            </li>
+            {/carefree:foreach}
+        </ul>
+    </div>
+</div>
+{/if}
+
+<!-- 标签云 -->
+{if condition="$tags"}
+<div class="sidebar-widget tags-widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-content">
+        <div class="tag-cloud">
+            {carefree:foreach from="$tags" item="tag"}
+            <a href="{$base_url}/tag/{$tag.id}.html" class="tag-item" style="font-size: {$12 + (tag.article_count / 10)}px;">
+                {$tag.name}
+            </a>
+            {/carefree:foreach}
+        </div>
+    </div>
+</div>
+{/if}
+
+<!-- 广告位 -->
+{if condition="$sidebar_ads"}
+{carefree:foreach from="$sidebar_ads" item="ad"}
+<div class="sidebar-widget ad-widget">
+    <div class="widget-content">
+        <a href="{$ad.link_url}" target="_blank" rel="nofollow">
+            <img src="{$ad.image_url}" alt="{$ad.title}">
+        </a>
+    </div>
+</div>
+{/carefree:foreach}
+{/if}
+
+<!-- 友情链接 -->
+{if condition="$sidebar_links"}
+<div class="sidebar-widget links-widget">
+    <h3 class="widget-title">友情链接</h3>
+    <div class="widget-content">
+        <ul class="links-list">
+            {carefree:foreach from="$sidebar_links" item="link"}
+            <li>
+                <a href="{$link.url}" target="_blank" rel="nofollow" title="{$link.description}">
+                    {$link.name}
+                </a>
+            </li>
+            {/carefree:foreach}
+        </ul>
+    </div>
+</div>
+{/if}

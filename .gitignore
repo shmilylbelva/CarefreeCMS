@@ -1,0 +1,48 @@
+# ============================================
+# CMS 项目 Git 忽略文件
+# ============================================
+
+# ========== 通用 ==========
+.DS_Store
+Thumbs.db
+*.log
+*.bak
+*.tmp
+*.swp
+*~
+
+# ========== IDE ==========
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# ========== ThinkPHP (api/) ==========
+api/runtime/
+api/vendor/
+api/composer.lock
+api/.env
+api/public/uploads/*
+!api/public/uploads/.gitkeep
+
+# ========== Vue 3 (backend/) ==========
+backend/node_modules/
+backend/dist/
+backend/.env.local
+backend/.env.development.local
+backend/.env.production.local
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+
+# ========== 静态文件 ==========
+api/html/*
+!api/html/.gitkeep
+
+# ========== 数据库 ==========
+*.sql.bak
+*.db
+
+# ========== 系统文件 ==========
+*.cache
+.temp/

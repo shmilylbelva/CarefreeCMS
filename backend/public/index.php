@@ -13,6 +13,11 @@ use think\App;
 
 // [ 应用入口文件 ]
 
+// 设置内部字符编码为 UTF-8
+mb_internal_encoding('UTF-8');
+ini_set('default_charset', 'UTF-8');
+header('Content-Type: text/html; charset=utf-8');
+
 require __DIR__ . '/../vendor/autoload.php';
 
 // 执行HTTP应用并响应

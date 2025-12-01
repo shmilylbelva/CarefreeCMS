@@ -4,15 +4,25 @@ namespace app\controller\api;
 
 use app\BaseController;
 use app\common\Response;
-use app\model\Media as MediaModel;
+use app\model\MediaLibrary;
+use app\service\MediaLibraryService;
+use think\App;
 use think\Request;
-use think\facade\Filesystem;
 
 /**
  * 媒体库控制器
+ * 使用新的媒体库系统（MediaLibrary + MediaFile）
  */
 class Media extends BaseController
 {
+    protected $mediaService;
+
+    public function __construct(App $app)
+    {
+        parent::__construct($app);
+        $this->mediaService = new MediaLibraryService();
+    }
+
     /**
      * 媒体文件列表
      */
@@ -24,45 +34,108 @@ class Media extends BaseController
         $filename = $request->get('filename', '');
         $startDate = $request->get('start_date', '');
         $endDate = $request->get('end_date', '');
+        $categoryId = $request->get('category_id', '');
+        $tagId = $request->get('tag_id', '');
 
         // 构建查询
-        $query = MediaModel::with(['user'])
-            ->order('create_time', 'desc');
+        $query = MediaLibrary::with(['file', 'user'])
+            ->order('created_at', 'desc');
 
         // 搜索条件
         if (!empty($type)) {
-            $query->where('file_type', $type);
+            // 通过关联的file表查询文件类型
+            $query->hasWhere('file', function ($q) use ($type) {
+                $q->where('file_type', $type);
+            });
         }
+
         if (!empty($filename)) {
-            $query->where('file_name', 'like', '%' . $filename . '%');
+            $query->where('title', 'like', '%' . $filename . '%');
         }
+
         // 日期范围查询
         if (!empty($startDate)) {
-            $query->whereTime('create_time', '>=', $startDate . ' 00:00:00');
+            $query->whereTime('created_at', '>=', $startDate . ' 00:00:00');
         }
+
         if (!empty($endDate)) {
-            $query->whereTime('create_time', '<=', $endDate . ' 23:59:59');
+            $query->whereTime('created_at', '<=', $endDate . ' 23:59:59');
+        }
+
+        // 分类筛选
+        if (!empty($categoryId)) {
+            $query->hasWhere('categories', function ($q) use ($categoryId) {
+                $q->where('id', $categoryId);
+            });
+        }
+
+        // 标签筛选
+        if (!empty($tagId)) {
+            $query->hasWhere('tags', function ($q) use ($tagId) {
+                $q->where('id', $tagId);
+            });
         }
 
         // 分页
         $list = $query->page($page, $pageSize)->select();
 
-        // 计算总数（需要使用相同的查询条件）
-        $total = MediaModel::when(!empty($type), function($query) use ($type) {
-            $query->where('file_type', $type);
+        // 处理返回数据
+        $data = $list->map(function ($media) {
+            return [
+                'id' => $media->id,
+                'title' => $media->title,
+                'file_name' => $media->file ? $media->file->file_name : '',
+                'file_url' => $media->file_url,
+                'file_type' => $media->file ? $media->file->file_type : '',
+                'file_size' => $media->file ? $media->file->file_size : 0,
+                'width' => $media->file ? $media->file->width : null,
+                'height' => $media->file ? $media->file->height : null,
+                'mime_type' => $media->file ? $media->file->mime_type : '',
+                'storage_type' => $media->file ? $media->file->storage_type : 'local',
+                'description' => $media->description,
+                'alt_text' => $media->alt_text,
+                'is_public' => $media->is_public,
+                'view_count' => $media->view_count,
+                'download_count' => $media->download_count,
+                'source' => $media->source,
+                'user' => $media->user ? [
+                    'id' => $media->user->id,
+                    'username' => $media->user->username,
+                ] : null,
+                'thumbnails' => $media->getAllThumbnails(),
+                'created_at' => $media->created_at,
+                'updated_at' => $media->updated_at,
+            ];
+        });
+
+        // 计算总数
+        $total = MediaLibrary::when(!empty($type), function ($query) use ($type) {
+            $query->hasWhere('file', function ($q) use ($type) {
+                $q->where('file_type', $type);
+            });
         })
-        ->when(!empty($filename), function($query) use ($filename) {
-            $query->where('file_name', 'like', '%' . $filename . '%');
+        ->when(!empty($filename), function ($query) use ($filename) {
+            $query->where('title', 'like', '%' . $filename . '%');
         })
-        ->when(!empty($startDate), function($query) use ($startDate) {
-            $query->whereTime('create_time', '>=', $startDate . ' 00:00:00');
+        ->when(!empty($startDate), function ($query) use ($startDate) {
+            $query->whereTime('created_at', '>=', $startDate . ' 00:00:00');
         })
-        ->when(!empty($endDate), function($query) use ($endDate) {
-            $query->whereTime('create_time', '<=', $endDate . ' 23:59:59');
+        ->when(!empty($endDate), function ($query) use ($endDate) {
+            $query->whereTime('created_at', '<=', $endDate . ' 23:59:59');
+        })
+        ->when(!empty($categoryId), function ($query) use ($categoryId) {
+            $query->hasWhere('categories', function ($q) use ($categoryId) {
+                $q->where('id', $categoryId);
+            });
+        })
+        ->when(!empty($tagId), function ($query) use ($tagId) {
+            $query->hasWhere('tags', function ($q) use ($tagId) {
+                $q->where('id', $tagId);
+            });
         })
         ->count();
 
-        return Response::paginate($list->toArray(), $total, $page, $pageSize);
+        return Response::paginate($data->toArray(), $total, $page, $pageSize);
     }
 
     /**
@@ -90,81 +163,40 @@ class Media extends BaseController
         }
 
         try {
-            // 获取文件信息
-            $originalName = $file->getOriginalName();
-            $ext = strtolower($file->extension());
-            $mimeType = $file->getMime();
-            $fileSize = $file->getSize();
+            // 准备媒体数据
+            $data = [
+                'user_id' => $request->user['id'],
+                'title' => $request->post('title', $file->getOriginalName()),
+                'description' => $request->post('description', ''),
+                'alt_text' => $request->post('alt_text', ''),
+                'is_public' => $request->post('is_public', 1),
+            ];
 
-            // 判断文件类型
-            $imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico'];
-            $videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'];
-            $audioExts = ['mp3', 'wav', 'wma', 'ogg', 'flac'];
-            $docExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar'];
+            // 分类和标签
+            $categoryIds = $request->post('category_ids', []);
+            $tagNames = $request->post('tag_names', []);
 
-            if (in_array($ext, $imageExts)) {
-                $fileType = 'image';
-            } elseif (in_array($ext, $videoExts)) {
-                $fileType = 'video';
-            } elseif (in_array($ext, $audioExts)) {
-                $fileType = 'audio';
-            } elseif (in_array($ext, $docExts)) {
-                $fileType = 'document';
-            } else {
-                $fileType = 'other';
+            if (!empty($categoryIds)) {
+                $data['category_ids'] = is_array($categoryIds) ? $categoryIds : explode(',', $categoryIds);
             }
 
-            // 生成日期目录
-            $datePath = date('Y/m/d');
-            $savePath = 'uploads/' . $datePath;
-
-            // 生成唯一文件名
-            $fileName = date('YmdHis') . '_' . uniqid() . '.' . $ext;
-
-            // 创建目录（如果不存在）- 保存到html目录
-            $fullPath = app()->getRootPath() . 'html' . DIRECTORY_SEPARATOR . $savePath;
-            if (!is_dir($fullPath)) {
-                mkdir($fullPath, 0755, true);
+            if (!empty($tagNames)) {
+                $data['tag_names'] = is_array($tagNames) ? $tagNames : explode(',', $tagNames);
             }
 
-            // 移动文件
-            $file->move($fullPath, $fileName);
-
-            // 文件相对路径（只存储相对路径，URL在读取时动态生成）
-            $filePath = $savePath . '/' . $fileName;
-
-            // 获取图片尺寸
-            $width = null;
-            $height = null;
-            if ($fileType === 'image') {
-                $imageInfo = getimagesize(app()->getRootPath() . 'html' . DIRECTORY_SEPARATOR . $filePath);
-                if ($imageInfo) {
-                    $width = $imageInfo[0];
-                    $height = $imageInfo[1];
-                }
-            }
-
-            // 保存到数据库（不保存file_url，URL将在读取时动态生成）
-            $media = MediaModel::create([
-                'user_id'      => $request->user['id'],
-                'file_name'    => $originalName,
-                'file_path'    => $filePath,
-                'file_type'    => $fileType,
-                'mime_type'    => $mimeType,
-                'file_size'    => $fileSize,
-                'width'        => $width,
-                'height'       => $height,
-                'storage_type' => 'local',
-            ]);
+            // 使用服务上传媒体
+            $media = $this->mediaService->upload($file, $data);
 
             return Response::success([
-                'id'        => $media->id,
-                'file_name' => $originalName,
-                'file_url'  => $media->file_url,  // 使用模型的获取器动态生成URL
-                'file_type' => $fileType,
-                'file_size' => $fileSize,
-                'width'     => $width,
-                'height'    => $height,
+                'id' => $media->id,
+                'title' => $media->title,
+                'file_name' => $media->file->file_name,
+                'file_url' => $media->file_url,
+                'file_type' => $media->file->file_type,
+                'file_size' => $media->file->file_size,
+                'width' => $media->file->width,
+                'height' => $media->file->height,
+                'thumbnails' => $media->getAllThumbnails(),
             ], '文件上传成功');
 
         } catch (\Exception $e) {
@@ -173,38 +205,154 @@ class Media extends BaseController
     }
 
     /**
+     * 获取媒体详情
+     */
+    public function read($id)
+    {
+        $media = MediaLibrary::with(['file', 'user', 'thumbnails'])
+            ->find($id);
+
+        if (!$media) {
+            return Response::notFound('媒体不存在');
+        }
+
+        // 增加查看次数
+        $media->incrementViewCount();
+
+        return Response::success([
+            'id' => $media->id,
+            'title' => $media->title,
+            'description' => $media->description,
+            'alt_text' => $media->alt_text,
+            'file_name' => $media->file->file_name,
+            'file_url' => $media->file_url,
+            'file_type' => $media->file->file_type,
+            'file_size' => $media->file->file_size,
+            'file_ext' => $media->file->file_ext,
+            'width' => $media->file->width,
+            'height' => $media->file->height,
+            'mime_type' => $media->file->mime_type,
+            'storage_type' => $media->file->storage_type,
+            'is_public' => $media->is_public,
+            'view_count' => $media->view_count,
+            'download_count' => $media->download_count,
+            'source' => $media->source,
+            'status' => $media->status,
+            'categories' => $media->categories,
+            'tags' => $media->tags,
+            'thumbnails' => $media->getAllThumbnails(),
+            'user' => $media->user ? [
+                'id' => $media->user->id,
+                'username' => $media->user->username,
+            ] : null,
+            'created_at' => $media->created_at,
+            'updated_at' => $media->updated_at,
+        ]);
+    }
+
+    /**
+     * 更新媒体信息
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $data = [
+                'title' => $request->post('title'),
+                'description' => $request->post('description'),
+                'alt_text' => $request->post('alt_text'),
+                'is_public' => $request->post('is_public'),
+            ];
+
+            // 分类和标签
+            if ($request->has('category_ids')) {
+                $categoryIds = $request->post('category_ids', []);
+                $data['category_ids'] = is_array($categoryIds) ? $categoryIds : explode(',', $categoryIds);
+            }
+
+            if ($request->has('tag_names')) {
+                $tagNames = $request->post('tag_names', []);
+                $data['tag_names'] = is_array($tagNames) ? $tagNames : explode(',', $tagNames);
+            }
+
+            $media = $this->mediaService->update($id, $data);
+
+            return Response::success([
+                'id' => $media->id,
+                'title' => $media->title,
+                'description' => $media->description,
+                'alt_text' => $media->alt_text,
+                'is_public' => $media->is_public,
+            ], '更新成功');
+
+        } catch (\Exception $e) {
+            return Response::error('更新失败：' . $e->getMessage());
+        }
+    }
+
+    /**
      * 删除文件
      */
     public function delete($id)
     {
-        $media = MediaModel::find($id);
-        if (!$media) {
-            return Response::notFound('文件不存在');
-        }
-
-        // 检查回收站是否开启
-        $recycleBinEnabled = \app\model\Config::getConfig('recycle_bin_enable', 'open');
-
         try {
-            if ($recycleBinEnabled === 'open') {
-                // 软删除：进入回收站，不删除物理文件
-                $media->delete();
-                $message = '文件已移入回收站';
-            } else {
-                // 物理删除：删除物理文件和数据库记录
-                $filePath = app()->getRootPath() . 'html' . DIRECTORY_SEPARATOR . $media->file_path;
-                if (file_exists($filePath)) {
-                    @unlink($filePath);
-                }
+            $permanent = request()->post('permanent', false);
+            $this->mediaService->delete($id, $permanent);
 
-                // 强制删除数据库记录
-                $media->force()->delete();
-                $message = '文件删除成功';
-            }
-
+            $message = $permanent ? '文件已永久删除' : '文件已移入回收站';
             return Response::success([], $message);
+
         } catch (\Exception $e) {
             return Response::error('文件删除失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 批量上传
+     */
+    public function batchUpload(Request $request)
+    {
+        $files = $request->file('files');
+
+        if (empty($files)) {
+            return Response::error('请选择要上传的文件');
+        }
+
+        try {
+            $commonData = [
+                'user_id' => $request->user['id'],
+                'is_public' => $request->post('is_public', 1),
+            ];
+
+            $results = $this->mediaService->batchImport($files, $commonData);
+
+            $successCount = count(array_filter($results, fn($r) => $r['success']));
+            $failedCount = count($results) - $successCount;
+
+            return Response::success([
+                'total' => count($results),
+                'success' => $successCount,
+                'failed' => $failedCount,
+                'results' => $results,
+            ], "批量上传完成：成功 {$successCount} 个，失败 {$failedCount} 个");
+
+        } catch (\Exception $e) {
+            return Response::error('批量上传失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 获取存储统计信息
+     */
+    public function stats()
+    {
+        try {
+            $fileService = new \app\service\MediaFileService();
+            $stats = $fileService->getStorageStats();
+
+            return Response::success($stats);
+
+        } catch (\Exception $e) {
+            return Response::error('获取统计信息失败：' . $e->getMessage());
         }
     }
 }

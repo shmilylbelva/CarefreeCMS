@@ -165,14 +165,6 @@
           <el-icon><refresh /></el-icon>
           缓存管理
         </el-button>
-        <el-button @click="$router.push('/config')">
-          <el-icon><setting /></el-icon>
-          系统设置
-        </el-button>
-        <el-button @click="$router.push('/logs')">
-          <el-icon><tickets /></el-icon>
-          操作日志
-        </el-button>
       </div>
     </el-card>
 
@@ -364,7 +356,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   border-radius: 8px;
   color: white;
   margin-bottom: 10px;

@@ -9,7 +9,9 @@ use app\model\Article;
 use app\model\Category;
 use app\model\Tag;
 use app\model\Page;
+use app\model\MediaLibrary;
 use app\model\OperationLog;
+use app\service\MediaLibraryService;
 use think\Request;
 
 /**
@@ -22,21 +24,23 @@ class RecycleBin extends BaseController
      */
     public function index(Request $request)
     {
-        $type = $request->get('type', 'all'); // all, article, category, tag, page
+        $type = $request->get('type', 'all'); // all, article, category, tag, page, media
         $page = $request->get('page', 1);
         $pageSize = $request->get('page_size', 20);
         $keyword = $request->get('keyword', '');
 
         $items = [];
 
-        // 获取各类型已删除的数据
+        // 获取各类型已删除的数据（禁用站点过滤，显示所有站点的回收站项目）
         if ($type === 'all' || $type === 'article') {
-            $articles = Article::onlyTrashed()
+            // 使用withoutSiteScope禁用站点过滤，回收站应显示所有站点的已删除文章
+            $query = Article::withoutSiteScope()->onlyTrashed()
                 ->when($keyword, function($query) use ($keyword) {
                     $query->where('title', 'like', '%' . $keyword . '%');
                 })
-                ->order('deleted_at', 'desc')
-                ->select()
+                ->order('deleted_at', 'desc');
+
+            $articles = $query->select()
                 ->each(function($item) {
                     $item->item_type = 'article';
                     $item->item_type_text = '文章';
@@ -48,12 +52,13 @@ class RecycleBin extends BaseController
         }
 
         if ($type === 'all' || $type === 'category') {
-            $categories = Category::onlyTrashed()
+            $query = Category::withoutSiteScope()->onlyTrashed()
                 ->when($keyword, function($query) use ($keyword) {
                     $query->where('name', 'like', '%' . $keyword . '%');
                 })
-                ->order('deleted_at', 'desc')
-                ->select()
+                ->order('deleted_at', 'desc');
+
+            $categories = $query->select()
                 ->each(function($item) {
                     $item->item_type = 'category';
                     $item->item_type_text = '分类';
@@ -65,12 +70,13 @@ class RecycleBin extends BaseController
         }
 
         if ($type === 'all' || $type === 'tag') {
-            $tags = Tag::onlyTrashed()
+            $query = Tag::withoutSiteScope()->onlyTrashed()
                 ->when($keyword, function($query) use ($keyword) {
                     $query->where('name', 'like', '%' . $keyword . '%');
                 })
-                ->order('deleted_at', 'desc')
-                ->select()
+                ->order('deleted_at', 'desc');
+
+            $tags = $query->select()
                 ->each(function($item) {
                     $item->item_type = 'tag';
                     $item->item_type_text = '标签';
@@ -82,12 +88,13 @@ class RecycleBin extends BaseController
         }
 
         if ($type === 'all' || $type === 'page') {
-            $pages = Page::onlyTrashed()
+            $query = Page::withoutSiteScope()->onlyTrashed()
                 ->when($keyword, function($query) use ($keyword) {
                     $query->where('title', 'like', '%' . $keyword . '%');
                 })
-                ->order('deleted_at', 'desc')
-                ->select()
+                ->order('deleted_at', 'desc');
+
+            $pages = $query->select()
                 ->each(function($item) {
                     $item->item_type = 'page';
                     $item->item_type_text = '单页';
@@ -96,6 +103,27 @@ class RecycleBin extends BaseController
                 })
                 ->toArray();
             $items = array_merge($items, $pages);
+        }
+
+        if ($type === 'all' || $type === 'media') {
+            $query = MediaLibrary::withoutSiteScope()->onlyTrashed()
+                ->with(['file'])
+                ->when($keyword, function($query) use ($keyword) {
+                    $query->where('title', 'like', '%' . $keyword . '%');
+                })
+                ->order('deleted_at', 'desc');
+
+            $medias = $query->select()
+                ->each(function($item) {
+                    $item->item_type = 'media';
+                    $item->item_type_text = '媒体';
+                    $item->item_title = $item->title;
+                    $item->file_url = $item->file ? $item->file->file_url : '';
+                    $item->file_type = $item->file ? $item->file->file_type : '';
+                    return $item;
+                })
+                ->toArray();
+            $items = array_merge($items, $medias);
         }
 
         // 按删除时间排序
@@ -115,17 +143,20 @@ class RecycleBin extends BaseController
      */
     public function statistics()
     {
-        $articleCount = Article::onlyTrashed()->count();
-        $categoryCount = Category::onlyTrashed()->count();
-        $tagCount = Tag::onlyTrashed()->count();
-        $pageCount = Page::onlyTrashed()->count();
+        // 禁用站点过滤，统计所有站点的回收站项目
+        $articleCount = Article::withoutSiteScope()->onlyTrashed()->count();
+        $categoryCount = Category::withoutSiteScope()->onlyTrashed()->count();
+        $tagCount = Tag::withoutSiteScope()->onlyTrashed()->count();
+        $pageCount = Page::withoutSiteScope()->onlyTrashed()->count();
+        $mediaCount = MediaLibrary::withoutSiteScope()->onlyTrashed()->count();
 
         return Response::success([
             'article_count' => $articleCount,
             'category_count' => $categoryCount,
             'tag_count' => $tagCount,
             'page_count' => $pageCount,
-            'total_count' => $articleCount + $categoryCount + $tagCount + $pageCount,
+            'media_count' => $mediaCount,
+            'total_count' => $articleCount + $categoryCount + $tagCount + $pageCount + $mediaCount,
         ]);
     }
 
@@ -143,10 +174,19 @@ class RecycleBin extends BaseController
 
         try {
             $model = $this->getModel($type);
-            $item = $model::onlyTrashed()->find($id);
+            // 禁用站点过滤，允许恢复所有站点的项目
+            $item = $model::withoutSiteScope()->onlyTrashed()->find($id);
 
             if (!$item) {
                 return Response::notFound('项目不存在');
+            }
+
+            // 关键修复：禁用模型实例的站点过滤
+            $reflection = new \ReflectionObject($item);
+            if ($reflection->hasProperty('multiSiteEnabled')) {
+                $property = $reflection->getProperty('multiSiteEnabled');
+                $property->setAccessible(true);
+                $property->setValue($item, false);
             }
 
             // 恢复
@@ -182,9 +222,18 @@ class RecycleBin extends BaseController
                 if (!$type || !$id) continue;
 
                 $model = $this->getModel($type);
-                $record = $model::onlyTrashed()->find($id);
+                // 禁用站点过滤
+                $record = $model::withoutSiteScope()->onlyTrashed()->find($id);
 
                 if ($record) {
+                    // 关键修复：禁用模型实例的站点过滤
+                    $reflection = new \ReflectionObject($record);
+                    if ($reflection->hasProperty('multiSiteEnabled')) {
+                        $property = $reflection->getProperty('multiSiteEnabled');
+                        $property->setAccessible(true);
+                        $property->setValue($record, false);
+                    }
+
                     $record->restore();
                     $successCount++;
                 }
@@ -214,15 +263,36 @@ class RecycleBin extends BaseController
         }
 
         try {
-            $model = $this->getModel($type);
-            $item = $model::onlyTrashed()->find($id);
+            // 媒体类型需要特殊处理
+            if ($type === 'media') {
+                $media = MediaLibrary::withoutSiteScope()->onlyTrashed()->find($id);
+                if (!$media) {
+                    return Response::notFound('项目不存在');
+                }
 
-            if (!$item) {
-                return Response::notFound('项目不存在');
+                // 使用 MediaLibraryService 进行永久删除
+                $mediaService = new MediaLibraryService();
+                $mediaService->delete($id, true);
+            } else {
+                $model = $this->getModel($type);
+                // 禁用站点过滤
+                $item = $model::withoutSiteScope()->onlyTrashed()->find($id);
+
+                if (!$item) {
+                    return Response::notFound('项目不存在');
+                }
+
+                // 关键修复：禁用模型实例的站点过滤
+                $reflection = new \ReflectionObject($item);
+                if ($reflection->hasProperty('multiSiteEnabled')) {
+                    $property = $reflection->getProperty('multiSiteEnabled');
+                    $property->setAccessible(true);
+                    $property->setValue($item, false);
+                }
+
+                // 彻底删除
+                $item->force()->delete();
             }
-
-            // 彻底删除
-            $item->force()->delete();
 
             // 记录日志
             $typeName = $this->getTypeName($type);
@@ -247,18 +317,38 @@ class RecycleBin extends BaseController
 
         try {
             $successCount = 0;
+            $mediaService = new MediaLibraryService();
+
             foreach ($items as $item) {
                 $type = $item['type'] ?? '';
                 $id = $item['id'] ?? '';
 
                 if (!$type || !$id) continue;
 
-                $model = $this->getModel($type);
-                $record = $model::onlyTrashed()->find($id);
+                // 媒体类型需要特殊处理
+                if ($type === 'media') {
+                    $media = MediaLibrary::withoutSiteScope()->onlyTrashed()->find($id);
+                    if ($media) {
+                        $mediaService->delete($id, true);
+                        $successCount++;
+                    }
+                } else {
+                    $model = $this->getModel($type);
+                    // 禁用站点过滤
+                    $record = $model::withoutSiteScope()->onlyTrashed()->find($id);
 
-                if ($record) {
-                    $record->force()->delete();
-                    $successCount++;
+                    if ($record) {
+                        // 关键修复：禁用模型实例的站点过滤
+                        $reflection = new \ReflectionObject($record);
+                        if ($reflection->hasProperty('multiSiteEnabled')) {
+                            $property = $reflection->getProperty('multiSiteEnabled');
+                            $property->setAccessible(true);
+                            $property->setValue($record, false);
+                        }
+
+                        $record->force()->delete();
+                        $successCount++;
+                    }
                 }
             }
 
@@ -278,39 +368,76 @@ class RecycleBin extends BaseController
      */
     public function clear(Request $request)
     {
-        $type = $request->post('type', 'all'); // all, article, category, tag, page
+        $type = $request->post('type', 'all'); // all, article, category, tag, page, media
 
         try {
             $deletedCount = 0;
 
             if ($type === 'all' || $type === 'article') {
-                $articles = Article::onlyTrashed()->select();
+                // 禁用站点过滤，清空所有站点的回收站
+                $articles = Article::withoutSiteScope()->onlyTrashed()->select();
                 foreach ($articles as $article) {
+                    // 关键修复：禁用模型实例的站点过滤
+                    $reflection = new \ReflectionObject($article);
+                    if ($reflection->hasProperty('multiSiteEnabled')) {
+                        $property = $reflection->getProperty('multiSiteEnabled');
+                        $property->setAccessible(true);
+                        $property->setValue($article, false);
+                    }
                     $article->force()->delete();
                     $deletedCount++;
                 }
             }
 
             if ($type === 'all' || $type === 'category') {
-                $categories = Category::onlyTrashed()->select();
+                $categories = Category::withoutSiteScope()->onlyTrashed()->select();
                 foreach ($categories as $category) {
+                    $reflection = new \ReflectionObject($category);
+                    if ($reflection->hasProperty('multiSiteEnabled')) {
+                        $property = $reflection->getProperty('multiSiteEnabled');
+                        $property->setAccessible(true);
+                        $property->setValue($category, false);
+                    }
                     $category->force()->delete();
                     $deletedCount++;
                 }
             }
 
             if ($type === 'all' || $type === 'tag') {
-                $tags = Tag::onlyTrashed()->select();
+                $tags = Tag::withoutSiteScope()->onlyTrashed()->select();
                 foreach ($tags as $tag) {
+                    $reflection = new \ReflectionObject($tag);
+                    if ($reflection->hasProperty('multiSiteEnabled')) {
+                        $property = $reflection->getProperty('multiSiteEnabled');
+                        $property->setAccessible(true);
+                        $property->setValue($tag, false);
+                    }
                     $tag->force()->delete();
                     $deletedCount++;
                 }
             }
 
             if ($type === 'all' || $type === 'page') {
-                $pages = Page::onlyTrashed()->select();
+                $pages = Page::withoutSiteScope()->onlyTrashed()->select();
                 foreach ($pages as $page) {
+                    $reflection = new \ReflectionObject($page);
+                    if ($reflection->hasProperty('multiSiteEnabled')) {
+                        $property = $reflection->getProperty('multiSiteEnabled');
+                        $property->setAccessible(true);
+                        $property->setValue($page, false);
+                    }
                     $page->force()->delete();
+                    $deletedCount++;
+                }
+            }
+
+            if ($type === 'all' || $type === 'media') {
+                $mediaService = new MediaLibraryService();
+                $medias = MediaLibrary::withoutSiteScope()->onlyTrashed()->select();
+                foreach ($medias as $media) {
+                    // 使用 MediaLibraryService 的 delete 方法进行永久删除
+                    // 这会正确处理文件引用计数、缩略图、元数据等
+                    $mediaService->delete($media->id, true);
                     $deletedCount++;
                 }
             }
@@ -336,6 +463,7 @@ class RecycleBin extends BaseController
             'category' => Category::class,
             'tag' => Tag::class,
             'page' => Page::class,
+            'media' => MediaLibrary::class,
         ];
 
         if (!isset($models[$type])) {
@@ -355,6 +483,7 @@ class RecycleBin extends BaseController
             'category' => '分类',
             'tag' => '标签',
             'page' => '单页',
+            'media' => '媒体',
         ];
 
         return $names[$type] ?? '未知';

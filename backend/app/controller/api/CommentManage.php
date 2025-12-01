@@ -30,8 +30,14 @@ class CommentManage extends BaseController
         $keyword = $request->get('keyword', '');
         $startTime = $request->get('start_time', '');
         $endTime = $request->get('end_time', '');
+        $siteId = $request->get('site_id', '');
 
-        $query = Comment::with(['article', 'user']);
+        $query = Comment::withoutSiteScope()->with(['article', 'user', 'site']);
+
+        // 站点筛选
+        if ($siteId !== '') {
+            $query->where('comments.site_id', (int) $siteId);
+        }
 
         // 应用搜索条件
         if ($articleId > 0) {
@@ -79,7 +85,7 @@ class CommentManage extends BaseController
      */
     public function read(Request $request, $id)
     {
-        $comment = Comment::with(['article', 'user', 'parent', 'children'])->find($id);
+        $comment = Comment::withoutSiteScope()->with(['article', 'user', 'parent', 'children'])->find($id);
 
         if (!$comment) {
             return Response::notFound('评论不存在');
@@ -103,7 +109,7 @@ class CommentManage extends BaseController
             return Response::error('状态值不正确');
         }
 
-        $comment = Comment::find($id);
+        $comment = Comment::withoutSiteScope()->find($id);
         if (!$comment) {
             return Response::notFound('评论不存在');
         }
@@ -186,31 +192,31 @@ class CommentManage extends BaseController
     public function statistics(Request $request)
     {
         // 总评论数
-        $totalCount = Comment::count();
+        $totalCount = Comment::withoutSiteScope()->count();
 
         // 各状态评论数
-        $pendingCount = Comment::where('status', Comment::STATUS_PENDING)->count();
-        $approvedCount = Comment::where('status', Comment::STATUS_APPROVED)->count();
-        $rejectedCount = Comment::where('status', Comment::STATUS_REJECTED)->count();
+        $pendingCount = Comment::withoutSiteScope()->where('status', Comment::STATUS_PENDING)->count();
+        $approvedCount = Comment::withoutSiteScope()->where('status', Comment::STATUS_APPROVED)->count();
+        $rejectedCount = Comment::withoutSiteScope()->where('status', Comment::STATUS_REJECTED)->count();
 
         // 今日评论数
-        $todayCount = Comment::where('create_time', '>=', date('Y-m-d 00:00:00'))->count();
+        $todayCount = Comment::withoutSiteScope()->where('create_time', '>=', date('Y-m-d 00:00:00'))->count();
 
         // 本周评论数
-        $weekCount = Comment::where('create_time', '>=', date('Y-m-d 00:00:00', strtotime('this week monday')))->count();
+        $weekCount = Comment::withoutSiteScope()->where('create_time', '>=', date('Y-m-d 00:00:00', strtotime('this week monday')))->count();
 
         // 本月评论数
-        $monthCount = Comment::where('create_time', '>=', date('Y-m-01 00:00:00'))->count();
+        $monthCount = Comment::withoutSiteScope()->where('create_time', '>=', date('Y-m-01 00:00:00'))->count();
 
         // 注册用户评论数和游客评论数
-        $userCommentCount = Comment::where('is_guest', 0)->count();
-        $guestCommentCount = Comment::where('is_guest', 1)->count();
+        $userCommentCount = Comment::withoutSiteScope()->where('is_guest', 0)->count();
+        $guestCommentCount = Comment::withoutSiteScope()->where('is_guest', 1)->count();
 
         // 最近7天评论趋势
         $trend = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = date('Y-m-d', strtotime("-{$i} days"));
-            $count = Comment::whereTime('create_time', 'between', [$date . ' 00:00:00', $date . ' 23:59:59'])->count();
+            $count = Comment::withoutSiteScope()->whereTime('create_time', 'between', [$date . ' 00:00:00', $date . ' 23:59:59'])->count();
             $trend[] = [
                 'date'  => $date,
                 'count' => $count,
@@ -218,7 +224,8 @@ class CommentManage extends BaseController
         }
 
         // 评论最多的文章 Top 10
-        $topArticles = Comment::field('article_id, COUNT(*) as comment_count')
+        $topArticles = Comment::withoutSiteScope()
+            ->field('article_id, COUNT(*) as comment_count')
             ->with(['article'])
             ->where('status', Comment::STATUS_APPROVED)
             ->group('article_id')
@@ -258,7 +265,7 @@ class CommentManage extends BaseController
             return Response::error('回复内容不能为空');
         }
 
-        $comment = Comment::find($commentId);
+        $comment = Comment::withoutSiteScope()->find($commentId);
         if (!$comment) {
             return Response::error('评论不存在');
         }
@@ -300,15 +307,23 @@ class CommentManage extends BaseController
             return Response::error('评论内容不能为空');
         }
 
-        $comment = Comment::find($id);
+        $comment = Comment::withoutSiteScope()->find($id);
         if (!$comment) {
             return Response::notFound('评论不存在');
         }
 
         try {
-            $comment->content = $content;
-            $comment->save();
-            return Response::success([], '更新成功');
+            // 使用Db类直接更新，确保WHERE条件精确，只更新指定ID的记录
+            $affected = \think\facade\Db::name('comments')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update(['content' => $content]);
+
+            if ($affected === 0) {
+                return Response::error('更新失败：未找到该记录或数据未改变');
+            }
+
+            return Response::success(['affected' => $affected], '更新成功');
         } catch (\Exception $e) {
             return Response::error('更新失败：' . $e->getMessage());
         }

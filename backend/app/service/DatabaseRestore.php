@@ -93,20 +93,47 @@ class DatabaseRestore
         }
 
         $zip = new \ZipArchive();
-        if ($zip->open($zipFile) === true) {
-            // 获取第一个SQL文件
-            for ($i = 0; $i < $zip->numFiles; $i++) {
-                $filename = $zip->getNameIndex($i);
-                if (pathinfo($filename, PATHINFO_EXTENSION) === 'sql') {
-                    $sqlFile = $this->backupPath . 'temp_' . time() . '.sql';
-                    $content = $zip->getFromIndex($i);
-                    file_put_contents($sqlFile, $content);
-                    $zip->close();
-                    return $sqlFile;
-                }
-            }
-            $zip->close();
+        if ($zip->open($zipFile) !== true) {
+            return false;
         }
+
+        // 设置最大允许大小（100MB）防止ZIP炸弹
+        $maxTotalSize = 100 * 1024 * 1024;
+        $maxFileSize = 50 * 1024 * 1024;
+
+        // 获取第一个SQL文件
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $filename = $zip->getNameIndex($i);
+            $fileinfo = $zip->statIndex($i);
+
+            // 验证文件名不包含路径遍历
+            if (strpos($filename, '..') !== false || strpos($filename, '/') !== false || strpos($filename, '\\') !== false) {
+                $zip->close();
+                return false;
+            }
+
+            // 检查未压缩文件大小（防止ZIP炸弹）
+            if ($fileinfo['size'] > $maxTotalSize) {
+                $zip->close();
+                return false;
+            }
+
+            if (pathinfo($filename, PATHINFO_EXTENSION) === 'sql') {
+                $content = $zip->getFromIndex($i);
+
+                // 检查实际内容大小
+                if (strlen($content) > $maxFileSize) {
+                    $zip->close();
+                    return false;
+                }
+
+                $sqlFile = $this->backupPath . 'temp_' . time() . '.sql';
+                file_put_contents($sqlFile, $content);
+                $zip->close();
+                return $sqlFile;
+            }
+        }
+        $zip->close();
 
         return false;
     }

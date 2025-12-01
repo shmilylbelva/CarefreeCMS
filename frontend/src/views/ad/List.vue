@@ -6,6 +6,17 @@
         <el-card>
           <!-- 搜索栏 -->
           <el-form :inline="true" :model="searchForm" class="search-form">
+            <el-form-item label="所属站点">
+              <el-select v-model="searchForm.site_id" placeholder="选择站点" clearable style="width: 200px;">
+                <el-option label="全部站点" :value="null" />
+                <el-option
+                  v-for="site in siteOptions"
+                  :key="site.id"
+                  :label="site.name"
+                  :value="site.id"
+                />
+              </el-select>
+            </el-form-item>
             <el-form-item label="关键词">
               <el-input
                 v-model="searchForm.keyword"
@@ -145,6 +156,17 @@
         :rules="rules"
         label-width="100px"
       >
+        <el-form-item label="所属站点" prop="site_id">
+          <el-select v-model="form.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="广告名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入广告名称" />
         </el-form-item>
@@ -277,6 +299,17 @@
         :rules="positionRules"
         label-width="100px"
       >
+        <el-form-item label="所属站点" prop="site_id">
+          <el-select v-model="positionForm.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="广告位名称" prop="name">
           <el-input v-model="positionForm.name" placeholder="请输入广告位名称" />
         </el-form-item>
@@ -391,11 +424,14 @@ import {
   updateAdPosition,
   deleteAdPosition
 } from '@/api/adPosition'
+import { getSiteOptions } from '@/api/site'
 import { getToken } from '@/utils/auth'
 
 const activeTab = ref('ads')
+const siteOptions = ref([])
 
 const searchForm = reactive({
+  site_id: null,
   keyword: '',
   position_id: '',
   type: '',
@@ -435,6 +471,7 @@ const statistics = reactive({
 })
 
 const form = reactive({
+  site_id: null,
   position_id: null,
   name: '',
   type: 'image',
@@ -448,6 +485,7 @@ const form = reactive({
 })
 
 const positionForm = reactive({
+  site_id: null,
   name: '',
   code: '',
   description: '',
@@ -457,12 +495,14 @@ const positionForm = reactive({
 })
 
 const rules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
   name: [{ required: true, message: '请输入广告名称', trigger: 'blur' }],
   position_id: [{ required: true, message: '请选择广告位', trigger: 'change' }],
   type: [{ required: true, message: '请选择广告类型', trigger: 'change' }]
 }
 
 const positionRules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
   name: [{ required: true, message: '请输入广告位名称', trigger: 'blur' }],
   code: [
     { required: true, message: '请输入广告位代码', trigger: 'blur' },
@@ -566,6 +606,7 @@ const handleSearch = () => {
 
 // 重置
 const handleReset = () => {
+  searchForm.site_id = null
   searchForm.keyword = ''
   searchForm.position_id = ''
   searchForm.type = ''
@@ -753,11 +794,13 @@ const handleSubmitPosition = async () => {
     if (valid) {
       submitting.value = true
       try {
+        const data = { ...positionForm }
+
         if (isPositionEdit.value) {
-          await updateAdPosition(editPositionId.value, positionForm)
+          await updateAdPosition(editPositionId.value, data)
           ElMessage.success('更新成功')
         } else {
-          await createAdPosition(positionForm)
+          await createAdPosition(data)
           ElMessage.success('创建成功')
         }
         positionDialogVisible.value = false
@@ -774,6 +817,7 @@ const handleSubmitPosition = async () => {
 
 // 重置表单
 const resetForm = () => {
+  form.site_id = null
   form.position_id = null
   form.name = ''
   form.type = 'image'
@@ -787,6 +831,7 @@ const resetForm = () => {
 }
 
 const resetPositionForm = () => {
+  positionForm.site_id = null
   positionForm.name = ''
   positionForm.code = ''
   positionForm.description = ''
@@ -795,7 +840,18 @@ const resetPositionForm = () => {
   positionForm.status = 1
 }
 
+// 获取站点选项
+const fetchSiteOptions = async () => {
+  try {
+    const res = await getSiteOptions()
+    siteOptions.value = res.data || []
+  } catch (error) {
+    console.error('获取站点列表失败:', error)
+  }
+}
+
 onMounted(async () => {
+  await fetchSiteOptions()
   await loadPositions()
   await loadData()
 })

@@ -11,14 +11,33 @@
               @click="handleBatchDelete"
               style="margin-right: 10px;"
             >
-              <el-icon><delete /></el-icon>
+              <el-icon><Delete /></el-icon>
               批量删除 ({{ selectedFiles.length }})
+            </el-button>
+            <el-button @click="$router.push('/media/storage')" style="margin-right: 10px;">
+              <el-icon><Setting /></el-icon>
+              存储配置
+            </el-button>
+            <el-button @click="$router.push('/media/queue')" style="margin-right: 10px;">
+              <el-icon><Monitor /></el-icon>
+              队列监控
+            </el-button>
+            <el-button type="success" @click="$router.push('/media/ai-generate')" style="margin-right: 10px;">
+              <el-icon><MagicStick /></el-icon>
+              AI生成
+            </el-button>
+            <el-button @click="$router.push('/media/watermark')" style="margin-right: 10px;">
+              <el-icon><PictureFilled /></el-icon>
+              水印管理
+            </el-button>
+            <el-button @click="$router.push('/media/thumbnail')" style="margin-right: 10px;">
+              <el-icon><Picture /></el-icon>
+              缩略图
             </el-button>
             <el-upload
               action="#"
               :http-request="handleUpload"
               :show-file-list="false"
-              :before-upload="beforeUpload"
             >
               <el-button type="primary">
                 <el-icon><Upload /></el-icon>
@@ -115,19 +134,29 @@
 
       <el-empty v-if="!loading && mediaList.length === 0" description="暂无文件" />
     </el-card>
+
+    <!-- 图片裁剪对话框 -->
+    <ImageCropper
+      v-model="showCropper"
+      :imageUrl="cropperImage"
+      @success="handleCropSuccess"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Upload, Document, Delete } from '@element-plus/icons-vue'
+import { Upload, Document, Delete, Setting, Monitor, MagicStick, PictureFilled, Picture } from '@element-plus/icons-vue'
 import request from '@/api/request'
+import ImageCropper from '@/components/MediaLibrary/ImageCropper.vue'
 
 const loading = ref(false)
 const mediaList = ref([])
 const selectedFiles = ref([])
 const activeTab = ref('all')
+const showCropper = ref(false)
+const cropperImage = ref('')
 
 const searchForm = reactive({
   filename: '',
@@ -147,7 +176,7 @@ const fetchMedia = async () => {
   try {
     const params = {
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,
       filename: searchForm.filename,
       type: searchForm.type
     }
@@ -166,7 +195,9 @@ const fetchMedia = async () => {
     }))
     pagination.total = res.data.total || 0
   } catch (error) {
-    ElMessage.error('获取媒体列表失败')
+    console.error('获取媒体列表失败:', error)
+    const message = error.response?.data?.message || error.message || '获取媒体列表失败，请稍后重试'
+    ElMessage.error(message)
   } finally {
     loading.value = false
   }
@@ -289,18 +320,14 @@ const handleBatchDelete = async () => {
   }
 }
 
-// 上传前检查
-const beforeUpload = (file) => {
-  const maxSize = 10 * 1024 * 1024 // 10MB
-  if (file.size > maxSize) {
-    ElMessage.error('文件大小不能超过 10MB')
-    return false
-  }
-  return true
-}
-
 // 上传文件
 const handleUpload = async ({ file }) => {
+  const loadingMsg = ElMessage({
+    message: `正在上传 ${file.name}...`,
+    type: 'info',
+    duration: 0
+  })
+
   const formData = new FormData()
   formData.append('file', file)
 
@@ -311,10 +338,12 @@ const handleUpload = async ({ file }) => {
       data: formData,
       headers: { 'Content-Type': 'multipart/form-data' }
     })
-    ElMessage.success('上传成功')
+    loadingMsg.close()
+    ElMessage.success(`${file.name} 上传成功`)
     fetchMedia()
   } catch (error) {
-    ElMessage.error('上传失败')
+    loadingMsg.close()
+    ElMessage.error(`${file.name} 上传失败`)
   }
 }
 
@@ -372,6 +401,13 @@ const getFileTypeLabel = (type) => {
     'other': '其他'
   }
   return labels[type] || '未知'
+}
+
+// 图片裁剪成功
+const handleCropSuccess = (result) => {
+  ElMessage.success('裁剪成功')
+  showCropper.value = false
+  fetchMedia()
 }
 
 onMounted(() => {

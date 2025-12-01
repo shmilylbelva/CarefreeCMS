@@ -4,8 +4,7 @@ declare (strict_types = 1);
 namespace app\service;
 
 use app\model\SystemLog;
-use app\model\LoginLog;
-use app\model\SecurityLog;
+use app\model\OperationLog;
 use think\facade\Request;
 
 /**
@@ -129,20 +128,28 @@ class SystemLogger
      * @param string $username 用户名
      * @param bool $success 是否成功
      * @param string $failReason 失败原因
-     * @return LoginLog|false
+     * @return OperationLog|false
      */
     public static function logLogin($userId, $username, $success = true, $failReason = '')
     {
         try {
-            return LoginLog::create([
+            $description = $success
+                ? "用户 {$username} 登录成功"
+                : "用户 {$username} 登录失败: {$failReason}";
+
+            return OperationLog::create([
                 'user_id' => $success ? $userId : null,
                 'username' => $username,
+                'module' => 'auth',
+                'action' => 'login',
+                'description' => $description,
                 'ip' => Request::ip(),
                 'user_agent' => Request::header('user-agent'),
-                'login_time' => date('Y-m-d H:i:s'),
-                'status' => $success ? 'success' : 'failed',
-                'fail_reason' => $failReason,
-                'location' => self::getIpLocation(Request::ip())
+                'request_method' => 'POST',
+                'request_url' => Request::url(true),
+                'status' => $success ? 1 : 0,
+                'error_msg' => $success ? null : $failReason,
+                'create_time' => date('Y-m-d H:i:s')
             ]);
         } catch (\Exception $e) {
             return false;
@@ -156,21 +163,23 @@ class SystemLogger
      * @param string $description 描述
      * @param array $requestData 请求数据
      * @param bool $isBlocked 是否已拦截
-     * @return SecurityLog|false
+     * @return OperationLog|false
      */
     public static function logSecurity($type, $level, $description, $requestData = [], $isBlocked = false)
     {
         try {
-            return SecurityLog::create([
-                'type' => $type,
-                'level' => $level,
+            $fullDescription = "[{$level}] {$description}";
+
+            return OperationLog::create([
+                'module' => 'security',
+                'action' => $type,
+                'description' => $fullDescription,
                 'ip' => Request::ip(),
-                'url' => Request::url(true),
-                'method' => Request::method(),
                 'user_agent' => Request::header('user-agent'),
-                'request_data' => !empty($requestData) ? json_encode($requestData, JSON_UNESCAPED_UNICODE) : null,
-                'description' => $description,
-                'is_blocked' => $isBlocked ? 1 : 0,
+                'request_method' => Request::method(),
+                'request_url' => Request::url(true),
+                'request_params' => !empty($requestData) ? json_encode($requestData, JSON_UNESCAPED_UNICODE) : null,
+                'status' => $isBlocked ? 0 : 1,
                 'create_time' => date('Y-m-d H:i:s')
             ]);
         } catch (\Exception $e) {
@@ -254,34 +263,37 @@ class SystemLogger
      */
     public static function getLoginStatistics($startTime = '', $endTime = '')
     {
-        $where = [];
+        $where = [
+            ['module', '=', 'auth'],
+            ['action', '=', 'login']
+        ];
 
         if (!empty($startTime)) {
-            $where[] = ['login_time', '>=', $startTime];
+            $where[] = ['create_time', '>=', $startTime];
         }
 
         if (!empty($endTime)) {
-            $where[] = ['login_time', '<=', $endTime];
+            $where[] = ['create_time', '<=', $endTime];
         }
 
         // 成功/失败统计
-        $successCount = LoginLog::where($where)->where('status', 'success')->count();
-        $failedCount = LoginLog::where($where)->where('status', 'failed')->count();
+        $successCount = OperationLog::where($where)->where('status', 1)->count();
+        $failedCount = OperationLog::where($where)->where('status', 0)->count();
 
         // 每日统计
-        $dailyStats = LoginLog::where($where)
-            ->field('DATE(login_time) as date, COUNT(*) as count, SUM(CASE WHEN status="success" THEN 1 ELSE 0 END) as success_count')
-            ->group('DATE(login_time)')
+        $dailyStats = OperationLog::where($where)
+            ->field('DATE(create_time) as date, COUNT(*) as count, SUM(CASE WHEN status=1 THEN 1 ELSE 0 END) as success_count')
+            ->group('DATE(create_time)')
             ->order('date', 'desc')
             ->limit(30)
             ->select()
             ->toArray();
 
         // 失败原因统计
-        $failReasonStats = LoginLog::where($where)
-            ->where('status', 'failed')
-            ->field('fail_reason, COUNT(*) as count')
-            ->group('fail_reason')
+        $failReasonStats = OperationLog::where($where)
+            ->where('status', 0)
+            ->field('error_msg as fail_reason, COUNT(*) as count')
+            ->group('error_msg')
             ->select()
             ->toArray();
 
@@ -298,7 +310,7 @@ class SystemLogger
     /**
      * 清理旧日志
      * @param int $days 保留天数
-     * @param string $logType 日志类型：system, login, security
+     * @param string $logType 日志类型：system, login, security, operation
      * @return int 删除数量
      */
     public static function cleanOldLogs($days = 30, $logType = 'system')
@@ -307,9 +319,16 @@ class SystemLogger
 
         switch ($logType) {
             case 'login':
-                return LoginLog::where('login_time', '<', $time)->delete();
+                return OperationLog::where('module', 'auth')
+                    ->where('action', 'login')
+                    ->where('create_time', '<', $time)
+                    ->delete();
             case 'security':
-                return SecurityLog::where('create_time', '<', $time)->delete();
+                return OperationLog::where('module', 'security')
+                    ->where('create_time', '<', $time)
+                    ->delete();
+            case 'operation':
+                return OperationLog::where('create_time', '<', $time)->delete();
             case 'system':
             default:
                 return SystemLog::where('create_time', '<', $time)->delete();
@@ -326,10 +345,16 @@ class SystemLogger
     {
         switch ($logType) {
             case 'login':
-                $logs = LoginLog::where($where)->order('login_time', 'desc')->limit(10000)->select();
+                $where[] = ['module', '=', 'auth'];
+                $where[] = ['action', '=', 'login'];
+                $logs = OperationLog::where($where)->order('create_time', 'desc')->limit(10000)->select();
                 break;
             case 'security':
-                $logs = SecurityLog::where($where)->order('create_time', 'desc')->limit(10000)->select();
+                $where[] = ['module', '=', 'security'];
+                $logs = OperationLog::where($where)->order('create_time', 'desc')->limit(10000)->select();
+                break;
+            case 'operation':
+                $logs = OperationLog::where($where)->order('create_time', 'desc')->limit(10000)->select();
                 break;
             case 'system':
             default:

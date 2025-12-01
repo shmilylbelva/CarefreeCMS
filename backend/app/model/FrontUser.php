@@ -8,7 +8,7 @@ use think\model\concern\SoftDelete;
 /**
  * 前台用户模型
  */
-class FrontUser extends Model
+class FrontUser extends SiteModel
 {
     use SoftDelete;
 
@@ -278,18 +278,22 @@ class FrontUser extends Model
 
     /**
      * 关联收藏
+     * 使用统一的 UserAction 模型
      */
     public function favorites()
     {
-        return $this->hasMany(UserFavorite::class, 'user_id');
+        return $this->hasMany(UserAction::class, 'user_id')
+            ->where('action_type', UserAction::ACTION_FAVORITE);
     }
 
     /**
      * 关联点赞
+     * 使用统一的 UserAction 模型
      */
     public function likes()
     {
-        return $this->hasMany(UserLike::class, 'user_id');
+        return $this->hasMany(UserAction::class, 'user_id')
+            ->where('action_type', UserAction::ACTION_LIKE);
     }
 
     /**
@@ -310,17 +314,22 @@ class FrontUser extends Model
 
     /**
      * 关联关注（我关注的人）
+     * 使用统一的 UserAction 模型
      */
     public function following()
     {
-        return $this->hasMany(UserFollow::class, 'user_id');
+        return $this->hasMany(UserAction::class, 'user_id')
+            ->where('action_type', UserAction::ACTION_FOLLOW);
     }
 
     /**
      * 关联粉丝（关注我的人）
+     * 使用统一的 UserAction 模型
      */
     public function followers()
     {
-        return $this->hasMany(UserFollow::class, 'follow_user_id');
+        return $this->hasMany(UserAction::class, 'target_id')
+            ->where('action_type', UserAction::ACTION_FOLLOW)
+            ->where('target_type', UserAction::TARGET_USER);
     }
 }

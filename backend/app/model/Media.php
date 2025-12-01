@@ -2,18 +2,21 @@
 
 namespace app\model;
 
-use think\Model;
 use think\model\concern\SoftDelete;
 use app\model\Config;
 
 /**
- * 媒体库模型
+ * 媒体库模型（旧版本，已废弃）
+ *
+ * 注意：这是旧版媒体库模型，已废弃。
+ * 新代码请使用 MediaLibrary 模型。
+ * 此模型保留用于向后兼容。
  */
-class Media extends Model
+class Media extends SiteModel
 {
     use SoftDelete;
 
-    protected $name = 'media';
+    protected $name = 'media_legacy';
 
     protected $autoWriteTimestamp = 'datetime';
     protected $createTime = 'create_time';
@@ -54,11 +57,12 @@ class Media extends Model
             return '';
         }
 
-        // 获取系统配置的前端网站URL
-        $siteUrl = Config::getConfig('site_url', '');
+        // 使用当前站点的site_url字段
+        $site = \app\service\SiteContextService::getSite();
+        $siteUrl = $site ? $site->site_url : '';
 
         if (!empty($siteUrl)) {
-            // 如果配置了前端网站URL，使用前端网站URL
+            // 如果站点配置了site_url，使用站点URL
             return rtrim($siteUrl, '/') . '/' . $data['file_path'];
         } else {
             // 如果没有配置，使用API域名 + /html

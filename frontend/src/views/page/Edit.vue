@@ -9,6 +9,41 @@
       </template>
 
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px" v-loading="loading">
+        <el-form-item label="所属站点" :prop="isEdit ? 'site_id' : 'site_ids'">
+          <!-- 编辑时：单选 -->
+          <el-select v-if="isEdit" v-model="form.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+          <!-- 创建时：多选 -->
+          <div v-else>
+            <el-select v-model="form.site_ids" placeholder="请选择站点（可多选）" multiple style="width: 100%;">
+              <el-option
+                v-for="site in siteOptions"
+                :key="site.id"
+                :label="site.name"
+                :value="site.id"
+              />
+            </el-select>
+            <div style="margin-top: 8px;">
+              <el-button size="small" @click="selectAllSites">全选</el-button>
+              <el-button size="small" @click="deselectAllSites">取消全选</el-button>
+            </div>
+          </div>
+          <div style="margin-top: 5px; color: #909399; font-size: 12px;">
+            <template v-if="isEdit">
+              编辑时只能修改当前站点的单页，不影响其他站点
+            </template>
+            <template v-else>
+              创建时可选择多个站点，系统将为每个站点创建独立副本
+            </template>
+          </div>
+        </el-form-item>
+
         <el-form-item label="标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入标题" maxlength="200" show-word-limit />
         </el-form-item>
@@ -105,6 +140,7 @@ import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { getPageDetail, createPage, updatePage } from '@/api/page'
 import { getTemplates } from '@/api/template'
+import { getSiteOptions } from '@/api/site'
 import { getToken } from '@/utils/auth'
 import TinymceEditor from '@/components/TinyMCE.vue'
 
@@ -114,10 +150,13 @@ const formRef = ref(null)
 const loading = ref(false)
 const submitting = ref(false)
 const templates = ref([])
+const siteOptions = ref([])
 
 const isEdit = computed(() => !!route.params.id)
 
 const form = reactive({
+  site_id: null,
+  site_ids: [], // 多站点创建
   title: '',
   slug: '',
   content: '',
@@ -131,6 +170,8 @@ const form = reactive({
 })
 
 const rules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
+  site_ids: [{ required: true, type: 'array', min: 1, message: '请至少选择一个站点', trigger: 'change' }],
   title: [
     { required: true, message: '请输入标题', trigger: 'blur' }
   ],
@@ -219,11 +260,22 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
+    const submitData = { ...form }
+
+    // 区分创建和编辑模式的站点字段
     if (isEdit.value) {
-      await updatePage(route.params.id, form)
+      // 编辑模式：只保留 site_id，移除 site_ids
+      delete submitData.site_ids
+    } else {
+      // 创建模式：只保留 site_ids，移除 site_id
+      delete submitData.site_id
+    }
+
+    if (isEdit.value) {
+      await updatePage(route.params.id, submitData)
       ElMessage.success('保存成功')
     } else {
-      await createPage(form)
+      await createPage(submitData)
       ElMessage.success('创建成功')
     }
     router.push('/pages')
@@ -231,6 +283,26 @@ const handleSubmit = async () => {
     ElMessage.error(error.response?.data?.message || '保存失败')
   } finally {
     submitting.value = false
+  }
+}
+
+// 全选站点
+const selectAllSites = () => {
+  form.site_ids = siteOptions.value.map(site => site.id)
+}
+
+// 取消全选站点
+const deselectAllSites = () => {
+  form.site_ids = []
+}
+
+// 获取站点选项
+const fetchSiteOptions = async () => {
+  try {
+    const res = await getSiteOptions()
+    siteOptions.value = res.data || []
+  } catch (error) {
+    console.error('获取站点列表失败:', error)
   }
 }
 
@@ -250,6 +322,7 @@ const fetchTemplates = async () => {
 }
 
 onMounted(() => {
+  fetchSiteOptions()
   loadData()
   fetchTemplates()
 })

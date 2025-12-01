@@ -27,7 +27,7 @@ class MemberLevelLog extends Model
      */
     public function user()
     {
-        return $this->belongsTo(FrontUser::class, 'user_id');
+        return $this->belongsTo(FrontUser::class, 'user_id', 'id');
     }
 
     /**
@@ -35,7 +35,7 @@ class MemberLevelLog extends Model
      */
     public function operator()
     {
-        return $this->belongsTo(\app\model\AdminUser::class, 'operator_id');
+        return $this->belongsTo(\app\model\AdminUser::class, 'operator_id', 'id');
     }
 
     /**

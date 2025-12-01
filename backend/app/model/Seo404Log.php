@@ -8,7 +8,7 @@ use think\Model;
 /**
  * 404错误日志模型
  */
-class Seo404Log extends Model
+class Seo404Log extends SiteModel
 {
     protected $name = 'seo_404_logs';
 

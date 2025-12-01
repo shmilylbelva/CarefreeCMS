@@ -453,13 +453,57 @@ class DatabaseBackup
     }
 
     /**
-     * 删除备份文件
+     * 验证备份文件名是否安全
      * @param string $filename
      * @return bool
      */
+    private function isValidBackupFilename($filename)
+    {
+        // 验证文件名：只允许字母、数字、下划线、点和短横线
+        if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $filename)) {
+            return false;
+        }
+
+        // 防止路径遍历
+        if (strpos($filename, '..') !== false || strpos($filename, '/') !== false || strpos($filename, '\\') !== false) {
+            return false;
+        }
+
+        // 验证文件扩展名
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['sql', 'zip'])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 删除备份文件
+     * @param string $filename
+     * @return bool
+     * @throws \Exception
+     */
     public function deleteBackup($filename)
     {
+        // 验证文件名
+        if (!$this->isValidBackupFilename($filename)) {
+            throw new \Exception('无效的文件名');
+        }
+
         $filepath = $this->backupPath . $filename;
+
+        // 验证文件在备份目录内
+        $realPath = realpath($filepath);
+        $backupRealPath = realpath($this->backupPath);
+
+        if ($realPath === false || $backupRealPath === false) {
+            return false;
+        }
+
+        if (strpos($realPath, $backupRealPath) !== 0) {
+            throw new \Exception('文件不在备份目录内');
+        }
 
         if (file_exists($filepath)) {
             return unlink($filepath);
@@ -475,7 +519,33 @@ class DatabaseBackup
      */
     public function downloadBackup($filename)
     {
+        // 验证文件名
+        if (!$this->isValidBackupFilename($filename)) {
+            return [
+                'success' => false,
+                'message' => '无效的文件名'
+            ];
+        }
+
         $filepath = $this->backupPath . $filename;
+
+        // 验证文件在备份目录内
+        $realPath = realpath($filepath);
+        $backupRealPath = realpath($this->backupPath);
+
+        if ($realPath === false || $backupRealPath === false) {
+            return [
+                'success' => false,
+                'message' => '备份文件不存在'
+            ];
+        }
+
+        if (strpos($realPath, $backupRealPath) !== 0) {
+            return [
+                'success' => false,
+                'message' => '文件不在备份目录内'
+            ];
+        }
 
         if (!file_exists($filepath)) {
             return [

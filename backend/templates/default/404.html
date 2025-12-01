@@ -1,0 +1,46 @@
+{extend name="default/layout" /}
+
+{block name="title"}页面未找到 - {$site.site_name|default='国产CMS'}{/block}
+
+{block name="content"}
+<div class="error-page">
+    <div class="error-content">
+        <h1 class="error-code">404</h1>
+        <h2 class="error-title">页面未找到</h2>
+        <p class="error-message">抱歉，您访问的页面不存在或已被删除。</p>
+
+        <div class="error-actions">
+            <a href="/" class="btn btn-primary">返回首页</a>
+            <a href="javascript:history.back()" class="btn btn-default">返回上页</a>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="error-search">
+            <p>或者试试搜索：</p>
+            <form action="/search" method="get">
+                <input type="text" name="q" placeholder="输入关键词...">
+                <button type="submit">搜索</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 推荐内容 -->
+    {if condition="$recommended_articles"}
+    <div class="error-recommended">
+        <h3>推荐阅读</h3>
+        <div class="article-grid">
+            {carefree:foreach from="$recommended_articles" item="article"}
+            <div class="article-card-mini">
+                {if condition="!empty($article['cover_image'])"}
+                <a href="/article/{$article.id}" class="article-thumb">
+                    <img src="{$article.cover_image}" alt="{$article.title}">
+                </a>
+                {/if}
+                <h4><a href="/article/{$article.id}">{$article.title}</a></h4>
+            </div>
+            {/carefree:foreach}
+        </div>
+    </div>
+    {/if}
+</div>
+{/block}

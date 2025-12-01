@@ -4,7 +4,7 @@ namespace app\controller\api;
 
 use app\BaseController;
 use app\common\Response;
-use app\model\PointShopCategory;
+use app\model\Group;
 use app\model\PointShopGoods;
 use app\model\PointShopOrder;
 use think\Request;
@@ -21,7 +21,8 @@ class PointShopManage extends BaseController
      */
     public function categoryIndex(Request $request)
     {
-        $list = PointShopCategory::order('sort_order', 'asc')
+        $list = Group::where('type', Group::TYPE_POINT_SHOP)
+            ->order('sort', 'asc')
             ->order('id', 'asc')
             ->select();
 
@@ -40,11 +41,17 @@ class PointShopManage extends BaseController
         }
 
         try {
-            $category = PointShopCategory::create([
-                'name'       => $data['name'],
-                'icon'       => $data['icon'] ?? '',
-                'sort_order' => $data['sort_order'] ?? 0,
-                'status'     => $data['status'] ?? 1,
+            // 构建配置数据
+            $config = [
+                'icon' => $data['icon'] ?? '',
+            ];
+
+            $category = Group::create([
+                'type'   => Group::TYPE_POINT_SHOP,
+                'name'   => $data['name'],
+                'config' => json_encode($config),
+                'sort'   => $data['sort_order'] ?? $data['sort'] ?? 0,
+                'status' => $data['status'] ?? Group::STATUS_ENABLED,
             ]);
 
             return Response::success($category->toArray(), '创建成功');
@@ -59,7 +66,7 @@ class PointShopManage extends BaseController
      */
     public function categoryUpdate(Request $request, $id)
     {
-        $category = PointShopCategory::find($id);
+        $category = Group::where('type', Group::TYPE_POINT_SHOP)->find($id);
 
         if (!$category) {
             return Response::notFound('分类不存在');
@@ -68,13 +75,24 @@ class PointShopManage extends BaseController
         $data = $request->post();
 
         try {
-            $allowFields = ['name', 'icon', 'sort_order', 'status'];
             $updateData = [];
 
-            foreach ($allowFields as $field) {
-                if (isset($data[$field])) {
-                    $updateData[$field] = $data[$field];
-                }
+            // 处理基本字段
+            if (isset($data['name'])) {
+                $updateData['name'] = $data['name'];
+            }
+            if (isset($data['status'])) {
+                $updateData['status'] = $data['status'];
+            }
+            if (isset($data['sort_order']) || isset($data['sort'])) {
+                $updateData['sort'] = $data['sort_order'] ?? $data['sort'];
+            }
+
+            // 处理config字段
+            if (isset($data['icon'])) {
+                $currentConfig = json_decode($category->config ?? '{}', true) ?: [];
+                $currentConfig['icon'] = $data['icon'];
+                $updateData['config'] = json_encode($currentConfig);
             }
 
             $category->save($updateData);
@@ -91,7 +109,7 @@ class PointShopManage extends BaseController
      */
     public function categoryDelete($id)
     {
-        $category = PointShopCategory::find($id);
+        $category = Group::where('type', Group::TYPE_POINT_SHOP)->find($id);
 
         if (!$category) {
             return Response::notFound('分类不存在');

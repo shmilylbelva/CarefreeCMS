@@ -1,4 +1,4 @@
-{extend name="layout" /}
+{extend name="official/layout" /}
 
 {block name="style"}
 <link rel="stylesheet" href="/assets/css/article.css">
@@ -31,9 +31,9 @@
 
                 {if condition="$article.tags"}
                 <div class="article-tags">
-                    {volist name="article.tags" id="tag"}
+                    {carefree:foreach from="$article.tags" item="tag"}
                     <a href="/tag-{$tag.id}.html" class="article-tag">#{$tag.name}</a>
-                    {/volist}
+                    {/carefree:foreach}
                 </div>
                 {/if}
 
@@ -56,35 +56,42 @@
                     </div>
 
                     <!-- 分享按钮 -->
+                    {carefree:share url='{$article.url}' title='{$article.title}' summary='{$article.description}' image='{$article.cover_image}'}
                     <div class="d-flex align-items-center justify-content-between">
                         <span class="text-secondary">分享到：</span>
                         <div class="share-buttons">
-                            <a href="#" class="share-btn wechat" title="分享到微信">
+                            <a href="{$share.wechat_url}" class="share-btn wechat" title="分享到微信">
                                 <i class="bi bi-wechat"></i>
                             </a>
-                            <a href="#" class="share-btn weibo" title="分享到微博">
+                            <a href="{$share.weibo_url}" target="_blank" class="share-btn weibo" title="分享到微博">
                                 <i class="bi bi-share"></i>
                             </a>
-                            <a href="#" class="share-btn qq" title="分享到QQ">
+                            <a href="{$share.qq_url}" target="_blank" class="share-btn qq" title="分享到QQ">
                                 <i class="bi bi-chat-square"></i>
                             </a>
-                            <a href="#" class="share-btn link" title="复制链接">
+                            <a href="javascript:void(0)" onclick="copyLink('{$share.url}')" class="share-btn link" title="复制链接">
                                 <i class="bi bi-link-45deg"></i>
                             </a>
                         </div>
                     </div>
+                    {/carefree:share}
                 </div>
 
                 <!-- 作者信息 -->
-                {if condition="$article.user"}
+                {carefree:author userid='{$article.user_id}' id='author' empty=''}
                 <div class="author-card" data-aos="fade-up">
-                    <img src="{$article.user.avatar ?: '/assets/images/placeholder/avatar.svg'}" alt="{$article.user.username}" class="author-avatar">
+                    <img src="{$author.avatar ?: '/assets/images/placeholder/avatar.svg'}" alt="{$author.username}" class="author-avatar">
                     <div class="author-info">
-                        <h5>{$article.user.username}</h5>
-                        <p>{$article.user.bio ?: '这个作者很懒，什么都没有留下...'}</p>
+                        <h5>{$author.username}</h5>
+                        <p>{$author.bio ?: '这个作者很懒，什么都没有留下...'}</p>
+                        <div class="author-stats">
+                            <span><i class="bi bi-file-text"></i> {$author.article_count ?: 0} 篇文章</span>
+                            <span><i class="bi bi-hand-thumbs-up"></i> {$author.like_count ?: 0} 获赞</span>
+                            <span><i class="bi bi-people"></i> {$author.follower_count ?: 0} 粉丝</span>
+                        </div>
                     </div>
                 </div>
-                {/if}
+                {/carefree:author}
             </article>
 
             <!-- 上下篇导航 -->
@@ -148,9 +155,10 @@
 
             <!-- 评论区 -->
             <div id="comments" class="comments-section" data-aos="fade-up" data-article-id="{$article.id}">
+                {carefree:comment articleid='{$article.id}' limit='20' orderby='create_time desc' id='comment' empty='<div class="empty-state text-center py-4"><p class="text-muted">暂无评论，快来发表第一条评论吧！</p></div>'}
                 <h3>
                     <i class="bi bi-chat-left-text me-2"></i>
-                    评论 (<span id="commentCount">0</span>)
+                    评论 (<span id="commentCount">{$comment_total ?: 0}</span>)
                 </h3>
 
                 <!-- 发表评论表单 -->
@@ -162,13 +170,49 @@
                 </div>
 
                 <!-- 评论列表 -->
-                <div id="commentsList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">加载中...</span>
+                <div id="commentsList" class="comments-list">
+                    <div class="comment-item">
+                        <img src="{$comment.user.avatar ?: '/assets/images/placeholder/avatar.svg'}" alt="{$comment.user.username}" class="comment-avatar">
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">{$comment.user.username}</span>
+                                <span class="comment-time">{$comment.create_time|date='Y-m-d H:i'}</span>
+                            </div>
+                            <p class="comment-text">{$comment.content}</p>
+                            <div class="comment-actions">
+                                <a href="javascript:void(0)" class="comment-action" onclick="replyComment({$comment.id})">
+                                    <i class="bi bi-reply"></i> 回复
+                                </a>
+                                <a href="javascript:void(0)" class="comment-action" onclick="likeComment({$comment.id})">
+                                    <i class="bi bi-hand-thumbs-up"></i> {$comment.like_count ?: 0}
+                                </a>
+                            </div>
+
+                            <!-- 子评论/回复 -->
+                            {if condition="$comment.replies"}
+                            <div class="comment-replies">
+                                {carefree:foreach from="$comment.replies" item="reply"}
+                                <div class="comment-item reply-item">
+                                    <img src="{$reply.user.avatar ?: '/assets/images/placeholder/avatar.svg'}" alt="{$reply.user.username}" class="comment-avatar">
+                                    <div class="comment-content">
+                                        <div class="comment-header">
+                                            <span class="comment-author">{$reply.user.username}</span>
+                                            {if condition="$reply.reply_to_user"}
+                                            <span class="text-muted">回复</span>
+                                            <span class="comment-author">{$reply.reply_to_user.username}</span>
+                                            {/if}
+                                            <span class="comment-time">{$reply.create_time|date='Y-m-d H:i'}</span>
+                                        </div>
+                                        <p class="comment-text">{$reply.content}</p>
+                                    </div>
+                                </div>
+                                {/carefree:foreach}
+                            </div>
+                            {/if}
                         </div>
                     </div>
                 </div>
+                {/carefree:comment}
             </div>
         </div>
     </div>

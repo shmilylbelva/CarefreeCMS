@@ -14,10 +14,11 @@ export function getTopicList(params) {
 /**
  * 获取所有专题（不分页）
  */
-export function getAllTopics() {
+export function getAllTopics(params) {
   return request({
     url: '/topics/all',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
@@ -79,7 +80,7 @@ export function getTopicArticles(id, params) {
  */
 export function addArticleToTopic(topicId, articleId, sort = 0, isFeatured = 0) {
   return request({
-    url: `/topics/${topicId}/add-article`,
+    url: `/topics/${topicId}/articles`,
     method: 'post',
     data: {
       article_id: articleId,
@@ -94,11 +95,8 @@ export function addArticleToTopic(topicId, articleId, sort = 0, isFeatured = 0) 
  */
 export function removeArticleFromTopic(topicId, articleId) {
   return request({
-    url: `/topics/${topicId}/remove-article`,
-    method: 'post',
-    data: {
-      article_id: articleId
-    }
+    url: `/topics/${topicId}/articles/${articleId}`,
+    method: 'delete'
   })
 }
 
@@ -107,7 +105,7 @@ export function removeArticleFromTopic(topicId, articleId) {
  */
 export function setTopicArticles(topicId, articleIds) {
   return request({
-    url: `/topics/${topicId}/set-articles`,
+    url: `/topics/${topicId}/articles/batch`,
     method: 'post',
     data: {
       article_ids: articleIds
@@ -120,10 +118,9 @@ export function setTopicArticles(topicId, articleIds) {
  */
 export function updateArticleSort(topicId, articleId, sort) {
   return request({
-    url: `/topics/${topicId}/update-article-sort`,
-    method: 'post',
+    url: `/topics/${topicId}/articles/${articleId}/sort`,
+    method: 'put',
     data: {
-      article_id: articleId,
       sort
     }
   })
@@ -134,10 +131,9 @@ export function updateArticleSort(topicId, articleId, sort) {
  */
 export function setArticleFeatured(topicId, articleId, isFeatured) {
   return request({
-    url: `/topics/${topicId}/set-article-featured`,
-    method: 'post',
+    url: `/topics/${topicId}/articles/${articleId}/featured`,
+    method: 'put',
     data: {
-      article_id: articleId,
       is_featured: isFeatured
     }
   })

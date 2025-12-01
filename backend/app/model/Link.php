@@ -9,7 +9,7 @@ use think\model\concern\SoftDelete;
 /**
  * 友情链接模型
  */
-class Link extends Model
+class Link extends SiteModel
 {
     use SoftDelete;
 
@@ -29,10 +29,11 @@ class Link extends Model
 
     /**
      * 关联分组
+     * 使用统一的 Group 模型
      */
     public function group()
     {
-        return $this->belongsTo(LinkGroup::class, 'group_id', 'id');
+        return $this->belongsTo(Group::class, 'group_id', 'id');
     }
 
     /**

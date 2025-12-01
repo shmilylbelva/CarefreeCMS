@@ -88,7 +88,7 @@
                   <div class="diff-content old-content">
                     <div class="diff-label">旧值：</div>
                     <div class="diff-value">
-                      <div v-if="isHtmlField(key)" v-html="value.old || '-'"></div>
+                      <div v-if="isHtmlField(key)" v-safe-html="value.old || '-'"></div>
                       <pre v-else-if="isJsonField(key)">{{ formatJson(value.old) }}</pre>
                       <span v-else>{{ value.old || '-' }}</span>
                     </div>
@@ -98,7 +98,7 @@
                   <div class="diff-content new-content">
                     <div class="diff-label">新值：</div>
                     <div class="diff-value">
-                      <div v-if="isHtmlField(key)" v-html="value.new || '-'"></div>
+                      <div v-if="isHtmlField(key)" v-safe-html="value.new || '-'"></div>
                       <pre v-else-if="isJsonField(key)">{{ formatJson(value.new) }}</pre>
                       <span v-else>{{ value.new || '-' }}</span>
                     </div>
@@ -121,6 +121,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { compareVersions } from '@/api/articleVersion'
+import { vSafeHtml } from '@/utils/sanitize'
 
 const props = defineProps({
   modelValue: {

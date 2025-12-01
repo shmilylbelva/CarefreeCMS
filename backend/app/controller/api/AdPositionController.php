@@ -3,7 +3,7 @@ declare (strict_types = 1);
 
 namespace app\controller\api;
 
-use app\model\AdPosition;
+use app\model\Group;
 use think\Request;
 use think\facade\Validate;
 
@@ -22,7 +22,8 @@ class AdPositionController extends BaseController
         $keyword = $request->param('keyword', '');
         $status = $request->param('status', '');
 
-        $query = AdPosition::order('id', 'desc');
+        $query = Group::where('type', Group::TYPE_AD)
+            ->order('id', 'desc');
 
         // 关键词搜索
         if (!empty($keyword)) {
@@ -52,7 +53,8 @@ class AdPositionController extends BaseController
      */
     public function all()
     {
-        $list = AdPosition::where('status', AdPosition::STATUS_ENABLED)
+        $list = Group::where('type', Group::TYPE_AD)
+            ->where('status', Group::STATUS_ENABLED)
             ->select();
 
         return $this->success([
@@ -65,7 +67,7 @@ class AdPositionController extends BaseController
      */
     public function read($id)
     {
-        $position = AdPosition::find($id);
+        $position = Group::where('type', Group::TYPE_AD)->find($id);
 
         if (!$position) {
             return $this->error('广告位不存在');
@@ -91,27 +93,44 @@ class AdPositionController extends BaseController
         // 数据验证
         $validate = Validate::rule([
             'name' => 'require|max:50',
-            'code' => 'require|max:50|regex:^[a-z0-9_]+$|unique:ad_positions',
+            'code' => 'require|max:50|regex:^[a-z0-9_]+$',
         ])->message([
             'name.require' => '广告位名称不能为空',
             'name.max' => '广告位名称最多50个字符',
             'code.require' => '广告位代码不能为空',
             'code.max' => '广告位代码最多50个字符',
             'code.regex' => '广告位代码只能包含小写字母、数字和下划线',
-            'code.unique' => '广告位代码已存在',
         ]);
 
         if (!$validate->check($data)) {
             return $this->error($validate->getError());
         }
 
-        // 设置默认值
-        if (!isset($data['status'])) {
-            $data['status'] = AdPosition::STATUS_ENABLED;
+        // 检查代码是否重复
+        $exists = Group::where('type', Group::TYPE_AD)
+            ->where('code', $data['code'])
+            ->find();
+        if ($exists) {
+            return $this->error('广告位代码已存在');
         }
 
-        $position = new AdPosition();
-        $position->save($data);
+        // 提取广告位特定配置
+        $config = [
+            'width' => $data['width'] ?? null,
+            'height' => $data['height'] ?? null,
+        ];
+
+        // 构建分组数据
+        $groupData = [
+            'type' => Group::TYPE_AD,
+            'name' => $data['name'],
+            'code' => $data['code'],
+            'description' => $data['description'] ?? null,
+            'config' => json_encode($config),
+            'status' => $data['status'] ?? Group::STATUS_ENABLED,
+        ];
+
+        $position = Group::create($groupData);
 
         return $this->success($position, '创建成功');
     }
@@ -121,7 +140,7 @@ class AdPositionController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $position = AdPosition::find($id);
+        $position = Group::where('type', Group::TYPE_AD)->find($id);
 
         if (!$position) {
             return $this->error('广告位不存在');
@@ -139,18 +158,53 @@ class AdPositionController extends BaseController
         // 数据验证
         $validate = Validate::rule([
             'name' => 'require|max:50',
-            'code' => 'require|max:50|regex:^[a-z0-9_]+$|unique:ad_positions,code,' . $id,
+            'code' => 'require|max:50|regex:^[a-z0-9_]+$',
         ])->message([
             'name.require' => '广告位名称不能为空',
             'name.max' => '广告位名称最多50个字符',
             'code.require' => '广告位代码不能为空',
             'code.max' => '广告位代码最多50个字符',
             'code.regex' => '广告位代码只能包含小写字母、数字和下划线',
-            'code.unique' => '广告位代码已存在',
         ]);
 
         if (!$validate->check($data)) {
             return $this->error($validate->getError());
+        }
+
+        // 检查代码是否重复（排除自己）
+        if (isset($data['code'])) {
+            $exists = Group::where('type', Group::TYPE_AD)
+                ->where('code', $data['code'])
+                ->where('id', '<>', $id)
+                ->find();
+            if ($exists) {
+                return $this->error('广告位代码已存在');
+            }
+        }
+
+        // 如果有广告位配置字段，更新config
+        $configFields = ['width', 'height'];
+        $hasConfigUpdate = false;
+        foreach ($configFields as $field) {
+            if (isset($data[$field])) {
+                $hasConfigUpdate = true;
+                break;
+            }
+        }
+
+        if ($hasConfigUpdate) {
+            // 获取现有配置
+            $currentConfig = json_decode($position->config ?? '{}', true) ?: [];
+
+            // 更新配置字段
+            foreach ($configFields as $field) {
+                if (isset($data[$field])) {
+                    $currentConfig[$field] = $data[$field];
+                    unset($data[$field]);
+                }
+            }
+
+            $data['config'] = json_encode($currentConfig);
         }
 
         $position->save($data);
@@ -163,7 +217,7 @@ class AdPositionController extends BaseController
      */
     public function delete($id)
     {
-        $position = AdPosition::find($id);
+        $position = Group::where('type', Group::TYPE_AD)->find($id);
 
         if (!$position) {
             return $this->error('广告位不存在');
@@ -175,7 +229,17 @@ class AdPositionController extends BaseController
             return $this->error('该广告位下还有广告，无法删除');
         }
 
-        $position->delete();
+        $positionId = $position->id;
+
+        // 使用Db类直接删除，确保WHERE条件精确
+        $affected = \think\facade\Db::name('groups')
+            ->where('id', '=', $positionId)
+            ->limit(1)
+            ->delete();
+
+        if ($affected === 0) {
+            return $this->error('广告位删除失败：未找到该广告位');
+        }
 
         return $this->success(null, '删除成功');
     }

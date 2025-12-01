@@ -136,3 +136,77 @@ export function restoreHistory(historyId) {
     }
   })
 }
+
+/**
+ * ========== 模板包内模板管理 ==========
+ */
+
+// 获取模板包内的模板列表
+export function getPackageTemplateList(params) {
+  return request({
+    url: '/api/template/index',
+    method: 'get',
+    params
+  })
+}
+
+// 创建模板
+export function createPackageTemplate(data) {
+  return request({
+    url: '/api/template/save',
+    method: 'post',
+    data
+  })
+}
+
+// 更新模板
+export function updatePackageTemplate(id, data) {
+  return request({
+    url: `/api/template/update/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+// 删除模板
+export function deletePackageTemplate(id) {
+  return request({
+    url: `/api/template/delete/${id}`,
+    method: 'delete'
+  })
+}
+
+// 获取模板详情
+export function getPackageTemplate(id) {
+  return request({
+    url: `/api/template/read/${id}`,
+    method: 'get'
+  })
+}
+
+// 复制模板
+export function copyPackageTemplate(data) {
+  return request({
+    url: '/api/template/copy',
+    method: 'post',
+    data
+  })
+}
+
+// 保存模板内容
+export function savePackageTemplateContent(data) {
+  return request({
+    url: '/api/template/save-content',
+    method: 'post',
+    data
+  })
+}
+
+// 批量操作模板
+export function batchOperatePackageTemplates(data) {
+  return request({
+    url: '/api/template/batch',
+    method: 'post',
+    data
+  })
+}

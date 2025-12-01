@@ -165,7 +165,16 @@ class FrontUserManage extends BaseController
         }
 
         try {
-            $user->save($updateData);
+            $affected = Db::name('front_users')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update($updateData);
+
+            if ($affected === 0) {
+                return Response::error('更新失败：未找到该用户或数据未改变');
+            }
+
+            $user = FrontUser::withoutGlobalScope()->find($id);
             return Response::success($user->toArray(), '更新成功');
         } catch (\Exception $e) {
             return Response::error('更新失败：' . $e->getMessage());
@@ -190,8 +199,14 @@ class FrontUserManage extends BaseController
         }
 
         try {
-            $user->status = $status;
-            $user->save();
+            $affected = Db::name('front_users')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update(['status' => $status]);
+
+            if ($affected === 0) {
+                return Response::error('操作失败：未找到该用户或数据未改变');
+            }
 
             $statusText = ['禁用', '正常', '待验证'];
             return Response::success([], '用户状态已设置为：' . $statusText[$status]);
@@ -251,9 +266,16 @@ class FrontUserManage extends BaseController
         }
 
         try {
-            $user->level = $level;
-            $user->save();
+            $affected = Db::name('front_users')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update(['level' => $level]);
 
+            if ($affected === 0) {
+                return Response::error('操作失败：未找到该用户或数据未改变');
+            }
+
+            $user = FrontUser::withoutGlobalScope()->find($id);
             return Response::success([
                 'level' => $user->level,
                 'level_text' => $user->level_text,
@@ -278,16 +300,24 @@ class FrontUserManage extends BaseController
         $vipExpireTime = $request->post('vip_expire_time', '');
 
         try {
-            $user->is_vip = $isVip;
+            $updateData = ['is_vip' => $isVip];
 
             if ($isVip == 1 && !empty($vipExpireTime)) {
-                $user->vip_expire_time = $vipExpireTime;
+                $updateData['vip_expire_time'] = $vipExpireTime;
             } else {
-                $user->vip_expire_time = null;
+                $updateData['vip_expire_time'] = null;
             }
 
-            $user->save();
+            $affected = Db::name('front_users')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update($updateData);
 
+            if ($affected === 0) {
+                return Response::error('操作失败：未找到该用户或数据未改变');
+            }
+
+            $user = FrontUser::withoutGlobalScope()->find($id);
             return Response::success([
                 'is_vip' => $user->is_vip,
                 'vip_expire_time' => $user->vip_expire_time,
@@ -350,6 +380,7 @@ class FrontUserManage extends BaseController
             return Response::notFound('用户不存在');
         }
 
+        Db::startTrans();
         try {
             // 删除相关数据
             Db::name('user_favorites')->where('user_id', $id)->delete();
@@ -362,8 +393,10 @@ class FrontUserManage extends BaseController
             // 彻底删除用户
             $user->force()->delete();
 
+            Db::commit();
             return Response::success([], '用户已彻底删除');
         } catch (\Exception $e) {
+            Db::rollback();
             return Response::error('删除失败：' . $e->getMessage());
         }
     }

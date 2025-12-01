@@ -41,7 +41,7 @@
 
 ```bash
 # 方式1：通过Git克隆
-git clone https://github.com/carefreecms/carefreecms.git
+git clone https://github.com/carefree-code/CarefreeCMS.git
 cd carefreecms
 
 # 方式2：下载压缩包并解压
@@ -524,7 +524,7 @@ npm run build
 如遇到安装问题，可以通过以下方式获取帮助：
 
 - 查看文档：https://docs.carefreecms.com
-- 提交Issue：https://github.com/carefreecms/carefreecms/issues
+- 提交Issue：https://github.com/carefree-code/CarefreeCMS/issues
 - 邮件支持：support@carefreecms.com
 
 ---

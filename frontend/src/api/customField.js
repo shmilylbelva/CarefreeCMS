@@ -10,14 +10,20 @@ export function getCustomFieldList(params) {
 }
 
 // 根据模型获取字段（用于表单）
-export function getFieldsByModel(modelType, modelId = null) {
+export function getFieldsByModel(modelType, modelId = null, siteId = null) {
+  const params = {
+    model_type: modelType,
+    model_id: modelId
+  }
+
+  if (siteId !== null) {
+    params.site_id = siteId
+  }
+
   return request({
     url: '/custom-fields/by-model',
     method: 'get',
-    params: {
-      model_type: modelType,
-      model_id: modelId
-    }
+    params
   })
 }
 

@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 用户阅读历史模型
  */
-class UserReadHistory extends Model
+class UserReadHistory extends SiteModel
 {
     protected $name = 'user_read_history';
     protected $autoWriteTimestamp = true;
@@ -22,7 +22,7 @@ class UserReadHistory extends Model
      */
     public function user()
     {
-        return $this->belongsTo(FrontUser::class, 'user_id');
+        return $this->belongsTo(FrontUser::class, 'user_id', 'id');
     }
 
     /**
@@ -30,6 +30,6 @@ class UserReadHistory extends Model
      */
     public function article()
     {
-        return $this->belongsTo(Article::class, 'article_id');
+        return $this->belongsTo(Article::class, 'article_id', 'id');
     }
 }

@@ -24,7 +24,7 @@ class UserPointLog extends Model
      */
     public function user()
     {
-        return $this->belongsTo(FrontUser::class, 'user_id');
+        return $this->belongsTo(FrontUser::class, 'user_id', 'id');
     }
 
     /**

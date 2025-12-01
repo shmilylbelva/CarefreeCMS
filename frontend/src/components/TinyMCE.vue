@@ -78,8 +78,9 @@ const props = defineProps({
   toolbar: {
     type: [String, Array],
     default: [
-      'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough subscript superscript | forecolor backcolor | alignleft aligncenter alignright alignjustify',
-      'outdent indent | bullist numlist | link image mediaLibrary media table emoticons charmap | codesample code visualblocks | hr pagebreak anchor | searchreplace visualchars | insertdatetime | ltr rtl | removeformat | preview fullscreen'
+      'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | removeformat',
+      'outdent indent | bullist numlist | link image mediaLibrary table | codesample emoticons | hr pagebreak | searchreplace | fullscreen',
+      'subscript superscript | charmap insertdatetime | ltr rtl | visualblocks code | preview'
     ]
   }
 })

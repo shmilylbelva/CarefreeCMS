@@ -26,9 +26,8 @@ class MemberLevel extends Model
         'days_required' => 'integer',
         'sort' => 'integer',
         'status' => 'integer',
+        'privileges' => 'json',
     ];
-
-    protected $json = ['privileges'];
 
     /**
      * 获取privileges数组
@@ -36,7 +35,18 @@ class MemberLevel extends Model
     public function getPrivilegesArrayAttr($value, $data)
     {
         if (isset($data['privileges'])) {
-            return is_string($data['privileges']) ? json_decode($data['privileges'], true) : $data['privileges'];
+            $privileges = $data['privileges'];
+
+            // 处理 ThinkPHP 8 的 Json 对象
+            if ($privileges instanceof \think\model\type\Json) {
+                return $privileges->value();
+            }
+            if (is_string($privileges)) {
+                return json_decode($privileges, true) ?: [];
+            }
+            if (is_array($privileges)) {
+                return $privileges;
+            }
         }
         return [];
     }

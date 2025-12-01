@@ -17,11 +17,11 @@ export function updateProfile(data) {
   })
 }
 
-// 修改密码
+// 修改密码 (使用RESTful PATCH方式)
 export function updatePassword(data) {
   return request({
     url: '/profile/password',
-    method: 'post',
+    method: 'patch',
     data
   })
 }
@@ -35,5 +35,13 @@ export function uploadAvatar(data) {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
+  })
+}
+
+// 获取当前用户权限列表
+export function getPermissions() {
+  return request({
+    url: '/profile/permissions',
+    method: 'get'
   })
 }

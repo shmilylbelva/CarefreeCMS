@@ -1,56 +1,82 @@
-{extend name="layout" /}
+{extend name="default/layout" /}
+
+{block name="title"}标签：{$tag.name} - {$site.site_name|default='国产CMS'}{/block}
 
 {block name="content"}
-<div class="content-box">
-    <h2 style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #67C23A;">
-        标签：{$tag.name}
-    </h2>
-
-    {notempty name="tag.description"}
-    <p style="color: #666; margin-bottom: 30px; padding: 15px; background: #f9f9f9; border-radius: 4px;">
-        {$tag.description}
-    </p>
-    {/notempty}
-
-    <div style="color: #999; margin-bottom: 20px;">
-        共有 {$tag.article_count ?: '0'} 篇文章
+<div class="tag-header">
+    <div class="breadcrumb">
+        <a href="{$base_url}/index.html">首页</a>
+        <span class="separator">/</span>
+        <span>标签</span>
     </div>
 
-    <div class="article-list">
-        {volist name="articles" id="article"}
-        <article style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-            <h3 style="margin-bottom: 10px;">
-                <a href="/article/{$article.id}.html" style="color: #333; text-decoration: none;">
-                    {$article.title}
-                </a>
-            </h3>
-            <div style="color: #999; font-size: 14px; margin-bottom: 10px;">
-                <span>作者：{$article.user.real_name ?: ($article.author ?: '管理员')}</span>
-                <span style="margin-left: 20px;">发布时间：{$article.publish_time ?: $article.create_time}</span>
-                <span style="margin-left: 20px;">浏览量：{$article.view_count}</span>
-            </div>
-            {notempty name="article.category"}
-            <div style="color: #999; font-size: 14px; margin-bottom: 10px;">
-                <span>分类：{$article.category.name}</span>
-            </div>
-            {/notempty}
-            <p style="color: #666; line-height: 1.8;">
-                {$article.summary ?: '暂无摘要'}
-            </p>
-        </article>
-        {/volist}
-    </div>
-
-    {empty name="articles"}
-    <div style="text-align: center; padding: 50px 0; color: #999;">
-        该标签下暂无文章
-    </div>
-    {/empty}
+    <h1 class="tag-title">
+        <i class="icon-tag"></i>
+        {$tag.name}
+    </h1>
+    <p class="tag-count">共 {$total} 篇相关文章</p>
 </div>
 
-<style>
-    .article-list a:hover {
-        color: #67C23A;
-    }
-</style>
+<div class="tag-articles">
+    {if condition="$articles"}
+    <div class="article-list">
+        {carefree:foreach from="$articles" item="article"}
+        <article class="article-item">
+            {if condition="!empty($article['cover_image'])"}
+            <div class="article-thumbnail">
+                <a href="{$base_url}/article/{$article.id}.html">
+                    <img src="{$article.cover_image}" alt="{$article.title}">
+                </a>
+            </div>
+            {/if}
+
+            <div class="article-content">
+                <h3 class="article-title">
+                    <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
+                </h3>
+
+                {if condition="!empty($article['summary'])"}
+                <p class="article-excerpt">{$article.summary}</p>
+                {/if}
+
+                <div class="article-meta">
+                    {if condition="isset($article['category_id'])"}
+                    <span class="category">
+                        <a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
+                    </span>
+                    {/if}
+                    <span class="date">{$article.publish_time|date='Y-m-d'}</span>
+                    <span class="views">{$article.views} 阅读</span>
+                </div>
+            </div>
+        </article>
+        {/carefree:foreach}
+    </div>
+
+    {if condition="$pages > 1"}
+    <div class="pagination">
+        {if condition="$page > 1"}
+        <a href="?page={$page - 1}" class="page-link prev">上一页</a>
+        {/if}
+
+        {for start="1" end="$pages" name="p"}
+        {if condition="$p == $page"}
+        <span class="page-link active">{$p}</span>
+        {else /}
+        <a href="?page={$p}" class="page-link">{$p}</a>
+        {/if}
+        {/for}
+
+        {if condition="$page < $pages"}
+        <a href="?page={$page + 1}" class="page-link next">下一页</a>
+        {/if}
+    </div>
+    {/if}
+
+    {else /}
+    <div class="empty-state">
+        <p>该标签下暂无文章</p>
+    </div>
+    {/if}
+</div>
 {/block}

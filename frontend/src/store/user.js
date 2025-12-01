@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { login, getUserInfo, logout } from '@/api/auth'
+import { getPermissions } from '@/api/profile'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { usePermissionStore } from './permission'
 
@@ -38,22 +39,34 @@ export const useUserStore = defineStore('user', {
         const res = await getUserInfo()
         this.userInfo = res.data
 
-        // 加载用户权限
+        // 加载用户权限（调用专门的权限API）
         const permissionStore = usePermissionStore()
-        if (res.data.role && res.data.role.permissions) {
-          let permissions = []
-          try {
-            permissions = typeof res.data.role.permissions === 'string'
-              ? JSON.parse(res.data.role.permissions)
-              : res.data.role.permissions
-          } catch (e) {
-            permissions = []
+        try {
+          const permRes = await getPermissions()
+          if (permRes.data && permRes.data.permissions) {
+            permissionStore.setPermissions(permRes.data.permissions)
+          } else {
+            // 兼容旧数据：如果权限API失败，尝试从用户信息中获取
+            if (res.data.role && res.data.role.permissions) {
+              let permissions = []
+              try {
+                permissions = typeof res.data.role.permissions === 'string'
+                  ? JSON.parse(res.data.role.permissions)
+                  : res.data.role.permissions
+              } catch (e) {
+                permissions = []
+              }
+              // 超级管理员（ID=1）拥有所有权限
+              if (res.data.role_id === 1) {
+                permissions = ['*']
+              }
+              permissionStore.setPermissions(permissions)
+            }
           }
-          // 超级管理员（ID=1）拥有所有权限
-          if (res.data.role_id === 1) {
-            permissions = ['*']
-          }
-          permissionStore.setPermissions(permissions)
+        } catch (permError) {
+          console.error('获取权限失败:', permError)
+          // 权限获取失败，设置空权限
+          permissionStore.setPermissions([])
         }
 
         return res

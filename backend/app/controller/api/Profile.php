@@ -29,11 +29,12 @@ class Profile extends BaseController
 
         $userData = $user->toArray();
 
-        // 生成完整的头像URL
+        // 生成完整的头像URL - 使用当前站点的site_url字段
         if (!empty($userData['avatar'])) {
             // 如果不是完整URL，则生成完整URL
             if (!str_starts_with($userData['avatar'], 'http')) {
-                $siteUrl = \app\model\Config::getConfig('site_url', '');
+                $site = \app\service\SiteContextService::getSite();
+                $siteUrl = $site ? $site->site_url : '';
                 if (!empty($siteUrl)) {
                     $userData['avatar'] = rtrim($siteUrl, '/') . '/' . $userData['avatar'];
                 } else {
@@ -42,7 +43,23 @@ class Profile extends BaseController
             }
         }
 
+        // 添加用户权限信息
+        $userData['permissions'] = AdminUser::getUserPermissions($request->user['id']);
+
         return Response::success($userData);
+    }
+
+    /**
+     * 获取当前用户的权限列表
+     */
+    public function permissions(Request $request)
+    {
+        $permissions = AdminUser::getUserPermissions($request->user['id']);
+
+        return Response::success([
+            'permissions' => $permissions,
+            'is_super_admin' => in_array('*', $permissions)
+        ]);
     }
 
     /**
@@ -182,14 +199,19 @@ class Profile extends BaseController
             // 创建目录（如果不存在）- 保存到html目录
             $fullPath = app()->getRootPath() . 'html' . DIRECTORY_SEPARATOR . $savePath;
             if (!is_dir($fullPath)) {
-                mkdir($fullPath, 0755, true);
+                if (!mkdir($fullPath, 0755, true)) {
+                    throw new \Exception('无法创建上传目录');
+                }
             }
 
             // 删除旧头像文件（如果存在）
             if ($user->avatar) {
                 $oldAvatarPath = app()->getRootPath() . 'html' . DIRECTORY_SEPARATOR . $user->avatar;
-                if (file_exists($oldAvatarPath)) {
-                    @unlink($oldAvatarPath);
+                // 验证路径在允许的目录内，防止路径遍历
+                $realPath = realpath($oldAvatarPath);
+                $allowedDir = realpath(app()->getRootPath() . 'html' . DIRECTORY_SEPARATOR . 'uploads');
+                if ($realPath && $allowedDir && strpos($realPath, $allowedDir) === 0 && file_exists($realPath)) {
+                    @unlink($realPath);
                 }
             }
 
@@ -203,8 +225,9 @@ class Profile extends BaseController
             $user->avatar = $filePath;
             $user->save();
 
-            // 生成完整URL
-            $siteUrl = \app\model\Config::getConfig('site_url', '');
+            // 生成完整URL - 使用当前站点的site_url字段
+            $site = \app\service\SiteContextService::getSite();
+            $siteUrl = $site ? $site->site_url : '';
             if (!empty($siteUrl)) {
                 $avatarUrl = rtrim($siteUrl, '/') . '/' . $filePath;
             } else {

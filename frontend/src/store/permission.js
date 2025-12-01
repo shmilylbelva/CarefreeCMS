@@ -14,13 +14,36 @@ export const usePermissionStore = defineStore('permission', () => {
 
   /**
    * 检查是否有指定权限
+   * 支持通配符匹配,例如:
+   * - 权限列表包含 "article.*",可以匹配 "article.view", "article.create" 等
+   * - 权限列表包含 "*",可以匹配所有权限
    */
   function hasPermission(permission) {
+    if (!permission) {
+      return true
+    }
+
     // 超级管理员拥有所有权限
     if (permissions.value.includes('*')) {
       return true
     }
-    return permissions.value.includes(permission)
+
+    // 精确匹配
+    if (permissions.value.includes(permission)) {
+      return true
+    }
+
+    // 通配符匹配
+    // 例如: article.view 可以被 article.* 匹配
+    const parts = permission.split('.')
+    if (parts.length >= 2) {
+      const wildcardPermission = parts[0] + '.*'
+      if (permissions.value.includes(wildcardPermission)) {
+        return true
+      }
+    }
+
+    return false
   }
 
   /**

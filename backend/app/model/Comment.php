@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 评论模型
  */
-class Comment extends Model
+class Comment extends SiteModel
 {
     protected $name = 'comments';
     protected $autoWriteTimestamp = true;
@@ -32,7 +32,7 @@ class Comment extends Model
      */
     public function article()
     {
-        return $this->belongsTo(Article::class, 'article_id');
+        return $this->belongsTo(Article::class, 'article_id', 'id');
     }
 
     /**
@@ -40,7 +40,7 @@ class Comment extends Model
      */
     public function user()
     {
-        return $this->belongsTo(FrontUser::class, 'user_id');
+        return $this->belongsTo(FrontUser::class, 'user_id', 'id');
     }
 
     /**
@@ -48,7 +48,7 @@ class Comment extends Model
      */
     public function parent()
     {
-        return $this->belongsTo(Comment::class, 'parent_id');
+        return $this->belongsTo(Comment::class, 'parent_id', 'id');
     }
 
     /**
@@ -208,6 +208,9 @@ class Comment extends Model
             if ($comment->user_id) {
                 FrontUser::where('id', $comment->user_id)->inc('comment_count')->update();
             }
+
+            // 发送审核通过通知
+            \app\service\CommentNotificationService::notifyCommentApproved($comment);
         }
 
         // 如果从已通过变为其他状态，减少文章评论数
@@ -218,6 +221,11 @@ class Comment extends Model
             if ($comment->user_id && FrontUser::find($comment->user_id)->comment_count > 0) {
                 FrontUser::where('id', $comment->user_id)->dec('comment_count')->update();
             }
+        }
+
+        // 如果审核拒绝，发送通知
+        if ($oldStatus == self::STATUS_PENDING && $status == self::STATUS_REJECTED) {
+            \app\service\CommentNotificationService::notifyCommentRejected($comment);
         }
 
         return $result;
@@ -257,5 +265,146 @@ class Comment extends Model
 
         // 删除当前评论
         return $comment->delete();
+    }
+
+    /**
+     * 关联点赞记录
+     */
+    public function likes()
+    {
+        return $this->hasMany(CommentLike::class, 'comment_id');
+    }
+
+    /**
+     * 关联举报记录
+     */
+    public function reports()
+    {
+        return $this->hasMany(CommentReport::class, 'comment_id');
+    }
+
+    /**
+     * 获取评论列表（支持多种排序）
+     *
+     * @param int $articleId 文章ID
+     * @param string $orderBy 排序方式: time-时间 hot-热度 like-点赞数
+     * @param int $status 状态
+     * @param int $page 页码
+     * @param int $limit 每页数量
+     * @return array
+     */
+    public static function getList(int $articleId, string $orderBy = 'time', int $status = self::STATUS_APPROVED, int $page = 1, int $limit = 20): array
+    {
+        $query = self::with(['user', 'children'])
+            ->where('article_id', $articleId)
+            ->where('parent_id', 0)
+            ->where('status', $status);
+
+        // 根据排序方式
+        switch ($orderBy) {
+            case 'hot':
+                $query->order('hot_score', 'desc')->order('create_time', 'desc');
+                break;
+            case 'like':
+                $query->order('like_count', 'desc')->order('create_time', 'desc');
+                break;
+            case 'time':
+            default:
+                $query->order('create_time', 'desc');
+                break;
+        }
+
+        $comments = $query->page($page, $limit)->select();
+
+        return [
+            'list'  => $comments,
+            'total' => self::where('article_id', $articleId)
+                ->where('parent_id', 0)
+                ->where('status', $status)
+                ->count(),
+            'page'  => $page,
+            'limit' => $limit,
+        ];
+    }
+
+    /**
+     * 获取热门评论
+     *
+     * @param int $articleId 文章ID
+     * @param int $limit 数量
+     * @return array
+     */
+    public static function getHotComments(int $articleId, int $limit = 5): array
+    {
+        return self::with(['user'])
+            ->where('article_id', $articleId)
+            ->where('status', self::STATUS_APPROVED)
+            ->where('is_hot', 1)
+            ->order('hot_score', 'desc')
+            ->limit($limit)
+            ->select()
+            ->toArray();
+    }
+
+    /**
+     * 获取统计数据
+     *
+     * @return array
+     */
+    public static function getStatistics(): array
+    {
+        return [
+            'total' => self::count(),
+            'approved' => self::where('status', self::STATUS_APPROVED)->count(),
+            'pending' => self::where('status', self::STATUS_PENDING)->count(),
+            'rejected' => self::where('status', self::STATUS_REJECTED)->count(),
+            'today' => self::whereTime('create_time', 'today')->count(),
+            'week' => self::whereTime('create_time', 'week')->count(),
+            'month' => self::whereTime('create_time', 'month')->count(),
+            'guest' => self::where('is_guest', 1)->count(),
+            'user' => self::where('is_guest', 0)->count(),
+        ];
+    }
+
+    /**
+     * 获取评论趋势数据（最近30天）
+     *
+     * @return array
+     */
+    public static function getTrendData(): array
+    {
+        $data = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-{$i} days"));
+            $count = self::whereTime('create_time', $date)->count();
+            $data[] = [
+                'date' => $date,
+                'count' => $count
+            ];
+        }
+        return $data;
+    }
+
+    /**
+     * 获取活跃用户（评论最多的用户）
+     *
+     * @param int $limit 数量
+     * @param int $days 天数范围
+     * @return array
+     */
+    public static function getActiveUsers(int $limit = 10, int $days = 30): array
+    {
+        $startDate = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+
+        return self::where('user_id', '>', 0)
+            ->where('create_time', '>=', $startDate)
+            ->where('status', self::STATUS_APPROVED)
+            ->group('user_id')
+            ->field('user_id, count(*) as comment_count')
+            ->with(['user'])
+            ->order('comment_count', 'desc')
+            ->limit($limit)
+            ->select()
+            ->toArray();
     }
 }

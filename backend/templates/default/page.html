@@ -1,37 +1,30 @@
-{extend name="layout" /}
+{extend name="default/layout" /}
+
+{block name="title"}{$page.title} - {$site.site_name|default='国产CMS'}{/block}
+{block name="keywords"}{$page.keywords|default=''}{/block}
+{block name="description"}{$page.description|default=''}{/block}
 
 {block name="content"}
-<div class="content-box">
-    <article>
-        <header style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
-            <h1 style="font-size: 32px;">{$page.title}</h1>
+<div class="single-page">
+    <div class="breadcrumb">
+        <a href="{$base_url}/index.html">首页</a>
+        <span class="separator">/</span>
+        <span>{$page.title}</span>
+    </div>
+
+    <article class="page-content">
+        <header class="page-header">
+            <h1 class="page-title">{$page.title}</h1>
+            {if condition="!empty($page['update_time'])"}
+            <div class="page-meta">
+                <span class="update-time">更新时间：{$page.update_time|date='Y-m-d H:i:s'}</span>
+            </div>
+            {/if}
         </header>
 
-        <div class="page-content" style="line-height: 1.8; color: #333; font-size: 16px;">
+        <div class="page-body">
             {$page.content|raw}
         </div>
     </article>
 </div>
-
-<style>
-    .page-content p {
-        margin-bottom: 15px;
-    }
-    .page-content img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 20px auto;
-    }
-    .page-content h2 {
-        margin-top: 30px;
-        margin-bottom: 15px;
-        font-size: 24px;
-    }
-    .page-content h3 {
-        margin-top: 25px;
-        margin-bottom: 10px;
-        font-size: 20px;
-    }
-</style>
 {/block}

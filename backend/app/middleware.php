@@ -3,6 +3,8 @@
 return [
     // 跨域请求支持
     \app\middleware\Cors::class,
+    // 多站点识别（应在其他中间件之后）
+    \app\middleware\MultiSite::class,
     // 全局请求缓存
     // \think\middleware\CheckRequestCache::class,
     // 多语言加载

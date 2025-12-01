@@ -153,7 +153,17 @@ class SeoRedirectController extends BaseController
             return $this->error('重定向规则不存在');
         }
 
-        $redirect->delete();
+        $redirectId = $redirect->id;
+
+        // 使用Db类直接删除，确保WHERE条件精确
+        $affected = \think\facade\Db::name('seo_redirects')
+            ->where('id', '=', $redirectId)
+            ->limit(1)
+            ->delete();
+
+        if ($affected === 0) {
+            return $this->error('重定向规则删除失败：未找到该规则');
+        }
 
         return $this->success(null, '删除成功');
     }

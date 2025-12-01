@@ -1,0 +1,111 @@
+{extend name="default/layout" /}
+
+{block name="title"}{$topic.name} - {$site.site_name|default='国产CMS'}{/block}
+{block name="keywords"}{$keywords|default=''}{/block}
+{block name="description"}{$description|default=''}{/block}
+
+{block name="content"}
+<div class="topic-page">
+    <!-- 专题头部 -->
+    <div class="topic-header" {if condition="!empty($topic['cover_image'])"}style="background-image: url({$topic.cover_image})"{/if}>
+        <div class="topic-header-overlay">
+            <div class="breadcrumb">
+                <a href="{$base_url}/index.html">首页</a>
+                <span class="separator">/</span>
+                <span>专题</span>
+            </div>
+
+            <h1 class="topic-title">{$topic.name}</h1>
+            {if condition="!empty($topic['description'])"}
+            <p class="topic-description">{$topic.description}</p>
+            {/if}
+
+            <div class="topic-stats">
+                <span class="stat-item">
+                    <i class="icon-file"></i>
+                    {$total} 篇文章
+                </span>
+                <span class="stat-item">
+                    <i class="icon-eye"></i>
+                    {$topic.views|default=0} 浏览
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 专题介绍 -->
+    {if condition="!empty($topic['content'])"}
+    <div class="topic-intro">
+        <div class="container-small">
+            {$topic.content|raw}
+        </div>
+    </div>
+    {/if}
+
+    <!-- 文章列表 -->
+    <div class="topic-articles">
+        {if condition="$articles"}
+        <div class="article-list">
+            {carefree:foreach from="$articles" item="article"}
+            <article class="article-item-large">
+                {if condition="!empty($article['cover_image'])"}
+                <div class="article-thumbnail">
+                    <a href="{$base_url}/article/{$article.id}.html">
+                        <img src="{$article.cover_image}" alt="{$article.title}">
+                    </a>
+                </div>
+                {/if}
+
+                <div class="article-content">
+                    <h3 class="article-title">
+                        <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
+                    </h3>
+
+                    {if condition="!empty($article['summary'])"}
+                    <p class="article-excerpt">{$article.summary}</p>
+                    {/if}
+
+                    <div class="article-meta">
+                        {if condition="isset($article['category_id'])"}
+                        <span class="category">
+                            <a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
+                        </span>
+                        {/if}
+                        <span class="author">{$article.author}</span>
+                        <span class="date">{$article.publish_time|date='Y-m-d'}</span>
+                        <span class="views">{$article.views|default=0} 阅读</span>
+                    </div>
+                </div>
+            </article>
+            {/carefree:foreach}
+        </div>
+
+        <!-- 分页 -->
+        {if condition="$pages > 1"}
+        <div class="pagination">
+            {if condition="$page > 1"}
+            <a href="?page={$page - 1}" class="page-link prev">上一页</a>
+            {/if}
+
+            {for start="1" end="$pages" name="p"}
+            {if condition="$p == $page"}
+            <span class="page-link active">{$p}</span>
+            {else /}
+            <a href="?page={$p}" class="page-link">{$p}</a>
+            {/if}
+            {/for}
+
+            {if condition="$page < $pages"}
+            <a href="?page={$page + 1}" class="page-link next">下一页</a>
+            {/if}
+        </div>
+        {/if}
+
+        {else /}
+        <div class="empty-state">
+            <p>该专题下暂无文章</p>
+        </div>
+        {/if}
+    </div>
+</div>
+{/block}

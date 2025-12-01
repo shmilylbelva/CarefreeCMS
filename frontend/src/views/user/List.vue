@@ -221,11 +221,26 @@ const passwordForm = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  real_name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, message: '用户名长度不能少于3位', trigger: 'blur' },
+    { max: 50, message: '用户名长度不能超过50位', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
+    { max: 128, message: '密码长度不能超过128位', trigger: 'blur' }
+  ],
+  real_name: [
+    { required: true, message: '请输入姓名', trigger: 'blur' },
+    { max: 50, message: '姓名长度不能超过50位', trigger: 'blur' }
+  ],
   role_id: [{ required: true, message: '请选择角色', trigger: 'change' }],
-  email: [{ type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }]
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' },
+    { max: 100, message: '邮箱长度不能超过100位', trigger: 'blur' }
+  ]
 }
 
 const passwordRules = {
@@ -254,7 +269,7 @@ const fetchUsers = async () => {
   try {
     const params = {
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,
       ...searchForm
     }
     const res = await getUserList(params)

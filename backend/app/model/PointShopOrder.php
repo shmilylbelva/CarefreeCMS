@@ -91,7 +91,7 @@ class PointShopOrder extends Model
      */
     public function user()
     {
-        return $this->belongsTo(FrontUser::class, 'user_id');
+        return $this->belongsTo(FrontUser::class, 'user_id', 'id');
     }
 
     /**
@@ -99,7 +99,7 @@ class PointShopOrder extends Model
      */
     public function goods()
     {
-        return $this->belongsTo(PointShopGoods::class, 'goods_id');
+        return $this->belongsTo(PointShopGoods::class, 'goods_id', 'id');
     }
 
     /**

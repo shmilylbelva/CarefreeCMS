@@ -5,11 +5,10 @@ namespace app\controller\api;
 use app\BaseController;
 use app\common\Response;
 use app\model\FrontUser;
-use app\model\UserFavorite;
-use app\model\UserLike;
+use app\model\UserAction;
 use app\model\UserReadHistory;
 use app\model\UserPointLog;
-use app\model\UserFollow;
+use app\model\Article;
 use think\Request;
 use think\facade\Db;
 
@@ -84,7 +83,16 @@ class FrontProfile extends BaseController
         }
 
         try {
-            $user->save($data);
+            $affected = Db::name('front_users')
+                ->where('id', '=', $userId)
+                ->limit(1)
+                ->update($data);
+
+            if ($affected === 0) {
+                return Response::error('更新失败：未找到该用户或数据未改变');
+            }
+
+            $user = FrontUser::find($userId);
             return Response::success($user->toArray(), '资料更新成功');
         } catch (\Exception $e) {
             return Response::error('更新失败：' . $e->getMessage());
@@ -159,11 +167,18 @@ class FrontProfile extends BaseController
             $filePath = $savePath . '/' . $fileName;
 
             // 更新用户头像
-            $user->avatar = $filePath;
-            $user->save();
+            $affected = Db::name('front_users')
+                ->where('id', '=', $userId)
+                ->limit(1)
+                ->update(['avatar' => $filePath]);
 
-            // 生成完整URL
-            $siteUrl = \app\model\Config::getConfig('site_url', '');
+            if ($affected === 0) {
+                return Response::error('头像更新失败：未找到该用户');
+            }
+
+            // 生成完整URL - 使用当前站点的site_url字段
+            $site = \app\service\SiteContextService::getSite();
+            $siteUrl = $site ? $site->site_url : '';
             if (!empty($siteUrl)) {
                 $avatarUrl = rtrim($siteUrl, '/') . '/' . $filePath;
             } else {
@@ -194,15 +209,31 @@ class FrontProfile extends BaseController
         $page = $request->get('page', 1);
         $limit = $request->get('limit', 20);
 
-        $favorites = UserFavorite::with(['article'])
-            ->where('user_id', $userId)
-            ->order('create_time', 'desc')
-            ->paginate([
-                'list_rows' => $limit,
-                'page'      => $page,
-            ]);
+        // 获取收藏的文章ID列表
+        $articleIds = UserAction::getUserFavoriteArticleIds($userId);
 
-        return Response::success($favorites);
+        // 分页处理
+        $total = count($articleIds);
+        $offset = ($page - 1) * $limit;
+        $pageIds = array_slice($articleIds, $offset, $limit);
+
+        // 获取文章详情
+        $articles = Article::whereIn('id', $pageIds)->select();
+
+        // 构造返回数据（与原来的格式保持一致）
+        $list = [];
+        foreach ($pageIds as $articleId) {
+            $article = $articles->where('id', $articleId)->first();
+            if ($article) {
+                $list[] = [
+                    'article_id' => $articleId,
+                    'article' => $article->toArray(),
+                    'create_time' => date('Y-m-d H:i:s'), // UserAction创建时间
+                ];
+            }
+        }
+
+        return Response::paginate($list, $total, $page, $limit);
     }
 
     /**
@@ -222,24 +253,19 @@ class FrontProfile extends BaseController
         }
 
         // 检查是否已收藏
-        $exists = UserFavorite::where('user_id', $userId)
-            ->where('article_id', $articleId)
-            ->find();
-
-        if ($exists) {
+        if (UserAction::hasFavorited($userId, UserAction::TARGET_ARTICLE, $articleId)) {
             return Response::error('已经收藏过了');
         }
 
         try {
-            UserFavorite::create([
-                'user_id'    => $userId,
-                'article_id' => $articleId,
-            ]);
+            UserAction::addFavorite($userId, UserAction::TARGET_ARTICLE, $articleId);
 
             // 更新用户收藏数
-            $user = FrontUser::find($userId);
-            $user->favorite_count += 1;
-            $user->save();
+            $affected = Db::name('front_users')
+                ->where('id', '=', $userId)
+                ->limit(1)
+                ->inc('favorite_count')
+                ->update();
 
             return Response::success([], '收藏成功');
         } catch (\Exception $e) {
@@ -263,23 +289,20 @@ class FrontProfile extends BaseController
             return Response::error('文章ID不能为空');
         }
 
-        $favorite = UserFavorite::where('user_id', $userId)
-            ->where('article_id', $articleId)
-            ->find();
-
-        if (!$favorite) {
+        if (!UserAction::hasFavorited($userId, UserAction::TARGET_ARTICLE, $articleId)) {
             return Response::error('未收藏过该文章');
         }
 
         try {
-            $favorite->delete();
+            UserAction::removeFavorite($userId, UserAction::TARGET_ARTICLE, $articleId);
 
             // 更新用户收藏数
-            $user = FrontUser::find($userId);
-            if ($user->favorite_count > 0) {
-                $user->favorite_count -= 1;
-                $user->save();
-            }
+            Db::name('front_users')
+                ->where('id', '=', $userId)
+                ->where('favorite_count', '>', 0)
+                ->limit(1)
+                ->dec('favorite_count')
+                ->update();
 
             return Response::success([], '取消收藏成功');
         } catch (\Exception $e) {
@@ -309,23 +332,14 @@ class FrontProfile extends BaseController
         }
 
         // 检查是否已点赞
-        $exists = UserLike::where('user_id', $userId)
-            ->where('target_type', $targetType)
-            ->where('target_id', $targetId)
-            ->find();
-
-        if ($exists) {
+        if (UserAction::hasLiked($userId, $targetType, $targetId)) {
             return Response::error('已经点赞过了');
         }
 
         Db::startTrans();
         try {
             // 创建点赞记录
-            UserLike::create([
-                'user_id'     => $userId,
-                'target_type' => $targetType,
-                'target_id'   => $targetId,
-            ]);
+            UserAction::addLike($userId, $targetType, $targetId);
 
             // 更新目标的点赞数
             if ($targetType === 'article') {
@@ -355,18 +369,13 @@ class FrontProfile extends BaseController
             return Response::unauthorized();
         }
 
-        $like = UserLike::where('user_id', $userId)
-            ->where('target_type', $targetType)
-            ->where('target_id', $targetId)
-            ->find();
-
-        if (!$like) {
+        if (!UserAction::hasLiked($userId, $targetType, $targetId)) {
             return Response::error('未点赞过');
         }
 
         Db::startTrans();
         try {
-            $like->delete();
+            UserAction::removeLike($userId, $targetType, $targetId);
 
             // 更新目标的点赞数
             if ($targetType === 'article') {
@@ -498,29 +507,26 @@ class FrontProfile extends BaseController
         }
 
         // 检查是否已关注
-        $exists = UserFollow::where('user_id', $userId)
-            ->where('follow_user_id', $followUserId)
-            ->find();
-
-        if ($exists) {
+        if (UserAction::hasFollowed($userId, $followUserId)) {
             return Response::error('已经关注过了');
         }
 
         Db::startTrans();
         try {
-            UserFollow::create([
-                'user_id'        => $userId,
-                'follow_user_id' => $followUserId,
-            ]);
+            UserAction::addFollow($userId, $followUserId);
 
             // 更新关注数和粉丝数
-            $user = FrontUser::find($userId);
-            $user->following_count += 1;
-            $user->save();
+            Db::name('front_users')
+                ->where('id', '=', $userId)
+                ->limit(1)
+                ->inc('following_count')
+                ->update();
 
-            $followUser = FrontUser::find($followUserId);
-            $followUser->follower_count += 1;
-            $followUser->save();
+            Db::name('front_users')
+                ->where('id', '=', $followUserId)
+                ->limit(1)
+                ->inc('follower_count')
+                ->update();
 
             Db::commit();
             return Response::success([], '关注成功');
@@ -542,30 +548,28 @@ class FrontProfile extends BaseController
             return Response::unauthorized();
         }
 
-        $follow = UserFollow::where('user_id', $userId)
-            ->where('follow_user_id', $followUserId)
-            ->find();
-
-        if (!$follow) {
+        if (!UserAction::hasFollowed($userId, $followUserId)) {
             return Response::error('未关注过该用户');
         }
 
         Db::startTrans();
         try {
-            $follow->delete();
+            UserAction::removeFollow($userId, $followUserId);
 
             // 更新关注数和粉丝数
-            $user = FrontUser::find($userId);
-            if ($user->following_count > 0) {
-                $user->following_count -= 1;
-                $user->save();
-            }
+            Db::name('front_users')
+                ->where('id', '=', $userId)
+                ->where('following_count', '>', 0)
+                ->limit(1)
+                ->dec('following_count')
+                ->update();
 
-            $followUser = FrontUser::find($followUserId);
-            if ($followUser->follower_count > 0) {
-                $followUser->follower_count -= 1;
-                $followUser->save();
-            }
+            Db::name('front_users')
+                ->where('id', '=', $followUserId)
+                ->where('follower_count', '>', 0)
+                ->limit(1)
+                ->dec('follower_count')
+                ->update();
 
             Db::commit();
             return Response::success([], '取消关注成功');
@@ -589,15 +593,30 @@ class FrontProfile extends BaseController
         $page = $request->get('page', 1);
         $limit = $request->get('limit', 20);
 
-        $following = UserFollow::with(['followUser'])
-            ->where('user_id', $userId)
-            ->order('create_time', 'desc')
-            ->paginate([
-                'list_rows' => $limit,
-                'page'      => $page,
-            ]);
+        // 获取关注的用户ID列表
+        $followingIds = UserAction::getUserFollowingIds($userId);
 
-        return Response::success($following);
+        // 分页处理
+        $total = count($followingIds);
+        $offset = ($page - 1) * $limit;
+        $pageIds = array_slice($followingIds, $offset, $limit);
+
+        // 获取用户详情
+        $users = FrontUser::whereIn('id', $pageIds)->select();
+
+        // 构造返回数据
+        $list = [];
+        foreach ($pageIds as $followUserId) {
+            $followUser = $users->where('id', $followUserId)->first();
+            if ($followUser) {
+                $list[] = [
+                    'follow_user_id' => $followUserId,
+                    'follow_user' => $followUser->toArray(),
+                ];
+            }
+        }
+
+        return Response::paginate($list, $total, $page, $limit);
     }
 
     /**
@@ -614,14 +633,29 @@ class FrontProfile extends BaseController
         $page = $request->get('page', 1);
         $limit = $request->get('limit', 20);
 
-        $followers = UserFollow::with(['user'])
-            ->where('follow_user_id', $userId)
-            ->order('create_time', 'desc')
-            ->paginate([
-                'list_rows' => $limit,
-                'page'      => $page,
-            ]);
+        // 获取粉丝ID列表
+        $followerIds = UserAction::getUserFollowerIds($userId);
 
-        return Response::success($followers);
+        // 分页处理
+        $total = count($followerIds);
+        $offset = ($page - 1) * $limit;
+        $pageIds = array_slice($followerIds, $offset, $limit);
+
+        // 获取用户详情
+        $users = FrontUser::whereIn('id', $pageIds)->select();
+
+        // 构造返回数据
+        $list = [];
+        foreach ($pageIds as $followerUserId) {
+            $follower = $users->where('id', $followerUserId)->first();
+            if ($follower) {
+                $list[] = [
+                    'user_id' => $followerUserId,
+                    'user' => $follower->toArray(),
+                ];
+            }
+        }
+
+        return Response::paginate($list, $total, $page, $limit);
     }
 }

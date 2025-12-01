@@ -110,7 +110,7 @@
           {{ currentVersion.change_log || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="内容" :span="2">
-          <div v-html="currentVersion.content" style="max-height: 400px; overflow-y: auto;"></div>
+          <div v-safe-html="currentVersion.content" style="max-height: 400px; overflow-y: auto;"></div>
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -136,6 +136,7 @@ import {
   deleteVersion
 } from '@/api/articleVersion'
 import ArticleVersionCompare from './ArticleVersionCompare.vue'
+import { vSafeHtml } from '@/utils/sanitize'
 
 const props = defineProps({
   modelValue: {

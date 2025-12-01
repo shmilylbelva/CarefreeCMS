@@ -42,6 +42,17 @@
         <el-form-item label="标题">
           <el-input v-model="searchForm.title" placeholder="请输入文章标题" clearable style="width: 200px;" />
         </el-form-item>
+        <el-form-item label="站点">
+          <el-select v-model="searchForm.site_id" placeholder="全部站点" clearable style="width: 150px;">
+            <el-option label="全部站点" value="" />
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="分类">
           <el-select v-model="searchForm.category_id" placeholder="请选择分类" clearable style="width: 150px;">
             <el-option
@@ -92,14 +103,19 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column label="标题" min-width="200">
           <template #default="{ row }">
-            <div v-if="row.highlighted_title" v-html="row.highlighted_title"></div>
+            <div v-if="row.highlighted_title" v-safe-highlight="row.highlighted_title"></div>
             <div v-else>{{ row.title }}</div>
-            <div v-if="row.highlighted_summary" class="article-summary" v-html="row.highlighted_summary"></div>
+            <div v-if="row.highlighted_summary" class="article-summary" v-safe-highlight="row.highlighted_summary"></div>
           </template>
         </el-table-column>
         <el-table-column label="分类" width="120">
           <template #default="{ row }">
             {{ row.category?.name || '未分类' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="所属站点" width="120">
+          <template #default="{ row }">
+            <el-tag size="small">{{ row.site?.name || '-' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="作者" width="120">
@@ -162,6 +178,13 @@
       :tags="tags"
       @search="handleAdvancedSearch"
     />
+
+    <!-- 删除确认对话框 -->
+    <DeleteConfirmDialog
+      v-model="showDeleteDialog"
+      :article-id="deleteArticleId"
+      @confirm="handleConfirmDelete"
+    />
   </div>
 </template>
 
@@ -171,19 +194,25 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { getArticleList, deleteArticle, publishArticle, offlineArticle, fullTextSearch, advancedSearch } from '@/api/article'
+import DeleteConfirmDialog from '@/components/Article/DeleteConfirmDialog.vue'
 import { getCategoryTree } from '@/api/category'
 import { getUserList } from '@/api/user'
 import { getAllTags } from '@/api/tag'
+import { getSiteOptions } from '@/api/site'
 import AdvancedSearch from '@/components/AdvancedSearch.vue'
+import { vSafeHighlight } from '@/utils/sanitize'
 
 const router = useRouter()
 const loading = ref(false)
 const articleList = ref([])
+const siteOptions = ref([])
 const categories = ref([])
 const users = ref([])
 const tags = ref([])
 const dateRange = ref(null)
 const showAdvancedSearch = ref(false)
+const showDeleteDialog = ref(false)
+const deleteArticleId = ref(null)
 
 // 当前搜索类型和参数
 const currentSearchType = ref('') // 'fulltext' 或 'advanced'
@@ -191,6 +220,7 @@ const currentSearchParams = ref({})
 
 const searchForm = reactive({
   title: '',
+  site_id: '',
   category_id: '',
   user_id: '',
   start_time: '',
@@ -210,7 +240,7 @@ const fetchArticles = async () => {
   try {
     const params = {
       page: pagination.page,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,  // 使用下划线命名以匹配后端
       ...searchForm
     }
     const res = await getArticleList(params)
@@ -220,6 +250,16 @@ const fetchArticles = async () => {
     ElMessage.error('获取文章列表失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 获取站点列表
+const fetchSiteOptions = async () => {
+  try {
+    const res = await getSiteOptions()
+    siteOptions.value = res.data || []
+  } catch (error) {
+    console.error('获取站点列表失败', error)
   }
 }
 
@@ -273,6 +313,7 @@ const handleSearch = () => {
 // 重置
 const handleReset = () => {
   searchForm.title = ''
+  searchForm.site_id = ''
   searchForm.category_id = ''
   searchForm.user_id = ''
   searchForm.start_time = ''
@@ -311,20 +352,23 @@ const handleOffline = async (id) => {
 }
 
 // 删除
-const handleDelete = async (id) => {
+const handleDelete = (id) => {
+  deleteArticleId.value = id
+  showDeleteDialog.value = true
+}
+
+// 确认删除
+const handleConfirmDelete = async ({ deleteMedia, mediaIds }) => {
   try {
-    await ElMessageBox.confirm('确定要删除这篇文章吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
+    await deleteArticle(deleteArticleId.value, {
+      delete_media: deleteMedia,
+      media_ids: mediaIds
     })
-    await deleteArticle(id)
     ElMessage.success('删除成功')
+    showDeleteDialog.value = false
     fetchArticles()
   } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败')
-    }
+    ElMessage.error('删除失败')
   }
 }
 
@@ -338,12 +382,12 @@ const handleAdvancedSearch = async ({ type, params }) => {
     if (type === 'fulltext') {
       // 全文搜索
       params.page = pagination.page
-      params.page_size = pagination.pageSize
+      params.page_size = pagination.pageSize  // 使用下划线命名
       res = await fullTextSearch(params)
     } else {
       // 高级搜索
       params.page = pagination.page
-      params.page_size = pagination.pageSize
+      params.page_size = pagination.pageSize  // 使用下划线命名
       res = await advancedSearch(params)
     }
 
@@ -412,6 +456,7 @@ const countSearchConditions = () => {
 }
 
 onMounted(() => {
+  fetchSiteOptions()
   fetchCategories()
   fetchUsers()
   fetchTags()

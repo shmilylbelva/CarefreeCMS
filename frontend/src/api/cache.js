@@ -98,11 +98,13 @@ export function set(data) {
 
 /**
  * 缓存预热
+ * @param {object} data - 预热选项 { type: 'all|config|sites|categories|tags|articles|permissions' }
  */
-export function warmup() {
+export function warmup(data = {}) {
   return request({
     url: '/cache/warmup',
-    method: 'post'
+    method: 'post',
+    data
   })
 }
 

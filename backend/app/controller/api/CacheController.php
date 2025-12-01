@@ -96,7 +96,12 @@ class CacheController extends BaseController
      */
     public function clearLogs(Request $request)
     {
-        $days = $request->param('days', 7);
+        $days = (int) $request->param('days', 7);
+
+        // 验证天数范围
+        if ($days < 1 || $days > 365) {
+            return $this->error('保留天数必须在1-365之间');
+        }
 
         $service = new CacheManager();
         $result = $service->clearLogs($days);
@@ -114,7 +119,17 @@ class CacheController extends BaseController
     public function getKeys(Request $request)
     {
         $pattern = $request->param('pattern', '*');
-        $limit = $request->param('limit', 100);
+        $limit = (int) $request->param('limit', 100);
+
+        // 验证限制范围
+        if ($limit < 1 || $limit > 1000) {
+            return $this->error('数量限制必须在1-1000之间');
+        }
+
+        // 验证pattern安全性（防止危险模式）
+        if (strlen($pattern) > 100) {
+            return $this->error('匹配模式过长');
+        }
 
         $service = new CacheManager();
         $keys = $service->getKeys($pattern, $limit);
@@ -188,7 +203,12 @@ class CacheController extends BaseController
      */
     public function testPerformance(Request $request)
     {
-        $iterations = $request->param('iterations', 1000);
+        $iterations = (int) $request->param('iterations', 1000);
+
+        // 验证迭代次数范围（防止DoS）
+        if ($iterations < 1 || $iterations > 10000) {
+            return $this->error('迭代次数必须在1-10000之间');
+        }
 
         $service = new CacheManager();
         $result = $service->testPerformance($iterations);

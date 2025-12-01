@@ -39,7 +39,7 @@
             {/if}
 
             <div class="article-list">
-                {volist name="articles" id="article"}
+                {carefree:article topicid='$topic.id' limit='10' order='create_time desc' id='article' empty='<div class="text-center py-5" data-aos="fade-up"><i class="bi bi-inbox" style="font-size: 4rem; color: #cbd5e1;"></i><p class="mt-3 text-secondary">该专题下暂无文章</p></div>'}
                 <article class="article-card" data-aos="fade-up">
                     <div class="row g-0">
                         <div class="col-md-5">
@@ -49,33 +49,26 @@
                             <div class="article-content">
                                 <div class="article-meta">
                                     <span><i class="bi bi-calendar"></i> {$article.create_time|date='Y-m-d'}</span>
-                                    <span><i class="bi bi-person"></i> {$article.user.username ?: '管理员'}</span>
+                                    <span><i class="bi bi-person"></i> {$article.author_name ?: '管理员'}</span>
                                     <span><i class="bi bi-eye"></i> {$article.view_count ?: 0}</span>
                                 </div>
-                                <h3><a href="/article-{$article.id}.html">{$article.title}</a></h3>
-                                <p class="article-summary">{$article.summary ?: mb_substr($article.content, 0, 150, 'utf-8')}...</p>
-                                {if condition="$article.tags"}
+                                <h3><a href="/article/{$article.id}.html">{$article.title}</a></h3>
+                                <p class="article-summary">{$article.summary ?: $article.content_preview}...</p>
+                                {notempty name="article.tags"}
                                 <div class="article-tags">
-                                    {volist name="article.tags" id="tag"}
+                                    {carefree:foreach from="$article.tags" item="tag"}
                                     <a href="/tag-{$tag.id}.html" class="article-tag">{$tag.name}</a>
-                                    {/volist}
+                                    {/carefree:foreach}
                                 </div>
-                                {/if}
-                                <a href="/article-{$article.id}.html" class="read-more">
+                                {/notempty}
+                                <a href="/article/{$article.id}.html" class="read-more">
                                     阅读全文 <i class="bi bi-arrow-right"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
                 </article>
-                {/volist}
-
-                {empty name="articles"}
-                <div class="text-center py-5" data-aos="fade-up">
-                    <i class="bi bi-inbox" style="font-size: 4rem; color: #cbd5e1;"></i>
-                    <p class="mt-3 text-secondary">该专题下暂无文章</p>
-                </div>
-                {/empty}
+                {/carefree:article}
             </div>
 
             <!-- 分页 -->

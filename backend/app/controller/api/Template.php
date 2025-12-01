@@ -56,7 +56,7 @@ class Template extends BaseController
                             'name' => ucfirst($dir),
                             'description' => '',
                             'author' => '',
-                            'version' => '1.3.0',
+                            'version' => '2.0.0',
                             'preview' => ''
                         ];
 
@@ -146,11 +146,25 @@ class Template extends BaseController
 
     /**
      * 获取当前模板套装
+     * 优先获取主站点使用的模板套装
      */
     public function getCurrentTheme()
     {
         try {
-            $currentTheme = Config::getConfig('current_template_theme', 'default');
+            // 尝试获取主站点使用的模板套装
+            $mainSite = \app\model\Site::getMainSite();
+            $currentTheme = 'default';
+
+            if ($mainSite) {
+                // 获取主站点的模板配置
+                $templateConfig = \app\model\SiteTemplateConfig::where('site_id', $mainSite->id)->find();
+                if ($templateConfig && $templateConfig->package_id) {
+                    $templatePackage = \app\model\TemplatePackage::find($templateConfig->package_id);
+                    if ($templatePackage) {
+                        $currentTheme = $templatePackage->code;
+                    }
+                }
+            }
 
             $themePath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $currentTheme . DIRECTORY_SEPARATOR;
             $themeInfo = [
@@ -158,7 +172,7 @@ class Template extends BaseController
                 'name' => ucfirst($currentTheme),
                 'description' => '',
                 'author' => '',
-                'version' => '1.3.0'
+                'version' => '2.0.0'
             ];
 
             // 读取 theme.json
@@ -320,6 +334,16 @@ class Template extends BaseController
             }
 
             $content = file_get_contents($fullPath);
+
+            // 检测并转换编码为UTF-8
+            $encoding = mb_detect_encoding($content, ['UTF-8', 'GBK', 'GB2312', 'ISO-8859-1', 'ASCII'], true);
+            if ($encoding && $encoding !== 'UTF-8') {
+                $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+            }
+
+            // 移除可能的BOM
+            $bom = pack('H*','EFBBBF');
+            $content = preg_replace("/^$bom/", '', $content);
 
             return Response::success([
                 'content' => $content,

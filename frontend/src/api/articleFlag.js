@@ -10,10 +10,11 @@ export function getArticleFlags(params) {
 }
 
 // 获取所有启用的文章属性（不分页）
-export function getAllArticleFlags() {
+export function getAllArticleFlags(params) {
   return request({
     url: '/article-flags/all',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 

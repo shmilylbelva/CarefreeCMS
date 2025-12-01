@@ -33,10 +33,15 @@ return [
             'password'        => env('DB_PASS', ''),
             // 端口
             'hostport'        => env('DB_PORT', '3306'),
+            // 连接dsn
+            'dsn'             => 'mysql:host=127.0.0.1;port=3306;dbname=;charset=utf8mb4',
             // 数据库连接参数
-            'params'          => [],
+            'params'          => [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci',
+            ],
             // 数据库编码
-            'charset'         => env('DB_CHARSET', 'utf8mb4'),
+            'charset'         => 'utf8mb4',
             // 数据库表前缀
             'prefix'          => env('DB_PREFIX', ''),
 

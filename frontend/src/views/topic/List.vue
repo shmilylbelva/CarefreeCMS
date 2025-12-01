@@ -3,6 +3,17 @@
     <el-card>
       <!-- 搜索栏 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="站点">
+          <el-select v-model="searchForm.site_id" placeholder="全部站点" clearable style="width: 150px;">
+            <el-option label="全部站点" value="" />
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="关键词">
           <el-input
             v-model="searchForm.keyword"
@@ -33,6 +44,11 @@
       <!-- 数据表格 -->
       <el-table :data="list" border style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column label="所属站点" width="120">
+          <template #default="{ row }">
+            <el-tag size="small">{{ getSiteName(row.site_id) }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="封面图" width="100">
           <template #default="{ row }">
             <img
@@ -95,6 +111,41 @@
         :rules="rules"
         label-width="100px"
       >
+        <el-form-item label="所属站点" :prop="isEdit ? 'site_id' : 'site_ids'">
+          <!-- 编辑时：单选 -->
+          <el-select v-if="isEdit" v-model="form.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option
+              v-for="site in siteOptions"
+              :key="site.id"
+              :label="site.name"
+              :value="site.id"
+            />
+          </el-select>
+          <!-- 创建时：多选 -->
+          <div v-else>
+            <el-select v-model="form.site_ids" placeholder="请选择站点（可多选）" multiple style="width: 100%;">
+              <el-option
+                v-for="site in siteOptions"
+                :key="site.id"
+                :label="site.name"
+                :value="site.id"
+              />
+            </el-select>
+            <div style="margin-top: 8px;">
+              <el-button size="small" @click="selectAllSites">全选</el-button>
+              <el-button size="small" @click="deselectAllSites">取消全选</el-button>
+            </div>
+          </div>
+          <div style="margin-top: 5px; color: #909399; font-size: 12px;">
+            <template v-if="isEdit">
+              编辑时只能修改当前站点的专题，不影响其他站点
+            </template>
+            <template v-else>
+              创建时可选择多个站点，系统将为每个站点创建独立副本
+            </template>
+          </div>
+        </el-form-item>
+
         <el-form-item label="专题名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入专题名称" />
         </el-form-item>
@@ -208,14 +259,18 @@ import {
   updateTopic,
   deleteTopic
 } from '@/api/topic'
+import { getSiteOptions } from '@/api/site'
 import { getToken } from '@/utils/auth'
 import TopicArticleManager from './ArticleManager.vue'
 
 const searchForm = reactive({
+  site_id: '',
   keyword: '',
   status: '',
   is_recommended: ''
 })
+
+const siteOptions = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -236,6 +291,8 @@ const currentTopicId = ref(0)
 const currentTopicName = ref('')
 
 const form = reactive({
+  site_id: null,
+  site_ids: [],
   name: '',
   slug: '',
   description: '',
@@ -250,6 +307,8 @@ const form = reactive({
 })
 
 const rules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
+  site_ids: [{ required: true, type: 'array', min: 1, message: '请至少选择一个站点', trigger: 'change' }],
   name: [{ required: true, message: '请输入专题名称', trigger: 'blur' }],
   slug: [
     { required: true, message: '请输入URL别名', trigger: 'blur' },
@@ -333,6 +392,7 @@ const handleSearch = () => {
 
 // 重置
 const handleReset = () => {
+  searchForm.site_id = ''
   searchForm.keyword = ''
   searchForm.status = ''
   searchForm.is_recommended = ''
@@ -404,11 +464,21 @@ const handleSubmit = async () => {
     if (valid) {
       submitting.value = true
       try {
+        // 准备提交数据
+        const submitData = { ...form }
+
+        // 区分创建和编辑模式的站点字段
         if (isEdit.value) {
-          await updateTopic(editId.value, form)
+          delete submitData.site_ids
+        } else {
+          delete submitData.site_id
+        }
+
+        if (isEdit.value) {
+          await updateTopic(editId.value, submitData)
           ElMessage.success('更新成功')
         } else {
-          await createTopic(form)
+          await createTopic(submitData)
           ElMessage.success('创建成功')
         }
         dialogVisible.value = false
@@ -424,6 +494,8 @@ const handleSubmit = async () => {
 
 // 重置表单
 const resetForm = () => {
+  form.site_id = null
+  form.site_ids = []
   form.name = ''
   form.slug = ''
   form.description = ''
@@ -437,6 +509,32 @@ const resetForm = () => {
   form.sort = 0
 }
 
+// 全选站点
+const selectAllSites = () => {
+  form.site_ids = siteOptions.value.map(site => site.id)
+}
+
+// 取消全选站点
+const deselectAllSites = () => {
+  form.site_ids = []
+}
+
+// 加载站点选项
+const fetchSiteOptions = async () => {
+  try {
+    const res = await getSiteOptions()
+    siteOptions.value = res.data.list || res.data || []
+  } catch (error) {
+    console.error('加载站点列表失败:', error)
+  }
+}
+
+// 获取站点名称
+const getSiteName = (siteId) => {
+  const site = siteOptions.value.find(s => s.id === siteId)
+  return site ? site.name : '未知站点'
+}
+
 // 对话框关闭
 const handleDialogClose = () => {
   formRef.value?.clearValidate()
@@ -444,6 +542,7 @@ const handleDialogClose = () => {
 
 onMounted(() => {
   loadData()
+  fetchSiteOptions()
 })
 </script>
 

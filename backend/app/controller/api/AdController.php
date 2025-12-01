@@ -24,10 +24,16 @@ class AdController extends BaseController
         $positionId = $request->param('position_id', '');
         $type = $request->param('type', '');
         $status = $request->param('status', '');
+        $siteId = $request->param('site_id', '');
 
-        $query = Ad::with(['position'])
+        $query = Ad::withoutSiteScope()->with(['position', 'site'])
             ->order('sort', 'asc')
             ->order('id', 'desc');
+
+        // 站点筛选
+        if ($siteId !== '') {
+            $query->where('ads.site_id', (int) $siteId);
+        }
 
         // 关键词搜索
         if (!empty($keyword)) {
@@ -67,7 +73,7 @@ class AdController extends BaseController
      */
     public function read($id)
     {
-        $ad = Ad::with(['position'])->find($id);
+        $ad = Ad::withoutSiteScope()->with(['position'])->find($id);
 
         if (!$ad) {
             return $this->error('广告不存在');
@@ -135,10 +141,13 @@ class AdController extends BaseController
             }
         }
 
-        $ad = new Ad();
-        $ad->save($data);
-
-        return $this->success($ad, '创建成功');
+        try {
+            $ad = new Ad();
+            $ad->save($data);
+            return $this->success($ad, '创建成功');
+        } catch (\Exception $e) {
+            return $this->error('创建失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -146,7 +155,7 @@ class AdController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $ad = Ad::find($id);
+        $ad = Ad::withoutSiteScope()->find($id);
 
         if (!$ad) {
             return $this->error('广告不存在');
@@ -198,9 +207,21 @@ class AdController extends BaseController
             }
         }
 
-        $ad->save($data);
+        try {
+            // 使用Db类直接更新，确保WHERE条件精确，只更新指定ID的记录
+            $affected = \think\facade\Db::name('ads')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update($data);
 
-        return $this->success($ad, '更新成功');
+            if ($affected === 0) {
+                return $this->error('更新失败：未找到该记录或数据未改变');
+            }
+
+            return $this->success(['affected' => $affected], '更新成功');
+        } catch (\Exception $e) {
+            return $this->error('更新失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -208,16 +229,27 @@ class AdController extends BaseController
      */
     public function delete($id)
     {
-        $ad = Ad::find($id);
+        $ad = Ad::withoutSiteScope()->find($id);
 
         if (!$ad) {
             return $this->error('广告不存在');
         }
 
-        // 软删除
-        $ad->delete();
+        try {
+            // 使用Db类直接执行软删除，确保只删除指定ID的记录
+            $affected = \think\facade\Db::name('ads')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update(['deleted_at' => date('Y-m-d H:i:s')]);
 
-        return $this->success(null, '删除成功');
+            if ($affected === 0) {
+                return $this->error('广告删除失败：未找到该广告');
+            }
+
+            return $this->success(null, '删除成功');
+        } catch (\Exception $e) {
+            return $this->error('删除失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -225,7 +257,7 @@ class AdController extends BaseController
      */
     public function statistics(Request $request, $id)
     {
-        $ad = Ad::find($id);
+        $ad = Ad::withoutSiteScope()->find($id);
 
         if (!$ad) {
             return $this->error('广告不存在');
@@ -252,7 +284,7 @@ class AdController extends BaseController
      */
     public function click(Request $request, $id)
     {
-        $ad = Ad::find($id);
+        $ad = Ad::withoutSiteScope()->find($id);
 
         if (!$ad) {
             return $this->error('广告不存在');

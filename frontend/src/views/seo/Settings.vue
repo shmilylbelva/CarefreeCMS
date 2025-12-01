@@ -1,8 +1,32 @@
 <template>
   <div class="seo-settings-page">
+    <el-alert
+      type="warning"
+      :closable="false"
+      style="margin-bottom: 20px;"
+      title="SEO配置已迁移至站点管理"
+    >
+      <template #default>
+        <div style="line-height: 1.8;">
+          <p style="margin: 0 0 10px 0;"><strong>首页SEO（TDK）配置已调整为站点级别</strong></p>
+          <p style="margin: 0 0 5px 0;">
+            请前往
+            <router-link to="/site/list" style="color: #E6A23C; text-decoration: underline; font-weight: bold;">
+              系统管理 > 站点管理 > 编辑站点 > SEO设置
+            </router-link>
+            进行配置
+          </p>
+          <p style="margin: 10px 0 0 0; color: #909399; font-size: 13px;">
+            <el-icon><InfoFilled /></el-icon>
+            每个站点可以独立设置SEO信息，实现多站点差异化优化
+          </p>
+        </div>
+      </template>
+    </el-alert>
+
     <el-card>
       <template #header>
-        <h3>SEO设置</h3>
+        <h3>SEO设置（已废弃）</h3>
       </template>
 
       <el-form :model="form" label-width="140px" style="max-width: 800px;" v-loading="loading">
@@ -132,7 +156,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getConfig, saveConfig } from '@/api/config'
 import { InfoFilled, Select, RefreshLeft } from '@element-plus/icons-vue'
 
 const loading = ref(false)
@@ -146,14 +169,15 @@ const form = reactive({
 
 const originalForm = reactive({})
 
-// 获取配置
+// SEO配置已迁移到站点级别
+// 此页面仅作展示，不再提供保存功能
 const fetchConfig = async () => {
   loading.value = true
   try {
-    const res = await getConfig()
-    form.seo_title = res.data.seo_title || ''
-    form.seo_keywords = res.data.seo_keywords || ''
-    form.seo_description = res.data.seo_description || ''
+    // 不再从全局配置获取
+    form.seo_title = ''
+    form.seo_keywords = ''
+    form.seo_description = ''
 
     // 保存原始值
     Object.assign(originalForm, {
@@ -168,30 +192,9 @@ const fetchConfig = async () => {
   }
 }
 
-// 保存配置
+// 保存配置 - 已废弃
 const handleSave = async () => {
-  // 验证
-  if (!form.seo_title) {
-    ElMessage.warning('请输入网站标题')
-    return
-  }
-
-  saving.value = true
-  try {
-    await saveConfig(form)
-    ElMessage.success('SEO设置保存成功')
-
-    // 更新原始值
-    Object.assign(originalForm, {
-      seo_title: form.seo_title,
-      seo_keywords: form.seo_keywords,
-      seo_description: form.seo_description
-    })
-  } catch (error) {
-    ElMessage.error('保存失败')
-  } finally {
-    saving.value = false
-  }
+  ElMessage.warning('SEO配置已迁移到站点管理，请前往站点管理页面进行配置')
 }
 
 // 重置

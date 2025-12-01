@@ -107,13 +107,50 @@ class Logger
 
     /**
      * 记录更新操作
+     *
+     * @param string $module 模块名称
+     * @param string $itemName 项目名称
+     * @param int $itemId 项目ID
+     * @param array|null $oldValues 修改前的值
+     * @param array|null $newValues 修改后的值
      */
-    public static function update(string $module, string $itemName, int $itemId): bool
+    public static function update(string $module, string $itemName, int $itemId, ?array $oldValues = null, ?array $newValues = null): bool
     {
+        $extraData = [];
+
+        // 如果提供了新旧值，计算变更字段
+        if ($oldValues !== null && $newValues !== null) {
+            $changedFields = [];
+            foreach ($newValues as $key => $newValue) {
+                $oldValue = $oldValues[$key] ?? null;
+                // 比较值是否发生变化
+                if ($oldValue != $newValue) {
+                    $changedFields[] = $key;
+                }
+            }
+
+            // 只记录发生变化的字段
+            if (!empty($changedFields)) {
+                $filteredOldValues = [];
+                $filteredNewValues = [];
+                foreach ($changedFields as $field) {
+                    $filteredOldValues[$field] = $oldValues[$field] ?? null;
+                    $filteredNewValues[$field] = $newValues[$field] ?? null;
+                }
+
+                $extraData['old_values'] = json_encode($filteredOldValues, JSON_UNESCAPED_UNICODE);
+                $extraData['new_values'] = json_encode($filteredNewValues, JSON_UNESCAPED_UNICODE);
+                $extraData['changed_fields'] = implode(',', $changedFields);
+            }
+        }
+
         return self::log(
             $module,
             OperationLog::ACTION_UPDATE,
-            "更新{$itemName} (ID: {$itemId})"
+            "更新{$itemName} (ID: {$itemId})",
+            true,
+            '',
+            $extraData
         );
     }
 

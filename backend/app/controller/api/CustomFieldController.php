@@ -60,6 +60,8 @@ class CustomFieldController extends BaseController
             $query->where('model_id', $modelId);
         }
 
+        // 去掉多站点功能：自定义字段现在是全局的，不区分站点
+
         $fields = $query->select();
 
         // 按字段组分组

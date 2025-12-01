@@ -3,8 +3,9 @@ declare (strict_types = 1);
 
 namespace app\controller\api;
 
-use app\model\SliderGroup;
+use app\model\Group;
 use think\Request;
+use think\facade\Validate;
 
 /**
  * 幻灯片组管理控制器
@@ -19,7 +20,8 @@ class SliderGroupController extends BaseController
         $perPage = (int) $request->param('per_page', 15);
         $keyword = $request->param('keyword', '');
 
-        $query = SliderGroup::order('id', 'desc');
+        $query = Group::where('type', Group::TYPE_SLIDER)
+            ->order('id', 'desc');
 
         if ($keyword) {
             $query->where('name|code|description', 'like', "%{$keyword}%");
@@ -37,7 +39,8 @@ class SliderGroupController extends BaseController
     {
         $status = $request->param('status');
 
-        $query = SliderGroup::order('id', 'desc');
+        $query = Group::where('type', Group::TYPE_SLIDER)
+            ->order('id', 'desc');
 
         if ($status !== null && $status !== '') {
             $query->where('status', $status);
@@ -53,7 +56,9 @@ class SliderGroupController extends BaseController
      */
     public function read($id)
     {
-        $group = SliderGroup::with(['sliders'])->find($id);
+        $group = Group::where('type', Group::TYPE_SLIDER)
+            ->with(['sliders'])
+            ->find($id);
 
         if (!$group) {
             return $this->error('幻灯片组不存在');
@@ -89,18 +94,33 @@ class SliderGroupController extends BaseController
         }
 
         // 检查代码是否重复
-        $exists = SliderGroup::where('code', $data['code'])->find();
+        $exists = Group::where('type', Group::TYPE_SLIDER)
+            ->where('code', $data['code'])
+            ->find();
         if ($exists) {
             return $this->error('分组代码已存在');
         }
 
-        // 设置默认值
-        $data['auto_play'] = $data['auto_play'] ?? 1;
-        $data['play_interval'] = $data['play_interval'] ?? 3000;
-        $data['animation'] = $data['animation'] ?? 'slide';
-        $data['status'] = $data['status'] ?? 1;
+        // 提取幻灯片特定配置
+        $config = [
+            'width' => $data['width'] ?? null,
+            'height' => $data['height'] ?? null,
+            'auto_play' => $data['auto_play'] ?? 1,
+            'play_interval' => $data['play_interval'] ?? 3000,
+            'animation' => $data['animation'] ?? 'slide'
+        ];
 
-        $group = SliderGroup::create($data);
+        // 构建分组数据
+        $groupData = [
+            'type' => Group::TYPE_SLIDER,
+            'name' => $data['name'],
+            'code' => $data['code'],
+            'description' => $data['description'] ?? null,
+            'config' => json_encode($config),
+            'status' => $data['status'] ?? Group::STATUS_ENABLED
+        ];
+
+        $group = Group::create($groupData);
 
         return $this->success($group, '创建成功');
     }
@@ -110,7 +130,7 @@ class SliderGroupController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $group = SliderGroup::find($id);
+        $group = Group::where('type', Group::TYPE_SLIDER)->find($id);
 
         if (!$group) {
             return $this->error('幻灯片组不存在');
@@ -139,12 +159,38 @@ class SliderGroupController extends BaseController
             }
 
             // 检查代码是否重复（排除自己）
-            $exists = SliderGroup::where('code', $data['code'])
+            $exists = Group::where('type', Group::TYPE_SLIDER)
+                ->where('code', $data['code'])
                 ->where('id', '<>', $id)
                 ->find();
             if ($exists) {
                 return $this->error('分组代码已存在');
             }
+        }
+
+        // 如果有幻灯片配置字段，更新config
+        $configFields = ['width', 'height', 'auto_play', 'play_interval', 'animation'];
+        $hasConfigUpdate = false;
+        foreach ($configFields as $field) {
+            if (isset($data[$field])) {
+                $hasConfigUpdate = true;
+                break;
+            }
+        }
+
+        if ($hasConfigUpdate) {
+            // 获取现有配置
+            $currentConfig = json_decode($group->config ?? '{}', true) ?: [];
+
+            // 更新配置字段
+            foreach ($configFields as $field) {
+                if (isset($data[$field])) {
+                    $currentConfig[$field] = $data[$field];
+                    unset($data[$field]);
+                }
+            }
+
+            $data['config'] = json_encode($currentConfig);
         }
 
         $group->save($data);
@@ -157,14 +203,14 @@ class SliderGroupController extends BaseController
      */
     public function delete($id)
     {
-        $group = SliderGroup::find($id);
+        $group = Group::where('type', Group::TYPE_SLIDER)->find($id);
 
         if (!$group) {
             return $this->error('幻灯片组不存在');
         }
 
         // 检查是否有关联的幻灯片
-        $sliderCount = $group->sliders()->count();
+        $sliderCount = \app\model\Slider::where('group_id', $id)->count();
         if ($sliderCount > 0) {
             return $this->error('该分组下还有幻灯片，无法删除');
         }

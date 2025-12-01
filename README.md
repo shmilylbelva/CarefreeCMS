@@ -1,20 +1,33 @@
 # 逍遥内容管理系统 (CarefreeCMS)
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![PHP](https://img.shields.io/badge/php-8.1+-green.svg)
 ![Vue](https://img.shields.io/badge/vue-3.5-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
-一个现代化、轻量级的内容管理系统，专为快速构建静态网站而设计。完整开源代码，免费无限商用，没有任何限制。
+逍遥内容管理系统（CarefreeCMS）是一款现代化、高性能的内容管理平台，采用前后端分离架构，集成106个AI模型实现智能文章生成，支持多站点管理、模板包系统和全面升级的媒体库。系统基于PHP 8.0+ 和 Vue 3 开发，提供静态页面生成、全文搜索、SEO优化等完整功能，特别适合构建个人博客、企业官网、新闻媒体、内容营销等各类站点。完整开源代码，MIT协议，免费无限商用，没有任何使用限制。
 
 QQ群：113572201
 
 ## 系统简介
 
-逍遥内容管理系统（CarefreeCMS）是一款功能强大、易于使用的内容管理平台，采用前后端分离架构，支持静态页面生成，适用于个人博客、企业网站、新闻媒体等各类内容发布场景。
+逍遥内容管理系统（CarefreeCMS）v2.0.0 是一款功能强大、技术先进的内容管理平台，专为现代Web应用设计。系统采用前后端完全分离架构，后端基于ThinkPHP 8框架，前端使用Vue 3 + Vite构建，提供流畅的用户体验和优秀的开发体验。
+
+**AI赋能内容创作**：集成18个主流AI提供商的106个先进模型，包括OpenAI GPT-5、Claude Opus 4.5、Google Gemini 3、百度文心ERNIE 5.0、智谱GLM-4.5等顶级AI模型。支持批量生成高质量文章、自定义写作风格、智能配置管理，大幅提升内容生产效率。
+
+**多站点架构**：支持单一数据库管理多个独立站点，实现完全的数据隔离。通过自动站点过滤、全局查询作用域和统一的站点上下文管理，确保各站点数据安全隔离，每个站点拥有独立的SEO配置、模板设置和内容管理。
+
+**灵活的模板系统**：全新的模板包系统支持安装和管理多个模板包，每个站点可选择不同模板，并提供三级优先级解析（站点覆盖 > 站点包 > 默认包）。内置14种完整模板文件，配置自动合并，完美支持静态生成和批量构建。
+
+**强大的媒体库**：v2.0全面升级的媒体库系统，基于SHA256哈希实现文件去重，大幅节省存储空间。支持无限级分类、灵活标签、9种缩略图预设、3种水印模式、10+种在线图片编辑操作。完整的使用追踪和操作日志，让媒体管理更加专业。
+
+**高性能静态生成**：一键生成纯静态HTML页面，访问速度快、SEO友好。支持多站点批量生成、自动生成、定时生成，根据模板包自动适配，满足各类部署需求。
+
+**完善的功能体系**：全文搜索、高级搜索、权限管理、操作日志、SEO优化、评论系统、标签系统、分类管理、单页管理等功能一应俱全。系统经过大量实践检验，稳定可靠，适用于个人博客、企业官网、新闻门户、内容营销、知识库等各类应用场景。
 
 ### 核心特性
 
+- 🤖 **AI文章生成** - 集成106个AI模型，支持批量生成高质量文章内容
 - 🎨 **模板套装系统** - 支持多套模板自由切换，快速定制网站风格
 - ⚡ **静态页面生成** - 一键生成纯静态HTML页面，访问速度快，SEO友好
 - 📝 **文章管理** - 支持富文本编辑、草稿保存、文章属性标记、自动提取SEO
@@ -80,11 +93,12 @@ carefreecms/
 ## 🚀 技术栈
 
 ### 后端
-- PHP 8.2+
+- PHP 8.0+
 - ThinkPHP 8.0
 - MySQL 8.0
 - JWT 认证
 - ThinkORM
+- 106个AI模型集成（18个提供商）
 
 ### 前端
 - Vue 3 (Composition API)
@@ -98,14 +112,27 @@ carefreecms/
 ## 环境要求
 
 - PHP >= 8.0
-- MySQL >= 5.7
+- MySQL >= 5.7 (推荐 8.0+)
 - Node.js >= 16.0
 - Composer
 - npm 或 yarn
 
 ## ✨ 核心功能模块
 
-### 1. 文章管理
+### 1. AI文章生成 ⭐ v2.0新增
+- **AI模型库**：集成106个AI模型，18个主流提供商
+  - OpenAI (GPT-5, GPT-5.1, O3, O4-mini)
+  - Claude (Opus 4.5, Sonnet 4.5, Haiku 4.5)
+  - Google (Gemini 3, Gemini 3 Pro, Gemini 3 Deep Think)
+  - DeepSeek (V3.2-Exp, V3.1, R2)
+  - 百度文心、智谱ChatGLM、字节豆包、月之暗面Kimi等
+- **批量生成**：支持多主题批量生成文章
+- **AI配置管理**：灵活配置API密钥、模型、参数
+- **自定义参数**：文章长度、写作风格、自动发布等
+- **任务管理**：启动、停止、进度追踪
+- **生成记录**：详细的生成历史和Token统计
+
+### 2. 文章管理
 - 文章的增删改查
 - 文章分类、标签管理
 - 文章置顶、推荐、热门标记
@@ -118,92 +145,152 @@ carefreecms/
 - **关键词高亮**：搜索结果自动高亮匹配关键词
 - SEO自动提取和自定义设置
 
-### 2. 分类管理
+### 2. 多站点管理 ⭐ v2.0新增
+- **数据隔离**：支持同一数据库管理多个独立站点
+- **自动站点过滤**：查询自动添加 site_id 条件
+- **灵活的站点切换**：提供明确语义的查询方法
+- **统一的站点上下文**：通过中间件和应用容器管理
+- **独立站点配置**：每个站点独立的SEO、模板等配置
+
+### 3. 模板包系统 ⭐ v2.0新增
+- **多模板包管理**：支持安装和管理多个模板包
+- **站点级别模板**：每个站点可选择不同模板包
+- **模板优先级**：站点覆盖 > 站点包 > 默认包
+- **配置合并**：模板包默认配置 + 站点自定义配置
+- **完整模板文件**：包含14个模板文件（布局、首页、列表、详情等）
+
+### 4. 媒体库系统 ⭐ v2.0全面升级
+- **文件去重**：基于SHA256哈希自动去重，节省存储空间
+- **分类标签系统**：无限级分类 + 灵活标签管理
+- **缩略图生成**：9种内置预设，支持自定义尺寸
+- **水印处理**：文字/图片/平铺三种水印模式
+- **在线图片编辑**：裁剪、旋转、缩放等10+种操作
+- **AI图片生成**：集成AI模型生成图片
+- **元数据提取**：自动提取EXIF信息
+- **完整操作日志**：记录所有媒体操作历史
+
+### 5. 分类管理
 - 多级分类支持
 - 分类排序
 - 分类SEO设置
+- 站点级分类隔离
 
-### 3. 标签管理
+### 6. 标签管理
 - 标签增删改查
 - 标签关联统计
+- 站点级标签隔离
 
-### 4. 页面管理
+### 7. 页面管理
 - 单页面管理（关于我们、联系我们等）
 - 自定义模板选择
 
-### 5. 用户管理（多角色）
+### 8. 用户管理（多角色）
 - **超级管理员**: 拥有所有权限
 - **管理员**: 拥有大部分管理权限
 - **编辑**: 可以管理文章、分类、标签
 - **作者**: 只能管理自己的文章
 
-### 6. 评论管理
+### 9. 评论管理
 - 评论审核
 - 评论回复
 - 评论删除
 
-### 7. 媒体库
-- 图片、文件上传
-- 媒体文件管理
-- 多种存储方式支持
-
-### 8. SEO设置
+### 10. SEO设置
 - 每篇文章独立SEO设置
-- 全站SEO配置
-
-### 9. 站点配置
-- 网站基础信息
-- 上传配置
-- 模板配置
-
-### 10. 模板管理
-- 多套模板支持
-- 模板切换
+- 站点级SEO配置
+- Sitemap生成
+- Robots.txt管理
+- URL重定向管理
+- 404监控
 
 ### 11. 静态页面生成
 - **手动生成**: 后台按钮点击生成
 - **自动生成**: 文章发布/更新时自动生成
 - **定时生成**: 定时任务批量生成
+- **多站点生成**: 支持批量生成所有站点 ⭐ v2.0新增
 - **生成范围**: 首页、列表页、详情页、栏目页、标签聚合页
+- **模板包支持**: 根据站点选择的模板包生成 ⭐ v2.0新增
 - **生成日志**: 记录每次生成的详细信息
+
+### 12. 系统管理
+- 缓存管理（支持File和Redis）
+- 数据库管理
+- 系统日志、登录日志、安全日志
+- 操作日志审计
 
 ## 📊 数据库设计
 
-共13张表：
-1. `admin_users` - 管理员用户表
-2. `admin_roles` - 角色表
-3. `categories` - 分类表
-4. `tags` - 标签表
-5. `articles` - 文章表
-6. `article_tags` - 文章标签关联表
-7. `pages` - 单页面表
-8. `comments` - 评论表
-9. `media` - 媒体库表
-10. `site_config` - 站点配置表
-11. `templates` - 模板管理表
-12. `static_build_log` - 静态页面生成日志表
-13. `admin_logs` - 操作日志表
+v2.0.0 完整数据库包含 **92张表**，涵盖以下核心模块：
+
+**核心内容管理**：
+- `articles` - 文章表
+- `categories` - 分类表（支持多站点）
+- `tags` - 标签表（支持多站点）
+- `pages` - 单页面表
+- `comments` - 评论表
+
+**多站点系统** ⭐ v2.0新增：
+- `sites` - 站点表
+- `site_template_config` - 站点模板配置表
+- `site_template_overrides` - 站点模板覆盖表
+
+**模板包系统** ⭐ v2.0新增：
+- `template_packages` - 模板包表
+- `templates` - 模板文件表
+
+**媒体库系统** ⭐ v2.0全面升级：
+- `media_library` - 媒体库表
+- `media_files` - 媒体文件表（去重）
+- `media_categories` - 媒体分类表
+- `media_tags` - 媒体标签表
+- `media_thumbnail_presets` - 缩略图预设表
+- `media_watermark_presets` - 水印预设表
+- `media_usage_records` - 媒体使用记录表
+- `media_operation_logs` - 媒体操作日志表
+
+**AI系统** ⭐ v2.0新增：
+- `ai_providers` - AI提供商表（18个）
+- `ai_models` - AI模型表（106个）
+- `ai_configs` - AI配置表
+- `ai_prompt_templates` - AI提示词模板表
+- `ai_article_tasks` - AI文章生成任务表
+- `ai_article_records` - AI文章生成记录表
+
+**用户权限**：
+- `admin_users` - 管理员用户表
+- `admin_roles` - 角色表
+- `admin_role_permissions` - 角色权限关联表
+
+**系统管理**：
+- `site_config` - 站点配置表
+- `static_build_log` - 静态生成日志表
+- `admin_logs` - 操作日志表
+- `system_logs` - 系统日志表
+- `login_logs` - 登录日志表
+- `security_logs` - 安全日志表
 
 详见 `database_design.sql` 文件。
 
 ## 📖 文档
 
-完整的技术文档请查看：[文档中心](README.md)
+完整的技术文档请查看：[文档索引](DOCUMENTATION_INDEX.md)
 
 **快速链接：**
 - [完整部署指南](docs/deployment/DEPLOY.md) - 生产环境部署详细步骤
 - [后端环境配置](docs/deployment/backend-env.md) - .env 配置说明
 - [前端环境配置](docs/deployment/frontend-env.md) - 环境变量配置
-- [API 接口文档](docs/api/API.md) - 完整的 API 接口说明
-- [前端开发指南](docs/development/frontend-guide.md) - 前端开发规范
-- [权限管理指南](docs/development/permissions-guide.md) - 权限系统使用
+- [API 接口文档](docs/api/API_DOCUMENTATION.md) - 完整的 API 接口说明
+- [开发指南](docs/development/DEVELOPER_GUIDE.md) - 开发规范和最佳实践
+- [权限系统文档](PERMISSION_SYSTEM_COMPLETE.md) - 权限系统完整说明
+- [模板开发指南](docs/features/template/TEMPLATE_DEVELOPMENT_GUIDE.md) - 模板开发教程
+- [Carefree标签库](docs/carefree-taglib/CAREFREE_QUICK_START.md) - 标签库快速入门
 
 ## 安装部署
 
 ### 1. 克隆项目
 
 ```bash
-git clone https://gitee.com/carefreeteam/carefreecms.git
+git clone https://github.com/carefree-code/CarefreeCMS.git
 
 ```
 
@@ -273,17 +360,50 @@ npm run build
 
 后端 API 采用 RESTful 风格设计，所有接口都需要 JWT Token 认证（登录接口除外）。
 
-**完整的 API 文档请查看：[API 接口文档](docs/api/API.md)**
+**完整的 API 文档请查看：[API 接口文档](docs/api/API_DOCUMENTATION.md)**
 
-常用接口：
+### 核心接口
+
+**用户认证**：
 - `POST /api/auth/login` - 用户登录
+
+**文章管理**：
 - `GET /api/articles` - 文章列表
 - `POST /api/articles` - 创建文章
-- `GET /api/articles/fulltext-search` - 全文搜索 ⭐ 新增
-- `GET /api/articles/advanced-search` - 高级搜索 ⭐ 新增
-- `GET /api/articles/search-suggestions` - 搜索建议 ⭐ 新增
+- `GET /api/articles/fulltext-search` - 全文搜索 ⭐ v1.2新增
+- `GET /api/articles/advanced-search` - 高级搜索 ⭐ v1.2新增
+- `GET /api/articles/search-suggestions` - 搜索建议 ⭐ v1.2新增
+
+**AI文章生成** ⭐ v2.0新增：
+- `GET /api/ai-configs/providers` - 获取AI提供商列表
+- `POST /api/ai-configs` - 创建AI配置
+- `POST /api/ai-configs/:id/test` - 测试AI连接
+- `POST /api/ai-article-tasks` - 创建生成任务
+- `POST /api/ai-article-tasks/:id/start` - 启动任务
+- `POST /api/ai-article-tasks/:id/stop` - 停止任务
+
+**多站点管理** ⭐ v2.0新增：
+- `GET /api/sites` - 站点列表
+- `POST /api/sites` - 创建站点
+- `PUT /api/sites/:id` - 更新站点
+- `GET /api/sites/:id/template-config` - 获取站点模板配置
+
+**模板包管理** ⭐ v2.0新增：
+- `GET /api/template-packages` - 模板包列表
+- `POST /api/template-packages` - 安装模板包
+- `GET /api/template-packages/:id/templates` - 获取模板包文件列表
+
+**媒体库** ⭐ v2.0全面升级：
+- `POST /api/media/upload` - 文件上传（支持去重）
+- `GET /api/media` - 媒体列表（支持分类、标签筛选）
+- `POST /api/media/:id/thumbnail` - 生成缩略图
+- `POST /api/media/:id/watermark` - 添加水印
+- `POST /api/media/:id/edit` - 在线编辑图片
+- `POST /api/ai-image/generate` - AI生成图片 ⭐ v2.0新增
+
+**其他**：
 - `GET /api/categories/tree` - 分类树
-- `POST /api/media/upload` - 文件上传
+- `POST /api/build/all-sites` - 批量生成所有站点 ⭐ v2.0新增
 
 ## 常见问题
 
@@ -313,6 +433,90 @@ npm run build
 - 分类和标签数据已正确加载
 
 ## 更新日志
+
+### v2.0.0 (2025-12-01)
+
+**重大更新：AI模型库全面升级 + 关键Bug修复** 🎉
+
+本次更新包含AI模型库的全面升级和5个关键Bug的修复，大幅提升系统的AI能力和稳定性。
+
+**🌟 核心功能更新：**
+
+1. **✅ AI模型库全面升级**（重大更新）
+   - 新增4个国际顶级AI厂商（Meta、Mistral AI、xAI、Cohere）
+   - 更新10个主流厂商的最新模型
+   - 模型总数：106个，活跃模型：91个
+   - 新增旗舰模型：
+     - xAI Grok 4.1 Thinking（LMArena排名#1）
+     - Claude Opus 4.5（代码能力世界第一）
+     - OpenAI GPT-5 / GPT-5.1
+     - Google Gemini 3 Deep Think
+     - 百度 ERNIE 5.0 Preview（原生全模态）
+     - 智谱 GLM-4.5（全球第三、开源第一）
+     - 字节 Doubao Seed 1.6
+     - 月之暗面 Kimi K2 Thinking（开源SOTA）
+     - 讯飞 Spark X1.5（全国产算力）
+     - MiniMax M2、Meta Llama 4 Scout等
+   - 技术亮点：
+     - 超长上下文：Llama 4（10M）、MiniMax-01（4M）、Gemini 3（2M）
+     - 线性注意力：MiniMax Linear、Kimi Linear（速度6倍提升）
+     - 原生全模态：ERNIE 5.0、Gemini 3 Pro
+     - MoE架构：Llama 4（400B）、ERNIE 4.5（424B）、GLM-4.5（355B）
+
+**🐛 关键Bug修复：**
+
+2. **✅ SiteModel批量删除Bug修复**（高危修复）
+   - 修复使用`$model->delete()`误删整站数据的严重bug
+   - 影响11个控制器：AI配置、AI提示词、广告位、SEO日志等
+   - 采用安全删除模式：`Db::name()->where('id', $id)->limit(1)->delete()`
+   - 防止用户误删一条记录导致整站数据丢失
+
+3. **✅ 分类删除clearCacheTag错误修复**
+   - 修复`method not exist:think\db\Query->clearCacheTag`错误
+   - 将Cacheable trait中的clearCacheTag方法改为public
+
+4. **✅ 文章媒体使用追踪修复**
+   - 修复文章删除时媒体使用检测不准确问题
+   - 优化URL格式匹配（完整URL vs 路径）
+   - 修正单URL字段的处理逻辑
+
+5. **✅ 专题API重构为RESTful规范**
+   - 重构5个专题相关API为标准RESTful风格
+   - 修复ThinkPHP 8 JSON字段自动转换导致的bug
+   - 提升API设计规范性和可维护性
+
+**📚 文档更新：**
+
+6. **✅ 新增完整技术文档** - 详见 [docs/updates/v2.0.0/](docs/updates/v2.0.0/)
+   - AI模型库完整更新报告_2025年12月.md
+   - SiteModel批量删除bug全面修复报告.md
+   - 分类删除clearCacheTag错误修复报告.md
+   - 文章媒体使用追踪修复报告.md
+   - 专题API重构为RESTful规范报告.md
+   - 2025年12月系统更新总结.md
+   - 文档整理总结.md（新增）
+
+7. **✅ 文档结构重组**
+   - 所有文档统一整理到 `docs/` 文件夹
+   - 创建清晰的分类体系（api、backend、frontend、features等20个子目录）
+   - 完全重写 DOCUMENTATION_INDEX.md，提供完整的文档导航
+   - 清理过期和重复文档14个
+   - 详见：[文档整理总结](docs/updates/v2.0.0/文档整理总结.md)
+
+**技术改进：**
+- 代码质量：修改18个文件，约935行代码
+- 数据库：新增4个AI提供商，48个新模型，清理36个重复记录
+- 安全性：防止批量误删，提升数据安全
+- 规范性：API设计符合RESTful标准
+
+**升级说明：**
+- 需执行3个SQL脚本更新AI模型库
+- 代码完全兼容，无需修改现有功能
+- 建议升级以获得最新AI能力和修复关键bug
+
+详见：[2025年12月系统更新总结 v2.0.0](docs/updates/v2.0.0/2025年12月系统更新总结.md)
+
+---
 
 ### v1.3.0 (2025-11-04)
 
@@ -453,14 +657,14 @@ npm run build
 
 ## 许可证
 
-本项目自开发代码采用 MIT 开源协议。详见 [LICENSE](./LICENSE) 文件。
-本项目引用其他项目的代码，遵循引用项目的开源协议。
-例如 ThinkPHP遵循Apache2开源协议
+- 本项目自开发代码采用 MIT 开源协议。详见 [LICENSE](./LICENSE) 文件。
+- 本项目引用其他项目的代码，遵循引用项目的开源协议。
+- 例如 ThinkPHP遵循Apache2开源协议
 
 ## 联系我们
 
 - **官网**: https://www.carefreecms.com
-- **问题反馈**: https://gitee.com/carefreeteam/issues
+- **问题反馈**: https://github.com/carefree-code/CarefreeCMS/issues
 - **邮箱**: sinma@qq.com
 
 ## 致谢

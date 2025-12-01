@@ -120,7 +120,8 @@ import {
   addArticleToTopic,
   removeArticleFromTopic,
   updateArticleSort,
-  setArticleFeatured
+  setArticleFeatured,
+  getTopicDetail
 } from '@/api/topic'
 import { getArticleList } from '@/api/article'
 
@@ -144,6 +145,19 @@ const emit = defineEmits(['update:modelValue'])
 const currentArticles = ref([])
 const availableArticles = ref([])
 const searchKeyword = ref('')
+const topicSiteId = ref(null)
+
+// 加载专题详情（获取站点ID）
+const loadTopicDetail = async () => {
+  if (!props.topicId) return
+
+  try {
+    const res = await getTopicDetail(props.topicId)
+    topicSiteId.value = res.data.site_id
+  } catch (error) {
+    console.error('加载专题详情失败:', error)
+  }
+}
 
 // 加载当前专题的文章
 const loadCurrentArticles = async () => {
@@ -163,12 +177,19 @@ const loadCurrentArticles = async () => {
 // 搜索可用文章
 const searchArticles = async () => {
   try {
-    const res = await getArticleList({
+    const params = {
       page: 1,
       page_size: 20,
       keyword: searchKeyword.value,
       status: 1 // 只显示已发布的文章
-    })
+    }
+
+    // 只显示当前专题所属站点的文章
+    if (topicSiteId.value !== null) {
+      params.site_id = topicSiteId.value
+    }
+
+    const res = await getArticleList(params)
     availableArticles.value = res.data.list || []
   } catch (error) {
     ElMessage.error(error.message || '搜索失败')
@@ -230,8 +251,9 @@ const handleClose = () => {
 }
 
 // 监听对话框打开
-watch(() => props.modelValue, (val) => {
+watch(() => props.modelValue, async (val) => {
   if (val) {
+    await loadTopicDetail() // 先加载专题详情获取站点ID
     loadCurrentArticles()
     searchArticles()
   }

@@ -5,6 +5,12 @@
       <el-tab-pane label="幻灯片管理" name="sliders">
         <div class="toolbar">
           <el-form :inline="true" :model="sliderQuery">
+            <el-form-item label="所属站点">
+              <el-select v-model="sliderQuery.site_id" placeholder="选择站点" clearable style="width: 200px">
+                <el-option label="全部站点" :value="null" />
+                <el-option v-for="site in siteOptions" :key="site.id" :label="site.name" :value="site.id" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="分组">
               <el-select v-model="sliderQuery.group_id" placeholder="全部分组" clearable style="width: 200px">
                 <el-option v-for="group in groups" :key="group.id" :label="group.name" :value="group.id" />
@@ -100,6 +106,12 @@
       <el-tab-pane label="分组管理" name="groups">
         <div class="toolbar">
           <el-form :inline="true" :model="groupQuery">
+            <el-form-item label="所属站点">
+              <el-select v-model="groupQuery.site_id" placeholder="选择站点" clearable style="width: 200px">
+                <el-option label="全部站点" :value="null" />
+                <el-option v-for="site in siteOptions" :key="site.id" :label="site.name" :value="site.id" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="关键词">
               <el-input v-model="groupQuery.keyword" placeholder="分组名称/代码" clearable style="width: 200px" />
             </el-form-item>
@@ -175,6 +187,12 @@
       width="700px"
     >
       <el-form :model="sliderForm" :rules="sliderRules" ref="sliderFormRef" label-width="100px">
+        <el-form-item label="所属站点" prop="site_id">
+          <el-select v-model="sliderForm.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option v-for="site in siteOptions" :key="site.id" :label="site.name" :value="site.id" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="分组" prop="group_id">
           <el-select v-model="sliderForm.group_id" placeholder="请选择分组" style="width: 100%">
             <el-option v-for="group in groups" :key="group.id" :label="group.name" :value="group.id" />
@@ -266,6 +284,12 @@
       width="600px"
     >
       <el-form :model="groupForm" :rules="groupRules" ref="groupFormRef" label-width="100px">
+        <el-form-item label="所属站点" prop="site_id">
+          <el-select v-model="groupForm.site_id" placeholder="请选择站点" style="width: 100%;">
+            <el-option v-for="site in siteOptions" :key="site.id" :label="site.name" :value="site.id" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="分组名称" prop="name">
           <el-input v-model="groupForm.name" placeholder="请输入分组名称" />
         </el-form-item>
@@ -372,11 +396,13 @@ import {
   updateSliderGroup,
   deleteSliderGroup
 } from '@/api/sliderGroup'
+import { getSiteOptions } from '@/api/site'
 import { getToken } from '@/utils/auth'
 
 const activeTab = ref('sliders')
 const loading = ref(false)
 const submitting = ref(false)
+const siteOptions = ref([])
 
 // 幻灯片相关
 const sliders = ref([])
@@ -384,6 +410,7 @@ const sliderTotal = ref(0)
 const sliderQuery = reactive({
   page: 1,
   per_page: 15,
+  site_id: null,
   keyword: '',
   group_id: '',
   status: ''
@@ -393,6 +420,7 @@ const sliderDialogVisible = ref(false)
 const sliderFormMode = ref('add')
 const sliderForm = reactive({
   id: null,
+  site_id: null,
   group_id: '',
   title: '',
   image: '',
@@ -407,6 +435,7 @@ const sliderForm = reactive({
 })
 
 const sliderRules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
   group_id: [{ required: true, message: '请选择分组', trigger: 'change' }],
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   image: [{ required: true, message: '请上传图片', trigger: 'change' }]
@@ -421,6 +450,7 @@ const groupTotal = ref(0)
 const groupQuery = reactive({
   page: 1,
   per_page: 15,
+  site_id: null,
   keyword: ''
 })
 
@@ -430,6 +460,7 @@ const groupCallCode = ref('')
 const groupFormMode = ref('add')
 const groupForm = reactive({
   id: null,
+  site_id: null,
   name: '',
   code: '',
   description: '',
@@ -442,6 +473,7 @@ const groupForm = reactive({
 })
 
 const groupRules = {
+  site_id: [{ required: true, message: '请选择所属站点', trigger: 'change' }],
   name: [{ required: true, message: '请输入分组名称', trigger: 'blur' }],
   code: [{ required: true, message: '请输入分组代码', trigger: 'blur' }]
 }
@@ -494,6 +526,7 @@ const loadAllGroups = async () => {
 
 // 重置幻灯片查询
 const resetSliderQuery = () => {
+  sliderQuery.site_id = null
   sliderQuery.keyword = ''
   sliderQuery.group_id = ''
   sliderQuery.status = ''
@@ -503,6 +536,7 @@ const resetSliderQuery = () => {
 
 // 重置分组查询
 const resetGroupQuery = () => {
+  groupQuery.site_id = null
   groupQuery.keyword = ''
   groupQuery.page = 1
   loadGroups()
@@ -514,6 +548,7 @@ const handleAddSlider = () => {
   sliderFormMode.value = 'add'
   Object.assign(sliderForm, {
     id: null,
+    site_id: null,
     group_id: '',
     title: '',
     image: '',
@@ -580,12 +615,14 @@ const submitSliderForm = () => {
     submitting.value = true
     try {
       console.log('开始提交数据:', sliderFormMode.value)
+      const data = { ...sliderForm }
+
       if (sliderFormMode.value === 'add') {
-        const result = await createSlider(sliderForm)
+        const result = await createSlider(data)
         console.log('创建结果:', result)
         ElMessage.success('添加成功')
       } else {
-        const result = await updateSlider(sliderForm.id, sliderForm)
+        const result = await updateSlider(sliderForm.id, data)
         console.log('更新结果:', result)
         ElMessage.success('更新成功')
       }
@@ -605,6 +642,7 @@ const handleAddGroup = () => {
   groupFormMode.value = 'add'
   Object.assign(groupForm, {
     id: null,
+    site_id: null,
     name: '',
     code: '',
     description: '',
@@ -695,11 +733,13 @@ const submitGroupForm = () => {
 
     submitting.value = true
     try {
+      const data = { ...groupForm }
+
       if (groupFormMode.value === 'add') {
-        await createSliderGroup(groupForm)
+        await createSliderGroup(data)
         ElMessage.success('添加成功')
       } else {
-        await updateSliderGroup(groupForm.id, groupForm)
+        await updateSliderGroup(groupForm.id, data)
         ElMessage.success('更新成功')
       }
       groupDialogVisible.value = false
@@ -766,7 +806,18 @@ const handleTabChange = (tab) => {
   }
 }
 
+// 获取站点选项
+const fetchSiteOptions = async () => {
+  try {
+    const res = await getSiteOptions()
+    siteOptions.value = res.data || []
+  } catch (error) {
+    console.error('获取站点列表失败:', error)
+  }
+}
+
 onMounted(() => {
+  fetchSiteOptions()
   loadSliders()
   loadAllGroups()
 })

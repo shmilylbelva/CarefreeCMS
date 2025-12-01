@@ -6,7 +6,7 @@
 return [
     // 系统信息
     'system_name'      => '欢喜内容管理系统',
-    'system_version'   => '1.0.0',
+    'system_version'   => '2.0.0',
     'system_author'    => 'sinma',
     'author_email'     => 'sinma@qq.com',
     'author_website'   => 'https://www.sinma.net/',

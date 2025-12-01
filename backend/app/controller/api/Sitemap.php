@@ -6,6 +6,7 @@ use app\BaseController;
 use app\common\Response;
 use app\model\Config as ConfigModel;
 use app\service\EnhancedSitemapGenerator;
+use think\App;
 use think\Request;
 
 /**
@@ -15,8 +16,10 @@ class Sitemap extends BaseController
 {
     private $generator;
 
-    public function __construct()
+    public function __construct(App $app)
     {
+        parent::__construct($app);
+
         // 获取系统配置的前端网站URL
         $siteUrl = ConfigModel::getConfig('site_url', '');
 

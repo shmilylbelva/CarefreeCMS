@@ -21,10 +21,16 @@ class SliderController extends BaseController
         $keyword = $request->param('keyword', '');
         $groupId = $request->param('group_id');
         $status = $request->param('status');
+        $siteId = $request->param('site_id', '');
 
-        $query = Slider::with(['group'])
+        $query = Slider::withoutSiteScope()->with(['group', 'site'])
             ->order('sort', 'asc')
             ->order('id', 'desc');
+
+        // 站点筛选
+        if ($siteId !== '') {
+            $query->where('sliders.site_id', (int) $siteId);
+        }
 
         if ($keyword) {
             $query->where('title|description', 'like', "%{$keyword}%");
@@ -48,7 +54,7 @@ class SliderController extends BaseController
      */
     public function read($id)
     {
-        $slider = Slider::with(['group'])->find($id);
+        $slider = Slider::withoutSiteScope()->with(['group'])->find($id);
 
         if (!$slider) {
             return $this->error('幻灯片不存在');
@@ -108,7 +114,7 @@ class SliderController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $slider = Slider::find($id);
+        $slider = Slider::withoutSiteScope()->find($id);
 
         if (!$slider) {
             return $this->error('幻灯片不存在');
@@ -145,9 +151,21 @@ class SliderController extends BaseController
             return $this->error('请上传图片');
         }
 
-        $slider->save($data);
+        try {
+            // 使用Db类直接更新，确保WHERE条件精确，只更新指定ID的记录
+            $affected = \think\facade\Db::name('sliders')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update($data);
 
-        return $this->success($slider, '更新成功');
+            if ($affected === 0) {
+                return $this->error('更新失败：未找到该记录或数据未改变');
+            }
+
+            return $this->success(['affected' => $affected], '更新成功');
+        } catch (\Exception $e) {
+            return $this->error('更新失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -155,15 +173,27 @@ class SliderController extends BaseController
      */
     public function delete($id)
     {
-        $slider = Slider::find($id);
+        $slider = Slider::withoutSiteScope()->find($id);
 
         if (!$slider) {
             return $this->error('幻灯片不存在');
         }
 
-        $slider->delete();
+        try {
+            // 使用Db类直接执行软删除，确保只删除指定ID的记录
+            $affected = \think\facade\Db::name('sliders')
+                ->where('id', '=', $id)
+                ->limit(1)
+                ->update(['deleted_at' => date('Y-m-d H:i:s')]);
 
-        return $this->success(null, '删除成功');
+            if ($affected === 0) {
+                return $this->error('幻灯片删除失败：未找到该幻灯片');
+            }
+
+            return $this->success(null, '删除成功');
+        } catch (\Exception $e) {
+            return $this->error('删除失败：' . $e->getMessage());
+        }
     }
 
     /**
@@ -171,7 +201,7 @@ class SliderController extends BaseController
      */
     public function click(Request $request, $id)
     {
-        $slider = Slider::find($id);
+        $slider = Slider::withoutSiteScope()->find($id);
 
         if (!$slider) {
             return $this->error('幻灯片不存在');
@@ -197,7 +227,7 @@ class SliderController extends BaseController
      */
     public function view(Request $request, $id)
     {
-        $slider = Slider::find($id);
+        $slider = Slider::withoutSiteScope()->find($id);
 
         if (!$slider) {
             return $this->error('幻灯片不存在');
