@@ -143,7 +143,8 @@ import {
   getCategoryTree,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  clearCategoryCache
 } from '@/api/category'
 import { getTemplates } from '@/api/template'
 import { getSiteOptions, getCurrentSite } from '@/api/site'
@@ -290,6 +291,7 @@ const handleSubmit = async () => {
           ElMessage.success('创建成功')
         }
         dialogVisible.value = false
+        clearCategoryCache() // 清除分类缓存
         fetchCategories()
       } catch (error) {
         ElMessage.error(error.message || '保存失败')
@@ -310,6 +312,7 @@ const handleDelete = async (id) => {
     })
     await deleteCategory(id)
     ElMessage.success('删除成功')
+    clearCategoryCache() // 清除分类缓存
     fetchCategories()
   } catch (error) {
     if (error !== 'cancel') {

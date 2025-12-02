@@ -196,6 +196,7 @@ const searchForm = reactive({
 
 // 回收站配置已迁移到站点级别，此处不再需要全局检查
 // 后端会根据每个站点的配置决定是否进入回收站
+const recycleBinEnabled = ref(true)
 
 // 加载数据
 const loadData = async () => {
@@ -214,7 +215,7 @@ const loadData = async () => {
     ])
 
     list.value = listRes.data.list || []
-    total.value = listRes.data.pagination?.total || 0
+    total.value = listRes.data.total || 0
     statistics.value = statsRes.data
   } catch (error) {
     ElMessage.error('加载数据失败')

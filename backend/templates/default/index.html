@@ -1,200 +1,266 @@
 {extend name="default/layout" /}
 
-{block name="title"}首页 - {$site.site_name|default='国产CMS'}{/block}
+{block name="title"}{carefree:config name='site_name' default='Carefree CMS' /}{/block}
+{block name="keywords"}{carefree:config name='seo_keywords' default='' /}{/block}
+{block name="description"}{carefree:config name='seo_description' default='' /}{/block}
+
+
+{block name="css"}
+<link rel="stylesheet" href="{$base_url}/assets/css/index.css">
+{/block}
 
 {block name="content"}
-<!-- 轮播图区域 -->
+<!-- Hero Slider -->
 {carefree:slider group='home' limit='5' id='slider' key='k' empty=''}
-<div class="hero-slider">
-    <div class="slider-item" style="{if condition="!empty($slider['image'])"}background-image: url({$slider.image});{/if}">
-        <div class="slider-content">
-            <h2>{$slider.title|default='欢迎访问'}</h2>
-            {if condition="!empty($slider['description'])"}
-            <p>{$slider.description}</p>
-            {/if}
-            {if condition="!empty($slider['link'])"}
-            <a href="{$slider.link}" class="btn-primary">了解更多</a>
-            {/if}
+<section class="hero-slider">
+    <div class="slider-item" style="{if condition='!empty($slider.image)'}background-image: url({$slider.image});{/if}">
+        <div class="container">
+            <div class="slider-content">
+                <h2>{$slider.title|default='探索无限可能'}</h2>
+                {if condition="!empty($slider.description)"}
+                <p>{$slider.description}</p>
+                {/if}
+                {if condition="!empty($slider.link)"}
+                <a href="{$slider.link}" class="btn btn-primary btn-lg">
+                    了解更多
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                {/if}
+            </div>
         </div>
     </div>
-</div>
+</section>
 {/carefree:slider}
 
-<!-- 推荐文章区域 -->
-{if condition="isset($recommended_articles) && !empty($recommended_articles)"}
-<section class="recommended-section">
+<!-- Hero Section (Alternative when no slider) -->
+{carefree:slider group='home' limit='1' id='check_slider' empty=''}
+{/carefree:slider}
+{if condition="empty($check_slider)"}
+<section class="hero-section">
     <div class="container">
-        <div class="section-header">
-            <h2>推荐阅读</h2>
-            <a href="{$base_url}/articles.html" class="more-link">更多文章 →</a>
-        </div>
-        <div class="article-grid">
-            {carefree:foreach from="$recommended_articles" item="article"}
-            <article class="article-card featured">
-                {if condition="!empty($article['cover_image'])"}
-                <div class="article-image">
-                    <a href="{$base_url}/article/{$article.id}.html">
-                        <img src="{$article.cover_image}" alt="{$article.title}">
-                    </a>
-                    {if condition="!empty($article['flag'])"}
-                    <span class="article-flag {$article.flag|lower}">{$article.flag}</span>
-                    {/if}
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="bi bi-stars"></i>
+                <span>全新设计体验</span>
+            </div>
+            <h1 class="hero-title">
+                用 <span class="gradient-text">Carefree</span> 构建<br>
+                优雅的数字体验
+            </h1>
+            <p class="hero-description">
+                现代化的内容管理系统，融合玻璃态设计与流畅动画，
+                为您的内容创作提供极致的视觉体验与便捷的管理工具。
+            </p>
+            <div class="hero-actions">
+                <a href="{$base_url}/articles.html" class="btn btn-primary btn-lg">
+                    浏览文章
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="{$base_url}/about.html" class="btn btn-secondary btn-lg">
+                    了解更多
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value"><span>{carefree:stats type='article' /}</span>+</div>
+                    <div class="hero-stat-label">优质文章</div>
                 </div>
-                {/if}
-                <div class="article-body">
-                    <h3 class="article-title">
-                        <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
-                    </h3>
-                    {if condition="!empty($article['summary'])"}
-                    <p class="article-summary">{$article.summary}</p>
-                    {/if}
-                    <div class="article-meta">
-                        {if condition="isset($article['category_id'])"}
-                        <span class="category">
-                            <i class="icon-folder"></i>
-                            <a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
-                        </span>
-                        {/if}
-                        <span class="date">
-                            <i class="icon-calendar"></i>
-                            {$article.publish_time|date='Y-m-d'}
-                        </span>
-                        <span class="views">
-                            <i class="icon-eye"></i>
-                            {$article.views|default=0}
-                        </span>
-                    </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value"><span>{carefree:stats type='category' /}</span></div>
+                    <div class="hero-stat-label">内容分类</div>
                 </div>
-            </article>
-            {/carefree:foreach}
+                <div class="hero-stat">
+                    <div class="hero-stat-value"><span>{carefree:stats type='view' /}</span>+</div>
+                    <div class="hero-stat-label">累计阅读</div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 {/if}
 
-<!-- 最新文章 & 侧边栏 -->
-<section class="main-content">
+<!-- Featured/Recommended Articles -->
+{carefree:article flag='recommend' limit='1' id='check_recommend' empty=''}
+{/carefree:article}
+{if condition="!empty($check_recommend)"}
+<section class="featured-section">
     <div class="container">
-        <div class="content-wrapper">
-            <!-- 左侧：最新文章 -->
-            <div class="main-column">
+        <div class="section-header">
+            <h2 class="section-title">推荐阅读</h2>
+            <a href="{$base_url}/articles.html" class="section-link">
+                查看全部
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="article-grid">
+            {carefree:article flag='recommend' limit='6' order='create_time desc' id='article'}
+            <article class="article-card card-featured" data-reveal>
+                {if condition="!empty($article.cover_image)"}
+                <div class="article-image">
+                    <a href="{$base_url}/article/{$article.id}.html">
+                        <img src="{$article.cover_image}" alt="{$article.title}" loading="lazy">
+                    </a>
+                    {if condition="!empty($article.flag)"}
+                    <span class="article-flag">{$article.flag}</span>
+                    {/if}
+                </div>
+                {/if}
+                <div class="article-body">
+                    <h3 class="article-title line-clamp-2">
+                        <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
+                    </h3>
+                    {if condition="!empty($article.summary)"}
+                    <p class="article-summary">{$article.summary}</p>
+                    {/if}
+                    <div class="article-meta">
+                        {if condition="!empty($article.category_id)"}
+                        <span>
+                            <i class="bi bi-folder"></i>
+                            <a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
+                        </span>
+                        {/if}
+                        <span>
+                            <i class="bi bi-calendar3"></i>
+                            {$article.publish_time|date='Y-m-d'}
+                        </span>
+                        <span>
+                            <i class="bi bi-eye"></i>
+                            {$article.view_count|default=0}
+                        </span>
+                    </div>
+                </div>
+            </article>
+            {/carefree:article}
+        </div>
+    </div>
+</section>
+{/if}
+
+<!-- Latest Articles with Sidebar -->
+<section class="latest-section">
+    <div class="container">
+        <div class="latest-grid">
+            <!-- Main Content -->
+            <div class="main-content">
                 <div class="section-header">
-                    <h2>最新文章</h2>
+                    <h2 class="section-title">最新文章</h2>
+                    <a href="{$base_url}/articles.html" class="section-link">
+                        全部文章
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
                 </div>
 
-                {if condition="isset($latest_articles) && !empty($latest_articles)"}
-                <div class="article-list">
-                    {carefree:foreach from="$latest_articles" item="article"}
-                    <article class="article-item">
-                        {if condition="!empty($article['cover_image'])"}
-                        <div class="article-thumbnail">
+                <div class="articles-list">
+                {carefree:article limit='8' order='create_time desc' id='article' empty='<div class="empty-state"><i class="bi bi-inbox empty-state-icon"></i><h3 class="empty-state-title">暂无文章</h3><p class="empty-state-text">还没有发布任何文章，敬请期待...</p></div>'}
+                    <article class="article-card-horizontal" data-reveal>
+                        {if condition="!empty($article.cover_image)"}
+                        <div class="card-image">
                             <a href="{$base_url}/article/{$article.id}.html">
-                                <img src="{$article.cover_image}" alt="{$article.title}">
+                                <img src="{$article.cover_image}" alt="{$article.title}" loading="lazy">
                             </a>
                         </div>
                         {/if}
-                        <div class="article-content">
-                            <h3 class="article-title">
+                        <div class="card-body">
+                            {if condition="!empty($article.category_id)"}
+                            <span class="card-category">
+                                <i class="bi bi-folder"></i>
+                                {$article.category_name|default='未分类'}
+                            </span>
+                            {/if}
+                            <h3 class="card-title line-clamp-2">
                                 <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
                             </h3>
-                            {if condition="!empty($article['summary'])"}
-                            <p class="article-excerpt">{$article.summary}</p>
+                            {if condition="!empty($article.summary)"}
+                            <p class="card-excerpt line-clamp-2">{$article.summary}</p>
                             {/if}
-                            <div class="article-meta">
-                                <span class="author">
-                                    <i class="icon-user"></i>
-                                    {$article.author}
-                                </span>
-                                {if condition="isset($article['category_id'])"}
-                                <span class="category">
-                                    <i class="icon-folder"></i>
-                                    <a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
-                                </span>
-                                {/if}
-                                <span class="date">
-                                    <i class="icon-calendar"></i>
-                                    {$article.publish_time|date='Y-m-d H:i'}
-                                </span>
-                                <span class="views">
-                                    <i class="icon-eye"></i>
-                                    {$article.views|default=0} 阅读
-                                </span>
-                            </div>
-                        </div>
-                    </article>
-                    {/carefree:foreach}
-                </div>
-                {else /}
-                <div class="empty-state">
-                    <p>暂无文章</p>
-                </div>
-                {/if}
-            </div>
-
-            <!-- 右侧：侧边栏 -->
-            <aside class="sidebar">
-                <!-- 热门文章 -->
-                {if condition="isset($hot_articles) && !empty($hot_articles)"}
-                <div class="widget">
-                    <h3 class="widget-title">热门文章</h3>
-                    <div class="hot-list">
-                        {carefree:foreach from="$hot_articles" item="article" key="index"}
-                        <div class="hot-item">
-                            <span class="hot-rank {if condition="$index < 3"}top{/if}">{$index + 1}</span>
-                            <div class="hot-content">
-                                <a href="{$base_url}/article/{$article.id}.html" class="hot-title">{$article.title}</a>
-                                <div class="hot-meta">
-                                    <span class="views">{$article.views|default=0} 阅读</span>
+                            <div class="card-footer">
+                                <div class="card-author">
+                                    <span class="author-name">{$article.author|default='管理员'}</span>
+                                </div>
+                                <div class="card-stats">
+                                    <span>
+                                        <i class="bi bi-calendar3"></i>
+                                        {$article.publish_time|date='Y-m-d'}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-eye"></i>
+                                        {$article.view_count|default=0}
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                        {/carefree:foreach}
+                    </article>
+                {/carefree:article}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Hot Articles Widget -->
+                <div class="widget">
+                    <h3 class="widget-title">
+                        <i class="bi bi-fire text-primary"></i>
+                        热门文章
+                    </h3>
+                    <div class="hot-list">
+                        {carefree:article limit='10' order='view_count desc' id='hot' key='index' empty='<p class="text-muted">暂无热门文章</p>'}
+                        <div class="hot-item">
+                            <span class="hot-rank {if condition='$index < 3'}top{/if}">{$index + 1}</span>
+                            <div class="hot-content">
+                                <a href="{$base_url}/article/{$hot.id}.html" class="hot-title line-clamp-2">
+                                    {$hot.title}
+                                </a>
+                                <div class="hot-meta">
+                                    <i class="bi bi-eye"></i> {$hot.view_count|default=0} 阅读
+                                </div>
+                            </div>
+                        </div>
+                        {/carefree:article}
                     </div>
                 </div>
-                {/if}
 
-                <!-- 分类列表 -->
-                {if condition="isset($categories) && !empty($categories)"}
+                <!-- Categories Widget -->
                 <div class="widget">
-                    <h3 class="widget-title">文章分类</h3>
+                    <h3 class="widget-title">
+                        <i class="bi bi-grid text-primary"></i>
+                        文章分类
+                    </h3>
                     <ul class="category-list">
-                        {carefree:foreach from="$categories" item="category"}
+                        {carefree:category parent='0' limit='10' id='cat' empty='<li class="text-muted">暂无分类</li>'}
                         <li>
-                            <a href="{$base_url}/category/{$category.id}.html">
-                                {$category.name}
-                                {if condition="isset($category['article_count'])"}
-                                <span class="count">({$category.article_count})</span>
+                            <a href="{$base_url}/category/{$cat.id}.html">
+                                <span>{$cat.name}</span>
+                                {if condition="isset($cat.article_count)"}
+                                <span class="count">{$cat.article_count}</span>
                                 {/if}
                             </a>
                         </li>
-                        {/carefree:foreach}
+                        {/carefree:category}
                     </ul>
                 </div>
-                {/if}
 
-                <!-- 标签云 -->
-                {if condition="isset($tags) && !empty($tags)"}
+                <!-- Tags Widget -->
                 <div class="widget">
-                    <h3 class="widget-title">热门标签</h3>
+                    <h3 class="widget-title">
+                        <i class="bi bi-tags text-primary"></i>
+                        热门标签
+                    </h3>
                     <div class="tag-cloud">
-                        {carefree:foreach from="$tags" item="tag"}
+                        {carefree:tag limit='20' order='article_count desc' id='tag' empty='<span class="text-muted">暂无标签</span>'}
                         <a href="{$base_url}/tag/{$tag.id}.html" class="tag">{$tag.name}</a>
-                        {/carefree:foreach}
+                        {/carefree:tag}
                     </div>
                 </div>
-                {/if}
 
-                <!-- 广告位 -->
+                <!-- Ad Widget -->
                 {carefree:ad position='sidebar' limit='1' id='ad' empty=''}
-                <div class="widget">
-                    {if condition="!empty($ad['link'])"}
-                    <a href="{$ad.link}" target="_blank" class="ad-banner">
-                        <img src="{$ad.image}" alt="{$ad.title|default='广告'}">
+                <div class="widget p-0" style="border: none; overflow: hidden;">
+                    {if condition="!empty($ad.link)"}
+                    <a href="{$ad.link}" target="_blank" rel="nofollow" style="display: block;">
+                        <img src="{$ad.image}" alt="{$ad.title|default='广告'}" style="width: 100%; border-radius: var(--radius-xl);">
                     </a>
                     {else /}
-                    <div class="ad-banner">
-                        <img src="{$ad.image}" alt="{$ad.title|default='广告'}">
-                    </div>
+                    <img src="{$ad.image}" alt="{$ad.title|default='广告'}" style="width: 100%; border-radius: var(--radius-xl);">
                     {/if}
                 </div>
                 {/carefree:ad}
@@ -203,23 +269,90 @@
     </div>
 </section>
 
-<!-- 友情链接 -->
-{carefree:link group='home' limit='12' id='link' empty=''}
-<section class="links-section">
+<!-- Categories Section -->
+<section class="categories-section">
     <div class="container">
         <div class="section-header">
-            <h2>友情链接</h2>
+            <h2 class="section-title">浏览分类</h2>
         </div>
-        <div class="links-grid">
-            <a href="{$link.url}" target="_blank" rel="nofollow" class="link-item" title="{$link.title}">
-                {if condition="!empty($link['logo'])"}
-                <img src="{$link.logo}" alt="{$link.title}">
-                {else /}
-                {$link.title}
-                {/if}
+        <div class="categories-grid">
+            {carefree:category parent='0' limit='8' id='category' empty=''}
+            <a href="{$base_url}/category/{$category.id}.html" class="category-card" data-reveal>
+                <div class="category-icon">
+                    <i class="bi bi-folder2"></i>
+                </div>
+                <h3 class="category-name">{$category.name}</h3>
+                <p class="category-count">{$category.article_count|default=0} 篇文章</p>
             </a>
+            {/carefree:category}
         </div>
     </div>
 </section>
+
+<!-- Newsletter Section -->
+<section class="newsletter-section">
+    <div class="container">
+        <div class="newsletter-card" data-reveal>
+            <i class="bi bi-envelope-paper newsletter-icon"></i>
+            <h2 class="newsletter-title">订阅我们的更新</h2>
+            <p class="newsletter-text">
+                第一时间获取最新文章推送，精选内容直达邮箱
+            </p>
+            <form class="newsletter-form" action="#" method="post">
+                <input type="email" class="input input-lg rounded-xl" placeholder="输入您的邮箱地址" required>
+                <button type="submit" class="btn btn-lg rounded-xl">
+                    立即订阅
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Friend Links -->
+{carefree:link group='home' limit='1' id='check_link' empty=''}
 {/carefree:link}
+{if condition="!empty($check_link)"}
+<section class="links-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">友情链接</h2>
+        </div>
+        <div class="links-grid">
+            {carefree:link group='home' limit='12' id='link'}
+            <a href="{$link.url}" target="_blank" rel="nofollow" class="link-item" title="{$link.title}">
+                {if condition="!empty($link.logo)"}
+                <img src="{$link.logo}" alt="{$link.title}">
+                {/if}
+                <span>{$link.title}</span>
+            </a>
+            {/carefree:link}
+        </div>
+    </div>
+</section>
+{/if}
+{/block}
+
+{block name="js"}
+<script>
+// Scroll Reveal Animation
+document.addEventListener('DOMContentLoaded', function() {
+    const revealElements = document.querySelectorAll('[data-reveal]');
+
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    revealElements.forEach(el => {
+        revealObserver.observe(el);
+    });
+});
+</script>
 {/block}

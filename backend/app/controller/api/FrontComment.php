@@ -167,7 +167,9 @@ class FrontComment extends BaseController
             );
 
             if (!$checkResult['allowed']) {
-                return Response::error($checkResult['message']);
+                $words = $checkResult['matched_words'] ?? [];
+                $message = $checkResult['message'] . (count($words) > 0 ? '，违规词：' . implode('、', $words) : '');
+                return Response::error($message);
             }
 
             // 使用过滤后的内容

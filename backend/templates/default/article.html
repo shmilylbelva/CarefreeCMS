@@ -1,6 +1,6 @@
 {extend name="default/layout" /}
 
-{block name="title"}{$article.title} - {$site.site_name|default='国产CMS'}{/block}
+{block name="title"}{$article.title} - {$site.site_name|default='Carefree CMS'}{/block}
 {block name="keywords"}{$article.keywords|default=''}{/block}
 {block name="description"}{$article.summary|default=''}{/block}
 
@@ -9,225 +9,445 @@
 {/block}
 
 {block name="content"}
-<article class="article-detail">
-    <!-- 面包屑导航 -->
-    {carefree:breadcrumb separator='/' id='crumb'}
-    <div class="breadcrumb">
-        <a href="{$crumb.url}">{$crumb.title}</a>
-        <span class="separator">/</span>
-    </div>
-    {/carefree:breadcrumb}
-
-    <!-- 文章头部 -->
-    <header class="article-header">
-        {if condition="!empty($article['flag'])"}
-        <span class="article-flag {$article.flag|lower}">{$article.flag}</span>
-        {/if}
-
-        <h1 class="article-title">{$article.title}</h1>
-
-        <div class="article-meta">
-            <span class="author">
-                <i class="icon-user"></i>
-                作者：{$article.author}
-            </span>
-            <span class="date">
-                <i class="icon-calendar"></i>
-                发布时间：{$article.publish_time|date='Y-m-d H:i:s'}
-            </span>
-            {if condition="isset($article['category_id'])"}
-            <span class="category">
-                <i class="icon-folder"></i>
-                分类：<a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
-            </span>
-            {/if}
-            <span class="views">
-                <i class="icon-eye"></i>
-                浏览：{$article.views}
-            </span>
+<div class="article-page">
+    <!-- Breadcrumb Navigation -->
+    <nav class="article-breadcrumb">
+        <div class="container">
+            <ol class="breadcrumb-list">
+                {carefree:breadcrumb separator='/' id='crumb'}
+                <li class="breadcrumb-item">
+                    <a href="{$crumb.url}">{$crumb.title}</a>
+                    <span class="breadcrumb-separator">/</span>
+                </li>
+                {/carefree:breadcrumb}
+                <li class="breadcrumb-item">
+                    <span class="breadcrumb-current">{$article.title|mb_substr=0,30}...</span>
+                </li>
+            </ol>
         </div>
+    </nav>
 
-        {if condition="!empty($article['tags'])"}
-        <div class="article-tags">
-            <i class="icon-tag"></i>
-            标签：
-            {carefree:foreach from="$article.tags" item="tag"}
-            <a href="{$base_url}/tag/{$tag.id}.html" class="tag">{$tag.name}</a>
-            {/carefree:foreach}
-        </div>
-        {/if}
-    </header>
-
-    <!-- 文章内容 -->
-    <div class="article-content">
-        {if condition="!empty($article['cover_image'])"}
-        <div class="article-cover">
-            <img src="{$article.cover_image}" alt="{$article.title}">
-        </div>
-        {/if}
-
-        <div class="article-body">
-            {$article.content|raw}
-        </div>
-    </div>
-
-    <!-- 文章底部 -->
-    <footer class="article-footer">
-        <!-- 版权声明 -->
-        {if condition="isset($article['copyright_type']) && $article['copyright_type'] == 'original'"}
-        <div class="article-copyright">
-            <p><strong>版权声明：</strong>本文为原创文章，版权归作者所有，转载请注明出处。</p>
-        </div>
-        {elseif condition="isset($article['copyright_type']) && $article['copyright_type'] == 'reprint'" /}
-        <div class="article-copyright">
-            <p><strong>版权声明：</strong>本文转载自 {$article.source_name}，原文链接：<a href="{$article.source_url}" target="_blank">{$article.source_url}</a></p>
-        </div>
-        {/if}
-
-        <!-- 分享按钮 -->
-        <div class="article-share">
-            <span class="share-label">分享到：</span>
-            <div class="share-buttons">
-                <a href="javascript:void(0)" class="share-btn wechat" title="分享到微信" data-type="wechat">
-                    <i class="icon-wechat"></i>微信
-                </a>
-                <a href="http://service.weibo.com/share/share.php?url={$base_url}/article/{$article.id}.html&title={$article.title}" target="_blank" class="share-btn weibo" title="分享到微博" data-type="weibo">
-                    <i class="icon-weibo"></i>微博
-                </a>
-                <a href="http://connect.qq.com/widget/shareqq/index.html?url={$base_url}/article/{$article.id}.html&title={$article.title}" target="_blank" class="share-btn qq" title="分享到QQ" data-type="qq">
-                    <i class="icon-qq"></i>QQ
-                </a>
-            </div>
-        </div>
-    </footer>
-
-    <!-- 上一篇/下一篇导航 -->
-    {carefree:prevnext aid='$article.id' catid='$article.category_id' type='same'}
-    <div class="article-navigation">
-        {if condition="isset($prev)"}
-        <a href="{$base_url}/article/{$prev.id}.html" class="nav-prev">
-            <span class="nav-label">上一篇</span>
-            <span class="nav-title">{$prev.title}</span>
-        </a>
-        {else /}
-        <span class="nav-disabled">没有上一篇了</span>
-        {/if}
-
-        {if condition="isset($next)"}
-        <a href="{$base_url}/article/{$next.id}.html" class="nav-next">
-            <span class="nav-label">下一篇</span>
-            <span class="nav-title">{$next.title}</span>
-        </a>
-        {else /}
-        <span class="nav-disabled">没有下一篇了</span>
-        {/if}
-    </div>
-    {/carefree:prevnext}
-
-    <!-- 相关文章 -->
-    {carefree:related aid='$article.id' limit='6' type='tag' id='related'}
-    <div class="related-articles">
-        <h3 class="section-title">相关文章</h3>
-        <div class="related-list">
-            <article class="related-item">
-                {if condition="!empty($related['cover_image'])"}
-                <div class="related-thumbnail">
-                    <a href="{$base_url}/article/{$related.id}.html">
-                        <img src="{$related.cover_image}" alt="{$related.title}">
-                    </a>
+    <!-- Article Hero Header -->
+    <header class="article-hero">
+        <div class="container">
+            <div class="article-hero-inner">
+                {if condition="!empty($article['flag'])"}
+                <div class="article-flag-badge">
+                    <i class="bi bi-award"></i>
+                    <span>{$article.flag}</span>
                 </div>
                 {/if}
-                <div class="related-content">
-                    <h4 class="related-title">
-                        <a href="{$base_url}/article/{$related.id}.html">{$related.title}</a>
-                    </h4>
-                    <div class="related-meta">
-                        <span class="date">{$related.publish_time|date='Y-m-d'}</span>
-                        <span class="views">{$related.views|default=0} 阅读</span>
-                    </div>
-                </div>
-            </article>
-        </div>
-    </div>
-    {/carefree:related}
 
-    <!-- 评论区 -->
-    <div class="comments-section">
-        {carefree:comment articleid='$article.id' limit='20' id='comment'}
-        <h3 class="section-title">评论 (<span id="commentCount">{$comment_total|default=0}</span>)</h3>
+                <h1 class="article-hero-title">{$article.title}</h1>
 
-        <!-- 发表评论表单 -->
-        <div class="comment-form">
-            <textarea id="commentContent" rows="4" placeholder="写下你的评论..."></textarea>
-            <button id="submitCommentBtn" class="btn-submit">发表评论</button>
-        </div>
-
-        <!-- 评论列表 -->
-        <div class="comments-list">
-            <div class="comment-item">
-                <div class="comment-avatar">
-                    <img src="{$comment.user.avatar|default='/assets/images/default-avatar.png'}" alt="{$comment.user.username|default='匿名'}">
-                </div>
-                <div class="comment-content">
-                    <div class="comment-header">
-                        <span class="comment-author">{$comment.user.username|default='匿名'}</span>
-                        <span class="comment-time">{$comment.create_time|date='Y-m-d H:i'}</span>
-                    </div>
-                    <p class="comment-text">{$comment.content}</p>
-                    <div class="comment-actions">
-                        <a href="javascript:void(0)" class="comment-reply">回复</a>
-                        <a href="javascript:void(0)" class="comment-like">赞 ({$comment.like_count|default=0})</a>
-                    </div>
-
-                    <!-- 子评论/回复 -->
-                    {if condition="isset($comment['replies']) && !empty($comment['replies'])"}
-                    <div class="comment-replies">
-                        {carefree:foreach from="$comment.replies" item="reply"}
-                        <div class="comment-item reply-item">
-                            <div class="comment-avatar">
-                                <img src="{$reply.user.avatar|default='/assets/images/default-avatar.png'}" alt="{$reply.user.username|default='匿名'}">
-                            </div>
-                            <div class="comment-content">
-                                <div class="comment-header">
-                                    <span class="comment-author">{$reply.user.username|default='匿名'}</span>
-                                    {if condition="isset($reply['reply_to_user'])"}
-                                    <span class="reply-to">回复 {$reply.reply_to_user.username}</span>
-                                    {/if}
-                                    <span class="comment-time">{$reply.create_time|date='Y-m-d H:i'}</span>
-                                </div>
-                                <p class="comment-text">{$reply.content}</p>
-                            </div>
-                        </div>
-                        {/carefree:foreach}
-                    </div>
+                <div class="article-hero-meta">
+                    <span>
+                        <i class="bi bi-person-circle"></i>
+                        {$article.author|default='管理员'}
+                    </span>
+                    <span>
+                        <i class="bi bi-calendar3"></i>
+                        {$article.publish_time|date='Y年m月d日'}
+                    </span>
+                    {if condition="isset($article['category_id'])"}
+                    <span>
+                        <i class="bi bi-folder2"></i>
+                        <a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
+                    </span>
                     {/if}
+                    <span>
+                        <i class="bi bi-eye"></i>
+                        {$article.view_count|default=0} 阅读
+                    </span>
                 </div>
             </div>
         </div>
-        {/carefree:comment}
+    </header>
+
+    <!-- Article Main Content -->
+    <div class="container">
+        <div class="article-layout">
+            <!-- Main Content Area -->
+            <main class="article-main">
+                <article class="article-card">
+                    <!-- Cover Image -->
+                    {if condition="!empty($article['cover_image'])"}
+                    <div class="article-cover">
+                        <img src="{$article.cover_image}" alt="{$article.title}" loading="lazy">
+                    </div>
+                    {/if}
+
+                    <!-- Tags Section -->
+                    {if condition="!empty($article['tags'])"}
+                    <div class="article-tags-section">
+                        <div class="article-tag-list">
+                            {carefree:foreach from="$article.tags" item="tag"}
+                            <a href="{$base_url}/tag/{$tag.id}.html" class="article-tag">
+                                <i class="bi bi-hash"></i>
+                                {$tag.name}
+                            </a>
+                            {/carefree:foreach}
+                        </div>
+                    </div>
+                    {/if}
+
+                    <!-- Article Body -->
+                    <div class="article-body">
+                        <div class="article-content">
+                            {$article.content|raw}
+                        </div>
+                    </div>
+
+                    <!-- Article Footer -->
+                    <footer class="article-footer-section">
+                        <!-- Copyright Notice -->
+                        {if condition="isset($article['copyright_type']) && $article['copyright_type'] == 'original'"}
+                        <div class="article-copyright">
+                            <div class="article-copyright-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div class="article-copyright-text">
+                                <strong>原创声明</strong>
+                                <p>本文为原创文章，版权归作者所有。未经授权，禁止转载。如需转载请联系作者获取授权。</p>
+                            </div>
+                        </div>
+                        {elseif condition="isset($article['copyright_type']) && $article['copyright_type'] == 'reprint'" /}
+                        <div class="article-copyright">
+                            <div class="article-copyright-icon">
+                                <i class="bi bi-link-45deg"></i>
+                            </div>
+                            <div class="article-copyright-text">
+                                <strong>转载声明</strong>
+                                <p>本文转载自 {$article.source_name|default='网络'}，原文链接：<a href="{$article.source_url}" target="_blank" rel="nofollow">{$article.source_url}</a></p>
+                            </div>
+                        </div>
+                        {/if}
+
+                        <!-- Share Section -->
+                        <div class="article-share-section">
+                            <span class="share-label">分享文章：</span>
+                            <div class="share-buttons">
+                                <a href="javascript:void(0)" class="share-btn wechat" title="分享到微信" data-type="wechat">
+                                    <i class="bi bi-wechat"></i>
+                                </a>
+                                <a href="http://service.weibo.com/share/share.php?url={$base_url}/article/{$article.id}.html&title={$article.title}" target="_blank" class="share-btn weibo" title="分享到微博" data-type="weibo">
+                                    <i class="bi bi-sina-weibo"></i>
+                                </a>
+                                <a href="http://connect.qq.com/widget/shareqq/index.html?url={$base_url}/article/{$article.id}.html&title={$article.title}" target="_blank" class="share-btn qq" title="分享到QQ" data-type="qq">
+                                    <i class="bi bi-tencent-qq"></i>
+                                </a>
+                                <a href="javascript:void(0)" class="share-btn link" title="复制链接" data-type="copy" id="copyLinkBtn">
+                                    <i class="bi bi-link-45deg"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </footer>
+                </article>
+
+                <!-- Prev/Next Navigation -->
+                {carefree:prevnext aid='$article.id' catid='$article.category_id' type='same'}
+                <nav class="article-navigation">
+                    {if condition="isset($prev)"}
+                    <a href="{$base_url}/article/{$prev.id}.html" class="nav-item nav-prev">
+                        <span class="nav-label">
+                            <i class="bi bi-arrow-left"></i>
+                            上一篇
+                        </span>
+                        <span class="nav-title">{$prev.title}</span>
+                    </a>
+                    {else /}
+                    <div class="nav-disabled">
+                        <i class="bi bi-emoji-smile"></i>
+                        已经是第一篇了
+                    </div>
+                    {/if}
+
+                    {if condition="isset($next)"}
+                    <a href="{$base_url}/article/{$next.id}.html" class="nav-item nav-next">
+                        <span class="nav-label">
+                            下一篇
+                            <i class="bi bi-arrow-right"></i>
+                        </span>
+                        <span class="nav-title">{$next.title}</span>
+                    </a>
+                    {else /}
+                    <div class="nav-disabled">
+                        <i class="bi bi-emoji-smile"></i>
+                        已经是最后一篇了
+                    </div>
+                    {/if}
+                </nav>
+                {/carefree:prevnext}
+
+                <!-- Related Articles -->
+                {carefree:related aid='$article.id' limit='6' type='tag' id='related'}
+                <section class="related-section">
+                    <div class="related-header">
+                        <i class="bi bi-collection"></i>
+                        <h2 class="related-title">相关推荐</h2>
+                    </div>
+                    <div class="related-grid">
+                        <article class="related-card" data-reveal>
+                            {if condition="!empty($related['cover_image'])"}
+                            <div class="related-card-image">
+                                <a href="{$base_url}/article/{$related.id}.html">
+                                    <img src="{$related.cover_image}" alt="{$related.title}" loading="lazy">
+                                </a>
+                            </div>
+                            {/if}
+                            <div class="related-card-body">
+                                <h3 class="related-card-title">
+                                    <a href="{$base_url}/article/{$related.id}.html">{$related.title}</a>
+                                </h3>
+                                <div class="related-card-meta">
+                                    <span>
+                                        <i class="bi bi-calendar3"></i>
+                                        {$related.publish_time|date='Y-m-d'}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-eye"></i>
+                                        {$related.view_count|default=0}
+                                    </span>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+                {/carefree:related}
+
+                <!-- Comments Section -->
+                <section class="comments-section">
+                    {carefree:comment articleid='$article.id' limit='20' id='comment'}
+                    <div class="comments-header">
+                        <i class="bi bi-chat-dots"></i>
+                        <h3 class="comments-title">评论交流</h3>
+                        <span class="comments-count" id="commentCount">{$comment_total|default=0}</span>
+                    </div>
+
+                    <!-- Comment Form -->
+                    <div class="comment-form">
+                        <div class="comment-form-inner">
+                            <div class="comment-avatar">
+                                <img src="/assets/images/default-avatar.png" alt="头像">
+                            </div>
+                            <div class="comment-form-body">
+                                <textarea class="comment-textarea" id="commentContent" placeholder="写下你的想法..."></textarea>
+                                <div class="comment-form-actions">
+                                    <button class="comment-submit-btn" id="submitCommentBtn">
+                                        <i class="bi bi-send"></i>
+                                        发表评论
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div class="comments-list">
+                        <div class="comment-item">
+                            <div class="comment-user-avatar">
+                                <img src="{$comment.user.avatar|default='/assets/images/default-avatar.png'}" alt="{$comment.user.username|default='匿名'}">
+                            </div>
+                            <div class="comment-body">
+                                <div class="comment-header">
+                                    <span class="comment-author">{$comment.user.username|default='匿名用户'}</span>
+                                    <span class="comment-time">{$comment.create_time|date='Y-m-d H:i'}</span>
+                                </div>
+                                <p class="comment-text">{$comment.content}</p>
+                                <div class="comment-actions">
+                                    <button class="comment-action" data-action="reply">
+                                        <i class="bi bi-reply"></i>
+                                        回复
+                                    </button>
+                                    <button class="comment-action" data-action="like">
+                                        <i class="bi bi-heart"></i>
+                                        {$comment.like_count|default=0}
+                                    </button>
+                                </div>
+
+                                <!-- Nested Replies -->
+                                {if condition="isset($comment['replies']) && !empty($comment['replies'])"}
+                                <div class="comment-replies">
+                                    {carefree:foreach from="$comment.replies" item="reply"}
+                                    <div class="comment-item">
+                                        <div class="comment-user-avatar">
+                                            <img src="{$reply.user.avatar|default='/assets/images/default-avatar.png'}" alt="{$reply.user.username|default='匿名'}">
+                                        </div>
+                                        <div class="comment-body">
+                                            <div class="comment-header">
+                                                <span class="comment-author">{$reply.user.username|default='匿名用户'}</span>
+                                                {if condition="isset($reply['reply_to_user'])"}
+                                                <span class="comment-reply-to">
+                                                    回复 <a href="javascript:;">{$reply.reply_to_user.username}</a>
+                                                </span>
+                                                {/if}
+                                                <span class="comment-time">{$reply.create_time|date='Y-m-d H:i'}</span>
+                                            </div>
+                                            <p class="comment-text">{$reply.content}</p>
+                                            <div class="comment-actions">
+                                                <button class="comment-action" data-action="reply">
+                                                    <i class="bi bi-reply"></i>
+                                                    回复
+                                                </button>
+                                                <button class="comment-action" data-action="like">
+                                                    <i class="bi bi-heart"></i>
+                                                    {$reply.like_count|default=0}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/carefree:foreach}
+                                </div>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                    {/carefree:comment}
+
+                    {if condition="empty($comment_total) || $comment_total == 0"}
+                    <div class="comments-empty">
+                        <i class="bi bi-chat-text comments-empty-icon"></i>
+                        <p class="comments-empty-text">暂无评论，快来抢沙发吧~</p>
+                    </div>
+                    {/if}
+                </section>
+            </main>
+
+            <!-- Sidebar -->
+            <aside class="article-sidebar">
+                <!-- Table of Contents -->
+                <div class="toc-widget" id="tocWidget">
+                    <div class="toc-header">
+                        <i class="bi bi-list-nested"></i>
+                        <h4 class="toc-title">目录导航</h4>
+                    </div>
+                    <nav class="toc-nav">
+                        <ul class="toc-list" id="tocList">
+                            <!-- TOC will be generated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+
+                <!-- Author Widget -->
+                <div class="author-widget">
+                    <div class="author-avatar-large">
+                        <img src="/assets/images/default-avatar.png" alt="{$article.author|default='管理员'}">
+                    </div>
+                    <h4 class="author-name">{$article.author|default='管理员'}</h4>
+                    <p class="author-bio">热爱分享，持续输出优质内容</p>
+                </div>
+            </aside>
+        </div>
     </div>
-</article>
+</div>
 {/block}
 
 {block name="js"}
-<!-- 如需代码高亮功能，请添加 highlight.js 库 -->
-<!-- <script src="/assets/js/highlight.min.js"></script> -->
-<script src="/assets/js/article.js"></script>
 <script>
-    // 代码高亮（需要先引入 highlight.js）
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     document.querySelectorAll('pre code').forEach(function(block) {
-    //         hljs.highlightBlock(block);
-    //     });
-    // });
+document.addEventListener('DOMContentLoaded', function() {
+    // Generate Table of Contents
+    const articleContent = document.querySelector('.article-content');
+    const tocList = document.getElementById('tocList');
+    const tocWidget = document.getElementById('tocWidget');
 
-    // 分享功能
-    document.querySelectorAll('.share-btn').forEach(function(btn) {
+    if (articleContent && tocList) {
+        const headings = articleContent.querySelectorAll('h2, h3, h4');
+
+        if (headings.length > 0) {
+            headings.forEach((heading, index) => {
+                // Add ID to heading
+                const id = 'heading-' + index;
+                heading.id = id;
+
+                // Create TOC item
+                const li = document.createElement('li');
+                li.className = 'toc-item';
+
+                const a = document.createElement('a');
+                a.href = '#' + id;
+                a.className = 'toc-link toc-' + heading.tagName.toLowerCase();
+                a.textContent = heading.textContent;
+
+                li.appendChild(a);
+                tocList.appendChild(li);
+            });
+
+            // TOC scroll spy
+            const tocLinks = tocList.querySelectorAll('.toc-link');
+            const observerOptions = {
+                root: null,
+                rootMargin: '-80px 0px -80% 0px',
+                threshold: 0
+            };
+
+            const observerCallback = (entries) => {
+                entries.forEach(entry => {
+                    const id = entry.target.id;
+                    const tocLink = tocList.querySelector(`a[href="#${id}"]`);
+
+                    if (entry.isIntersecting) {
+                        tocLinks.forEach(link => link.classList.remove('active'));
+                        if (tocLink) {
+                            tocLink.classList.add('active');
+                        }
+                    }
+                });
+            };
+
+            const observer = new IntersectionObserver(observerCallback, observerOptions);
+            headings.forEach(heading => observer.observe(heading));
+
+            // Smooth scroll for TOC links
+            tocLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').slice(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        const offsetTop = targetElement.offsetTop - 100;
+                        window.scrollTo({
+                            top: offsetTop,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        } else {
+            // Hide TOC widget if no headings
+            if (tocWidget) {
+                tocWidget.style.display = 'none';
+            }
+        }
+    }
+
+    // Copy link functionality
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText(window.location.href).then(function() {
+                // Show success feedback
+                const originalIcon = copyLinkBtn.innerHTML;
+                copyLinkBtn.innerHTML = '<i class="bi bi-check2"></i>';
+                copyLinkBtn.style.background = 'var(--color-success)';
+                copyLinkBtn.style.color = '#fff';
+
+                setTimeout(function() {
+                    copyLinkBtn.innerHTML = originalIcon;
+                    copyLinkBtn.style.background = '';
+                    copyLinkBtn.style.color = '';
+                }, 2000);
+            });
+        });
+    }
+
+    // Share functionality
+    document.querySelectorAll('.share-btn[data-type]').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var type = this.dataset.type;
-            var url = encodeURIComponent(window.location.href);
-            var title = encodeURIComponent(document.title);
-            var shareUrl = '';
+            const type = this.dataset.type;
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent(document.title);
+            let shareUrl = '';
 
             switch(type) {
                 case 'weibo':
@@ -237,9 +457,11 @@
                     shareUrl = 'http://connect.qq.com/widget/shareqq/index.html?url=' + url + '&title=' + title;
                     break;
                 case 'wechat':
-                    // 显示二维码
+                    // Show QR code modal (implement as needed)
                     alert('请使用微信扫描二维码分享');
                     return;
+                case 'copy':
+                    return; // Handled separately
             }
 
             if (shareUrl) {
@@ -247,5 +469,33 @@
             }
         });
     });
+
+    // Reveal animation
+    const revealElements = document.querySelectorAll('[data-reveal]');
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    revealElements.forEach(el => {
+        revealObserver.observe(el);
+    });
+
+    // Image zoom (optional)
+    document.querySelectorAll('.article-content img').forEach(function(img) {
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', function() {
+            // Implement lightbox/zoom functionality as needed
+            window.open(this.src, '_blank');
+        });
+    });
+});
 </script>
 {/block}

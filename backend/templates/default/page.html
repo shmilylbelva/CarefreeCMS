@@ -1,30 +1,243 @@
 {extend name="default/layout" /}
 
-{block name="title"}{$page.title} - {$site.site_name|default='国产CMS'}{/block}
+{block name="title"}{$page.title} - {$site.site_name|default='Carefree CMS'}{/block}
 {block name="keywords"}{$page.keywords|default=''}{/block}
 {block name="description"}{$page.description|default=''}{/block}
 
+{block name="css"}
+<link rel="stylesheet" href="{$base_url}/assets/css/article.css">
+<style>
+.single-page {
+    padding-top: 80px;
+}
+
+.page-hero {
+    position: relative;
+    padding: var(--spacing-3xl) 0;
+    background: var(--gradient-primary);
+    overflow: hidden;
+}
+
+.page-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 30% 70%, rgba(99, 102, 241, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 70% 30%, rgba(168, 85, 247, 0.4) 0%, transparent 50%);
+    animation: Carefree 20s ease-in-out infinite;
+}
+
+.page-hero-inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.page-breadcrumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+}
+
+.page-breadcrumb a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.page-breadcrumb a:hover {
+    color: #fff;
+}
+
+.page-breadcrumb .separator {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.page-breadcrumb .current {
+    color: #fff;
+    font-weight: 500;
+}
+
+.page-hero-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: var(--spacing-md);
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+}
+
+.page-hero-meta {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+}
+
+.page-hero-meta i {
+    margin-right: var(--spacing-xs);
+}
+
+.page-content-wrapper {
+    margin-top: calc(-1 * var(--spacing-2xl));
+    padding-bottom: var(--spacing-3xl);
+    position: relative;
+    z-index: 10;
+}
+
+.page-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-2xl);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.page-body {
+    font-size: 1.0625rem;
+    line-height: 1.9;
+    color: var(--color-text-primary);
+}
+
+.page-body > *:first-child {
+    margin-top: 0;
+}
+
+.page-body > *:last-child {
+    margin-bottom: 0;
+}
+
+.page-body h2 {
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-top: var(--spacing-2xl);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-primary-100);
+    position: relative;
+}
+
+.page-body h2::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 60px;
+    height: 2px;
+    background: var(--gradient-primary);
+}
+
+.page-body h3 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
+}
+
+.page-body p {
+    margin-bottom: var(--spacing-lg);
+}
+
+.page-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-xl) 0;
+    box-shadow: var(--shadow-md);
+}
+
+.page-body a {
+    color: var(--color-primary);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-primary-200);
+}
+
+.page-body a:hover {
+    border-bottom-color: var(--color-primary);
+}
+
+.page-body blockquote {
+    position: relative;
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-secondary-50) 100%);
+    border-left: 4px solid var(--color-primary);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    font-style: italic;
+}
+
+.page-body ul, .page-body ol {
+    margin-bottom: var(--spacing-lg);
+    padding-left: var(--spacing-xl);
+}
+
+.page-body li {
+    margin-bottom: var(--spacing-sm);
+}
+</style>
+{/block}
+
 {block name="content"}
 <div class="single-page">
-    <div class="breadcrumb">
-        <a href="{$base_url}/index.html">首页</a>
-        <span class="separator">/</span>
-        <span>{$page.title}</span>
-    </div>
+    <!-- Page Hero Header -->
+    <header class="page-hero">
+        <div class="container">
+            <div class="page-hero-inner">
+                <!-- Breadcrumb -->
+                <nav class="page-breadcrumb">
+                    <a href="{$base_url}/index.html">
+                        <i class="bi bi-house"></i> 首页
+                    </a>
+                    <span class="separator">/</span>
+                    <span class="current">{$page.title}</span>
+                </nav>
 
-    <article class="page-content">
-        <header class="page-header">
-            <h1 class="page-title">{$page.title}</h1>
-            {if condition="!empty($page['update_time'])"}
-            <div class="page-meta">
-                <span class="update-time">更新时间：{$page.update_time|date='Y-m-d H:i:s'}</span>
+                <!-- Page Title -->
+                <h1 class="page-hero-title">{$page.title}</h1>
+
+                <!-- Page Meta -->
+                {if condition="!empty($page['update_time'])"}
+                <div class="page-hero-meta">
+                    <i class="bi bi-clock"></i>
+                    更新于 {$page.update_time|date='Y年m月d日'}
+                </div>
+                {/if}
             </div>
-            {/if}
-        </header>
-
-        <div class="page-body">
-            {$page.content|raw}
         </div>
-    </article>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content-wrapper">
+        <div class="container">
+            <article class="page-card">
+                <div class="page-body article-content">
+                    {$page.content|raw}
+                </div>
+            </article>
+        </div>
+    </div>
 </div>
+{/block}
+
+{block name="js"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Image zoom
+    document.querySelectorAll('.page-body img').forEach(function(img) {
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', function() {
+            window.open(this.src, '_blank');
+        });
+    });
+});
+</script>
 {/block}

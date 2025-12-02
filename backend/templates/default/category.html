@@ -1,115 +1,252 @@
 {extend name="default/layout" /}
 
-{block name="title"}{$category.name} - {$site.site_name|default='国产CMS'}{/block}
-{block name="keywords"}{$keywords|default=''}{/block}
-{block name="description"}{$description|default=''}{/block}
+{block name="title"}{$category.name} - {carefree:config name='site_name' default='Carefree CMS' /}{/block}
+{block name="keywords"}{$category.seo_keywords|default=''}{/block}
+{block name="description"}{$category.seo_description|default=''}{/block}
+
+{block name="css"}
+<link rel="stylesheet" href="{$base_url}/assets/css/list.css">
+{/block}
 
 {block name="content"}
-<!-- 分类头部 -->
-<div class="category-header">
-    <div class="breadcrumb">
-        <a href="{$base_url}/index.html">首页</a>
-        <span class="separator">/</span>
-        {if condition="!empty($category['parent'])"}
-        <a href="{$base_url}/category/{$category.parent.id}.html">{$category.parent.name}</a>
-        <span class="separator">/</span>
-        {/if}
-        <span>{$category.name}</span>
-    </div>
+<div class="list-page">
+    <!-- Category Hero Header -->
+    <header class="list-hero">
+        <div class="container">
+            <div class="list-hero-inner">
+                <!-- Breadcrumb -->
+                <nav class="list-breadcrumb">
+                    {carefree:breadcrumb separator=' <span class="separator">/</span> ' id='crumb'}
+                    <a href="{$crumb.url}">{$crumb.title}</a>
+                    {/carefree:breadcrumb}
+                </nav>
 
-    <h1 class="category-title">{$category.name}</h1>
-    {if condition="!empty($category['description'])"}
-    <p class="category-description">{$category.description}</p>
-    {/if}
+                <!-- Category Title -->
+                <h1 class="list-title">
+                    <i class="bi bi-folder2-open icon"></i>
+                    {$category.name}
+                </h1>
 
-    <!-- 子分类 -->
-    {if condition="isset($sub_categories) && !empty($sub_categories)"}
-    <div class="sub-categories">
-        <span class="label">子分类：</span>
-        {carefree:foreach from="$sub_categories" item="sub"}
-        <a href="{$base_url}/category/{$sub.id}.html" class="sub-category-link">{$sub.name}</a>
-        {/carefree:foreach}
-    </div>
-    {/if}
-</div>
-
-<!-- 筛选和排序 -->
-<div class="filter-bar">
-    <div class="filter-left">
-        <span class="total-count">共 {$total} 篇文章</span>
-    </div>
-    <div class="filter-right">
-        <select class="sort-select" onchange="location.href=this.value">
-            <option value="?order=latest" {if condition="isset($order) && $order == 'latest'"}selected{/if}>最新发布</option>
-            <option value="?order=hot" {if condition="isset($order) && $order == 'hot'"}selected{/if}>最热文章</option>
-            <option value="?order=views" {if condition="isset($order) && $order == 'views'"}selected{/if}>浏览最多</option>
-        </select>
-    </div>
-</div>
-
-<!-- 文章列表 -->
-<div class="category-articles">
-    {if condition="$articles"}
-    <div class="article-grid">
-        {carefree:foreach from="$articles" item="article"}
-        <article class="article-card">
-            {if condition="!empty($article['cover_image'])"}
-            <div class="article-thumbnail">
-                <a href="{$base_url}/article/{$article.id}.html">
-                    <img src="{$article.cover_image}" alt="{$article.title}" loading="lazy">
-                </a>
-                {if condition="!empty($article['flag'])"}
-                <span class="article-flag {$article.flag|lower}">{$article.flag}</span>
-                {/if}
-            </div>
-            {/if}
-
-            <div class="article-info">
-                <h3 class="article-title">
-                    <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
-                </h3>
-
-                {if condition="!empty($article['summary'])"}
-                <p class="article-excerpt">{$article.summary}</p>
+                <!-- Category Description -->
+                {if condition="!empty($category.description)"}
+                <p class="list-description">{$category.description}</p>
                 {/if}
 
-                <div class="article-meta">
-                    <span class="author">{$article.author}</span>
-                    <span class="date">{$article.publish_time|date='Y-m-d'}</span>
-                    <span class="views">{$article.views} 阅读</span>
+                <!-- Category Stats -->
+                <div class="list-stats">
+                    <div class="list-stat">
+                        <span class="list-stat-value">{carefree:stats type='article' catid='$category.id' /}</span>
+                        <span class="list-stat-label">篇文章</span>
+                    </div>
                 </div>
+
+                <!-- Sub Categories -->
+                {carefree:category parent='$category.id' limit='1' id='check_sub' empty=''}
+                {/carefree:category}
+                {if condition="!empty($check_sub)"}
+                <div class="list-subcategories">
+                    <span class="label">子分类：</span>
+                    {carefree:category parent='$category.id' limit='10' id='sub'}
+                    <a href="{$base_url}/category/{$sub.id}.html" class="subcategory-link">
+                        <i class="bi bi-folder"></i>
+                        {$sub.name}
+                        <span class="count">{$sub.article_count|default=0}</span>
+                    </a>
+                    {/carefree:category}
+                </div>
+                {/if}
             </div>
-        </article>
-        {/carefree:foreach}
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="list-content">
+        <div class="container">
+            <div class="list-layout">
+                <!-- Articles List -->
+                <main class="list-main">
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="filter-left">
+                            <span class="total-count">
+                                <i class="bi bi-file-earmark-text"></i>
+                                共 <strong>{carefree:stats type='article' catid='$category.id' /}</strong> 篇文章
+                            </span>
+                            <div class="view-modes">
+                                <button class="view-mode-btn active" data-view="grid" title="网格视图">
+                                    <i class="bi bi-grid-3x2"></i>
+                                </button>
+                                <button class="view-mode-btn" data-view="list" title="列表视图">
+                                    <i class="bi bi-list-ul"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="filter-right">
+                            <select class="sort-select" onchange="location.href=this.value">
+                                <option value="?order=latest" {if condition='isset($order) && $order == "latest"'}selected{/if}>最新发布</option>
+                                <option value="?order=hot" {if condition='isset($order) && $order == "hot"'}selected{/if}>最热文章</option>
+                                <option value="?order=views" {if condition='isset($order) && $order == "views"'}selected{/if}>浏览最多</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Articles Grid -->
+                    <div class="articles-grid" id="articlesGrid">
+                    {carefree:article typeid='$category.id' limit='12' order='create_time desc' page='true' id='article' key='idx' empty='<div class="empty-state"><i class="bi bi-inbox empty-state-icon"></i><h3 class="empty-state-title">暂无文章</h3><p class="empty-state-text">该分类下还没有文章，敬请期待更多精彩内容...</p><a href="index.html" class="empty-state-action"><i class="bi bi-house"></i> 返回首页</a></div>'}
+                        <article class="article-card" data-reveal style="animation-delay: {$idx * 0.05}s">
+                            {if condition="!empty($article.cover_image)"}
+                            <div class="article-card-image">
+                                <a href="{$base_url}/article/{$article.id}.html">
+                                    <img src="{$article.cover_image}" alt="{$article.title}" loading="lazy">
+                                </a>
+                                {if condition="!empty($article.flag)"}
+                                <span class="article-card-flag">{$article.flag}</span>
+                                {/if}
+                            </div>
+                            {/if}
+                            <div class="article-card-body">
+                                <div class="article-card-category">
+                                    <i class="bi bi-folder"></i>
+                                    {$category.name}
+                                </div>
+                                <h3 class="article-card-title">
+                                    <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
+                                </h3>
+                                {if condition="!empty($article.summary)"}
+                                <p class="article-card-excerpt">{$article.summary}</p>
+                                {/if}
+                                <div class="article-card-meta">
+                                    <span>
+                                        <i class="bi bi-person"></i>
+                                        {$article.author|default='管理员'}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-calendar3"></i>
+                                        {$article.publish_time|date='Y-m-d'}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-eye"></i>
+                                        {$article.view_count|default=0}
+                                    </span>
+                                </div>
+                            </div>
+                        </article>
+                    {/carefree:article}
+                    </div>
+
+                    <!-- 分页 -->
+                    {carefree:pagelist total='$__TOTAL__' pagesize='12' currentpage='$__PAGE__' url='?page=[PAGE]' style='full' /}
+                </main>
+
+                <!-- Sidebar -->
+                <aside class="list-sidebar">
+                    <!-- All Categories Widget -->
+                    <div class="sidebar-widget">
+                        <div class="widget-header">
+                            <i class="bi bi-grid"></i>
+                            <h4 class="widget-title">全部分类</h4>
+                        </div>
+                        <ul class="category-list">
+                            {carefree:category parent='0' limit='15' id='cat' empty='<li class="text-muted">暂无分类</li>'}
+                            <li>
+                                <a href="{$base_url}/category/{$cat.id}.html" class="{if condition='$cat.id == $category.id'}active{/if}">
+                                    <span>{$cat.name}</span>
+                                    <span class="count">{$cat.article_count|default=0}</span>
+                                </a>
+                            </li>
+                            {/carefree:category}
+                        </ul>
+                    </div>
+
+                    <!-- Hot Articles Widget -->
+                    <div class="sidebar-widget">
+                        <div class="widget-header">
+                            <i class="bi bi-fire"></i>
+                            <h4 class="widget-title">热门文章</h4>
+                        </div>
+                        <div class="hot-articles-list">
+                            {carefree:article typeid='$category.id' limit='10' order='view_count desc' id='hot' key='idx' empty='<p class="text-muted">暂无热门文章</p>'}
+                            <div class="hot-article-item">
+                                <span class="hot-article-rank {if condition='$idx < 3'}top{/if}">{$idx + 1}</span>
+                                <div class="hot-article-content">
+                                    <a href="{$base_url}/article/{$hot.id}.html" class="hot-article-title">{$hot.title}</a>
+                                    <div class="hot-article-views">
+                                        <i class="bi bi-eye"></i> {$hot.view_count|default=0} 阅读
+                                    </div>
+                                </div>
+                            </div>
+                            {/carefree:article}
+                        </div>
+                    </div>
+
+                    <!-- Tags Widget -->
+                    <div class="sidebar-widget">
+                        <div class="widget-header">
+                            <i class="bi bi-tags"></i>
+                            <h4 class="widget-title">热门标签</h4>
+                        </div>
+                        <div class="tags-cloud">
+                            {carefree:tag limit='20' order='article_count desc' id='tag' empty='<span class="text-muted">暂无标签</span>'}
+                            <a href="{$base_url}/tag/{$tag.id}.html" class="tag-link">{$tag.name}</a>
+                            {/carefree:tag}
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
     </div>
-
-    <!-- 分页 -->
-    {if condition="$pages > 1"}
-    <div class="pagination">
-        {if condition="$page > 1"}
-        <a href="?page={$page - 1}" class="page-link prev">上一页</a>
-        {/if}
-
-        {for start="1" end="$pages" name="p"}
-        {if condition="$p == $page"}
-        <span class="page-link active">{$p}</span>
-        {elseif condition="$p == 1 || $p == $pages || ($p >= $page - 2 && $p <= $page + 2)" /}
-        <a href="?page={$p}" class="page-link">{$p}</a>
-        {elseif condition="$p == $page - 3 || $p == $page + 3" /}
-        <span class="page-link ellipsis">...</span>
-        {/if}
-        {/for}
-
-        {if condition="$page < $pages"}
-        <a href="?page={$page + 1}" class="page-link next">下一页</a>
-        {/if}
-    </div>
-    {/if}
-
-    {else /}
-    <div class="empty-state">
-        <p>该分类下暂无文章</p>
-    </div>
-    {/if}
 </div>
+{/block}
+
+{block name="js"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View mode toggle
+    const viewModes = document.querySelectorAll('.view-mode-btn');
+    const articlesGrid = document.getElementById('articlesGrid');
+
+    viewModes.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+            viewModes.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            if (view === 'list') {
+                articlesGrid.classList.add('list-view');
+            } else {
+                articlesGrid.classList.remove('list-view');
+            }
+            localStorage.setItem('articleViewMode', view);
+        });
+    });
+
+    // Restore view mode preference
+    const savedViewMode = localStorage.getItem('articleViewMode');
+    if (savedViewMode === 'list') {
+        viewModes.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === 'list');
+        });
+        if (articlesGrid) {
+            articlesGrid.classList.add('list-view');
+        }
+    }
+
+    // Reveal animation
+    const revealElements = document.querySelectorAll('[data-reveal]');
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -30px 0px'
+    });
+
+    revealElements.forEach(el => {
+        revealObserver.observe(el);
+    });
+});
+</script>
 {/block}

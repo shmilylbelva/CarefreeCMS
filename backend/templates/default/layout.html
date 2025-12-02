@@ -1,82 +1,214 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{block name="title"}{$site.site_name|default='国产CMS'}{/block}</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{block name="title"}{$site.site_name|default='Carefree CMS'}{/block}</title>
     <meta name="keywords" content="{block name='keywords'}{$site.seo_keywords|default=''}{/block}">
     <meta name="description" content="{block name='description'}{$site.seo_description|default=''}{/block}">
-    <link rel="stylesheet" href="{$base_url}/assets/css/bootstrap.min.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{$site.favicon|default='/favicon.ico'}">
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="{$base_url}/assets/css/bootstrap-icons.min.css">
+
+    <!-- Theme Styles -->
     <link rel="stylesheet" href="{$base_url}/assets/css/common.css">
     <link rel="stylesheet" href="{$base_url}/assets/css/layout.css">
     {block name="css"}{/block}
+
+    <!-- Theme Color Meta -->
+    <meta name="theme-color" content="#6366f1">
+
+    <style>
+        /* Critical CSS - Prevent FOUC */
+        .site-header { background: var(--glass-bg-light); backdrop-filter: blur(20px); }
+    </style>
 </head>
-<body>
-    <!-- 顶部导航 -->
-    <header class="site-header">
+<body class="bg-mesh">
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- Site Header -->
+    <header class="site-header scrolled" id="siteHeader">
         <div class="container">
-            <div class="logo">
-                <a href="{$site.site_url|default=''}">
+            <div class="header-inner">
+                <!-- Logo -->
+                <a href="{$site.site_url|default='/'}" class="site-logo">
                     {if condition="!empty($site['logo'])"}
-                        <img src="{$site.logo}" alt="{$site.site_name|default='国产CMS'}">
+                    <img src="{$site.logo}" alt="{$site.site_name|default='Carefree'}">
                     {else /}
-                        <h1>{$site.site_name|default='国产CMS'}</h1>
+                    <h1>{$site.site_name|default='Carefree'}</h1>
                     {/if}
                 </a>
-            </div>
 
-            <!-- 主导航菜单 -->
-            <nav class="main-nav">
-                <ul class="nav-list">
-                    <li><a href="{$site.site_url|default=''}" class="{if condition="isset($is_home) && $is_home"}active{/if}">首页</a></li>
-                    {carefree:nav position='header' limit='10' id='nav' empty=''}
-                    <li class="{if condition="isset($nav['children']) && !empty($nav['children'])"}has-dropdown{/if} {if condition="isset($nav['is_active']) && $nav['is_active']"}active{/if}">
-                        <a href="{$nav.url}">{$nav.title}</a>
-                        {if condition="isset($nav['children']) && !empty($nav['children'])"}
-                        <ul class="dropdown">
-                            {carefree:foreach from="$nav.children" item="child"}
-                            <li><a href="{$child.url}">{$child.title}</a></li>
-                            {/carefree:foreach}
-                        </ul>
-                        {/if}
-                    </li>
-                    {/carefree:nav}
-                </ul>
-            </nav>
+                <!-- Main Navigation -->
+                <nav class="main-nav" id="mainNav">
+                    <ul class="nav-list">                     
+                        {carefree:nav position='header' limit='8' id='nav' empty=''}
+                        <li class="{if condition='isset($nav.children) && !empty($nav.children)'}has-dropdown{/if} {if condition='isset($nav.is_active) && $nav.is_active'}active{/if}">
+                            <a href="{$nav.url}">
+                                <span>{$nav.title}</span>
+                                {if condition="isset($nav.children) && !empty($nav.children)"}
+                                <i class="bi bi-chevron-down" style="font-size: 0.75em;"></i>
+                                {/if}
+                            </a>
+                            {if condition="isset($nav.children) && !empty($nav.children)"}
+                            <ul class="dropdown">
+                                {carefree:foreach from="$nav.children" item="child"}
+                                <li><a href="{$child.url}">{$child.title}</a></li>
+                                {/carefree:foreach}
+                            </ul>
+                            {/if}
+                        </li>
+                        {/carefree:nav}
+                    </ul>
+                </nav>
 
-            <!-- 搜索框 -->
-            <div class="search-box">
-                <form action="{$site.site_url|default=''}/search" method="get">
-                    <input type="text" name="keyword" placeholder="搜索...">
-                    <button type="submit">搜索</button>
-                </form>
+                <!-- Header Actions -->
+                <div class="header-actions">
+                    <!-- Search -->
+                    <div class="header-search">
+                        <button class="search-trigger" id="searchTrigger" aria-label="搜索">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+                        <i class="bi bi-moon-fill icon-moon"></i>
+                        <i class="bi bi-sun-fill icon-sun"></i>
+                    </button>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="菜单">
+                        <div class="hamburger">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- 主内容区 -->
-    <main class="site-main">
-        <div class="container">
-            {block name="content"}{/block}
+    <!-- Search Modal -->
+    <div class="search-modal" id="searchModal">
+        <div class="search-modal-content">
+            <div class="search-modal-header">
+                <i class="bi bi-search search-icon"></i>
+                <form action="{$site.site_url|default=''}/search" method="get" id="searchForm">
+                    <input type="text" name="keyword" placeholder="搜索文章、分类、标签..." autocomplete="off" id="searchInput">
+                </form>
+                <button class="search-close" id="searchClose">ESC</button>
+            </div>
+            <div class="search-modal-body">
+                <div class="search-hint text-center text-muted p-xl">
+                    <i class="bi bi-search" style="font-size: 2rem; opacity: 0.3;"></i>
+                    <p class="mt-lg">输入关键词开始搜索</p>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- Site Main Content -->
+    <main class="site-main">
+        {block name="content"}{/block}
     </main>
 
-    <!-- 侧边栏 -->
-    {block name="sidebar"}
-    <!-- 侧边栏暂时禁用 -->
-    {/block}
-
-    <!-- 页脚 -->
+    <!-- Site Footer -->
     <footer class="site-footer">
         <div class="container">
-            <div class="footer-info">
-                <p>&copy; {$Think.now|date='Y'} {$site.site_name|default='国产CMS'}. All rights reserved.</p>
-                <p>{$site.icp_no|default='湘ICP备100010号'} | {$site.police_no|default='湘GA备100011号'}</p>
+            <div class="footer-main">
+                <div class="footer-grid">
+                    <!-- Brand Column -->
+                    <div class="footer-brand">
+                        <a href="{$site.site_url|default='/'}" class="site-logo">
+                            {if condition="!empty($site['logo'])"}
+                            <img src="{$site.logo}" alt="{$site.site_name|default='Carefree'}">
+                            {else /}
+                            <h1>{$site.site_name|default='Carefree'}</h1>
+                            {/if}
+                        </a>
+                        <p class="footer-description">
+                            {$site.seo_description|default='一个现代化的内容管理系统，致力于提供优雅的阅读体验。'}
+                        </p>
+                        <div class="footer-social">
+                            <a href="javascript:;" title="微信"><i class="bi bi-wechat"></i></a>
+                            <a href="javascript:;" title="微博"><i class="bi bi-sina-weibo"></i></a>
+                            <a href="javascript:;" title="GitHub"><i class="bi bi-github"></i></a>
+                            <a href="javascript:;" title="RSS"><i class="bi bi-rss"></i></a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div class="footer-column">
+                        <h4>快速链接</h4>
+                        <ul class="footer-links">
+                            <li><a href="{$site.site_url|default='/'}/index.html">首页</a></li>
+                            <li><a href="{$site.site_url|default='/'}/articles.html">文章</a></li>
+                            <li><a href="{$site.site_url|default='/'}/archive.html">归档</a></li>
+                            <li><a href="{$site.site_url|default='/'}/about.html">关于</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="footer-column">
+                        <h4>热门分类</h4>
+                        <ul class="footer-links">
+                            {carefree:category limit='5' id='cat'}
+                            <li><a href="{$base_url}/category/{$cat.id}.html">{$cat.name}</a></li>
+                            {/carefree:category}
+                        </ul>
+                    </div>
+
+                    <!-- Contact -->
+                    <div class="footer-column">
+                        <h4>联系我们</h4>
+                        <ul class="footer-links">
+                            <li><a href="mailto:{$site.email|default='contact@example.com'}">邮箱联系</a></li>
+                            <li><a href="javascript:;">意见反馈</a></li>
+                            <li><a href="javascript:;">合作洽谈</a></li>
+                            <li><a href="{$site.site_url|default='/'}/sitemap.xml">网站地图</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <div class="footer-bottom-inner">
+                    <div class="copyright">
+                        &copy; {$Think.now|date='Y'} {$site.site_name|default='Carefree'}. All rights reserved.
+                    </div>
+                    <div class="footer-legal">
+                        <a href="javascript:;">{$site.icp_no|default='ICP备案号'}</a>
+                        {if condition="!empty($site['police_no'])"}
+                        <span style="margin: 0 8px;">|</span>
+                        <a href="javascript:;">{$site.police_no}</a>
+                        {/if}
+                    </div>
+                </div>
             </div>
         </div>
     </footer>
 
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="返回顶部">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <!-- Scripts -->
     <script src="{$base_url}/assets/js/main.js"></script>
     {block name="js"}{/block}
 </body>

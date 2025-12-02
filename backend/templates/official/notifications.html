@@ -78,7 +78,7 @@
     <!-- 分页 -->
     {if condition="isset($last_page) && $last_page > 1"}
     <nav class="mt-4">
-        {carefree:pagelist total='total' pagesize='pagesize' currentpage='current_page' url='/notifications.html?page={page}' style='full' /}
+        {carefree:pagelist total='$total' pagesize='$pagesize' currentpage='$current_page' url='/notifications.html?page=[PAGE]' style='full' /}
     </nav>
     {/if}
 </div>

@@ -116,6 +116,29 @@ abstract class SiteModel extends Model
     }
 
     /**
+     * 无站点限制 + 只查询已删除数据（用于回收站）
+     * 直接使用 Db 类查询，绕过 Model 的软删除自动过滤
+     * @return \think\db\Query
+     */
+    public static function withoutSiteScopeTrashed()
+    {
+        $model = new static();
+
+        // 获取表名（不带前缀的名称，用于 Db::name()）
+        $tableName = $model->name;
+
+        // 获取软删除字段名
+        $deleteTimeField = 'deleted_at';
+        if (property_exists($model, 'deleteTime') && $model->deleteTime) {
+            $deleteTimeField = $model->deleteTime;
+        }
+
+        // 直接使用 Db 查询，绕过 SoftDelete trait 的自动过滤
+        // Db::name() 会自动添加表前缀
+        return \think\facade\Db::name($tableName)->whereNotNull($deleteTimeField);
+    }
+
+    /**
      * 关联站点
      * @return \think\model\relation\BelongsTo
      */

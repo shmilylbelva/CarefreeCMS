@@ -1,5 +1,8 @@
 import request from './request'
-import { cachedRequest } from '@/utils/localCache'
+import { cachedRequest, localCache } from '@/utils/localCache'
+
+// 分类缓存键前缀（包含 localCache 使用的 cms_cache_ 前缀）
+const CATEGORY_CACHE_PREFIX = 'cms_cache_request_/categories/tree'
 
 export function getCategoryList(params) {
   return request({ url: '/categories', method: 'get', params })
@@ -14,6 +17,22 @@ export function getCategoryTree(params = {}) {
     cacheKey,
     { expire: 30 * 60 * 1000 } // 30分钟缓存
   )
+}
+
+// 清除所有分类缓存
+export function clearCategoryCache() {
+  try {
+    // 遍历 localStorage 清除所有分类树缓存
+    const keys = Object.keys(localStorage)
+    keys.forEach(key => {
+      if (key.includes(CATEGORY_CACHE_PREFIX)) {
+        localStorage.removeItem(key)
+      }
+    })
+    console.log('[CategoryCache] 已清除分类缓存')
+  } catch (error) {
+    console.error('[CategoryCache] 清除缓存失败:', error)
+  }
 }
 
 export function getCategoryDetail(id) {

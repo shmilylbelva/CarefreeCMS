@@ -1,46 +1,202 @@
 {extend name="default/layout" /}
 
-{block name="title"}页面未找到 - {$site.site_name|default='国产CMS'}{/block}
+{block name="title"}页面未找到 - {$site.site_name|default='Carefree CMS'}{/block}
+
+{block name="css"}
+<style>
+.error-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.error-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 40%);
+    animation: Carefree 30s ease-in-out infinite;
+}
+
+.error-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 600px;
+}
+
+.error-code {
+    font-size: clamp(8rem, 20vw, 12rem);
+    font-weight: 900;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: var(--spacing-md);
+    animation: float 6s ease-in-out infinite;
+}
+
+.error-title {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.error-description {
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--spacing-2xl);
+}
+
+.error-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.error-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radius-xl);
+    transition: all var(--duration-normal) var(--easing);
+}
+
+.error-btn-primary {
+    background: var(--gradient-primary);
+    color: #fff;
+    box-shadow: var(--shadow-primary);
+}
+
+.error-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+}
+
+.error-btn-secondary {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-primary);
+}
+
+.error-btn-secondary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transform: translateY(-3px);
+}
+
+.error-links {
+    margin-top: var(--spacing-3xl);
+    padding-top: var(--spacing-2xl);
+    border-top: 1px solid var(--glass-border);
+}
+
+.error-links-title {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+}
+
+.error-links-list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+}
+
+.error-links-list a {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    transition: color var(--duration-fast) var(--easing);
+}
+
+.error-links-list a:hover {
+    color: var(--color-primary);
+}
+
+.error-links-list a i {
+    margin-right: var(--spacing-xs);
+}
+
+.floating-shapes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.floating-shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.1;
+    animation: float 10s ease-in-out infinite;
+}
+
+.floating-shape:nth-child(1) { width: 100px; height: 100px; background: var(--color-primary); top: 10%; left: 10%; }
+.floating-shape:nth-child(2) { width: 60px; height: 60px; background: var(--color-secondary); top: 70%; left: 80%; animation-delay: 2s; }
+.floating-shape:nth-child(3) { width: 80px; height: 80px; background: var(--color-accent); top: 30%; right: 15%; animation-delay: 4s; }
+.floating-shape:nth-child(4) { width: 40px; height: 40px; background: var(--color-primary); bottom: 20%; left: 20%; animation-delay: 1s; }
+</style>
+{/block}
 
 {block name="content"}
 <div class="error-page">
+    <div class="floating-shapes">
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+    </div>
+
     <div class="error-content">
-        <h1 class="error-code">404</h1>
-        <h2 class="error-title">页面未找到</h2>
-        <p class="error-message">抱歉，您访问的页面不存在或已被删除。</p>
+        <div class="error-code">404</div>
+        <h1 class="error-title">哎呀，页面走丢了</h1>
+        <p class="error-description">
+            您访问的页面可能已被移动、删除，或者从未存在过。<br>
+            请检查网址是否正确，或者尝试以下操作。
+        </p>
 
         <div class="error-actions">
-            <a href="/" class="btn btn-primary">返回首页</a>
-            <a href="javascript:history.back()" class="btn btn-default">返回上页</a>
+            <a href="{$site.site_url|default='/'}" class="error-btn error-btn-primary">
+                <i class="bi bi-house"></i> 返回首页
+            </a>
+            <a href="javascript:history.back()" class="error-btn error-btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回上一页
+            </a>
         </div>
 
-        <!-- 搜索框 -->
-        <div class="error-search">
-            <p>或者试试搜索：</p>
-            <form action="/search" method="get">
-                <input type="text" name="q" placeholder="输入关键词...">
-                <button type="submit">搜索</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- 推荐内容 -->
-    {if condition="$recommended_articles"}
-    <div class="error-recommended">
-        <h3>推荐阅读</h3>
-        <div class="article-grid">
-            {carefree:foreach from="$recommended_articles" item="article"}
-            <div class="article-card-mini">
-                {if condition="!empty($article['cover_image'])"}
-                <a href="/article/{$article.id}" class="article-thumb">
-                    <img src="{$article.cover_image}" alt="{$article.title}">
-                </a>
-                {/if}
-                <h4><a href="/article/{$article.id}">{$article.title}</a></h4>
+        <div class="error-links">
+            <p class="error-links-title">或者访问以下页面</p>
+            <div class="error-links-list">
+                <a href="{$base_url}/articles.html"><i class="bi bi-journal-text"></i>全部文章</a>
+                <a href="{$base_url}/archive.html"><i class="bi bi-archive"></i>文章归档</a>
+                <a href="{$base_url}/about.html"><i class="bi bi-info-circle"></i>关于我们</a>
+                <a href="{$base_url}/search"><i class="bi bi-search"></i>搜索内容</a>
             </div>
-            {/carefree:foreach}
         </div>
     </div>
-    {/if}
 </div>
 {/block}

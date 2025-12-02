@@ -22,8 +22,9 @@ class ContentViolationController extends BaseController
         $pageSize = $request->param('page_size', 20);
         $contentType = $request->param('content_type', '');
         $action = $request->param('action', '');
-        $status = $request->param('status', '');
+        $reviewStatus = $request->param('review_status', '');
         $userId = $request->param('user_id', '');
+        $keyword = $request->param('keyword', '');
 
         $query = ContentViolation::order('created_at desc');
 
@@ -34,11 +35,17 @@ class ContentViolationController extends BaseController
         if ($action) {
             $query->where('action', $action);
         }
-        if ($status) {
-            $query->where('status', $status);
+        if ($reviewStatus) {
+            $query->where('status', $reviewStatus);
         }
         if ($userId) {
             $query->where('user_id', $userId);
+        }
+        if ($keyword) {
+            $query->where(function($q) use ($keyword) {
+                $q->whereLike('original_content', "%{$keyword}%")
+                  ->whereOr('matched_words', 'like', "%{$keyword}%");
+            });
         }
 
         $total = $query->count();
@@ -47,8 +54,17 @@ class ContentViolationController extends BaseController
             ->select()
             ->toArray();
 
+        // 映射字段名：status -> review_status
+        foreach ($list as &$item) {
+            $item['review_status'] = $item['status'] ?? 'pending';
+            // 确保 created_at 字段存在
+            if (!isset($item['created_at']) && isset($item['create_time'])) {
+                $item['created_at'] = $item['create_time'];
+            }
+        }
+
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => [
                 'total' => $total,
@@ -72,10 +88,17 @@ class ContentViolationController extends BaseController
             return json(['code' => 404, 'message' => '记录不存在']);
         }
 
+        $data = $violation->toArray();
+        // 映射字段名
+        $data['review_status'] = $data['status'] ?? 'pending';
+        if (!isset($data['created_at']) && isset($data['create_time'])) {
+            $data['created_at'] = $data['create_time'];
+        }
+
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
-            'data' => $violation
+            'data' => $data
         ]);
     }
 
@@ -96,7 +119,7 @@ class ContentViolationController extends BaseController
         }
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '已标记为已审核'
         ]);
     }
@@ -118,7 +141,7 @@ class ContentViolationController extends BaseController
         }
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '已标记为已忽略'
         ]);
     }
@@ -147,7 +170,7 @@ class ContentViolationController extends BaseController
         }
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '批量处理成功'
         ]);
     }
@@ -167,7 +190,7 @@ class ContentViolationController extends BaseController
         $violation->delete();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '删除成功'
         ]);
     }
@@ -179,7 +202,7 @@ class ContentViolationController extends BaseController
     public function statistics(): Response
     {
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => ContentViolation::getStatistics()
         ]);

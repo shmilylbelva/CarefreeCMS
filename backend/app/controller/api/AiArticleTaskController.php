@@ -247,11 +247,46 @@ class AiArticleTaskController extends BaseController
         try {
             $task->start();
 
-            // 异步执行生成任务
+            // 设置无限执行时间，避免超时
+            set_time_limit(0);
+
+            // 即使用户断开连接也继续执行
+            ignore_user_abort(true);
+
+            // 准备响应数据
+            $responseData = [
+                'code' => 200,
+                'message' => '任务已启动，正在后台生成文章',
+                'data' => [],
+                'timestamp' => time()
+            ];
+
+            // 先发送响应给前端，然后在后台继续执行
+            header('Content-Type: application/json; charset=utf-8');
+            header('Connection: close');
+
+            $content = json_encode($responseData, JSON_UNESCAPED_UNICODE);
+            header('Content-Length: ' . strlen($content));
+
+            echo $content;
+
+            // 刷新所有输出缓冲区
+            while (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            flush();
+
+            // 对于 PHP-FPM，结束请求但继续执行
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+
+            // 在响应发送后继续执行生成任务
             $generator = new AiArticleGeneratorService();
             $generator->processTask($task);
 
-            return Response::success([], '任务已启动，正在后台生成文章');
+            // 响应已发送，直接退出
+            exit;
         } catch (\Exception $e) {
             $task->markAsFailed($e->getMessage());
             return Response::error('任务启动失败：' . $e->getMessage());

@@ -143,6 +143,128 @@ class ArticleTagService
     }
 
     /**
+     * 获取文章列表（带分页）
+     *
+     * @param array $params 查询参数（同getList）
+     * @param int $page 当前页码
+     * @param int $pagesize 每页数量
+     * @return array ['list' => array, 'total' => int, 'page' => int, 'pagesize' => int]
+     */
+    public static function getListWithPagination($params = [], $page = 1, $pagesize = 10)
+    {
+        $typeid = $params['typeid'] ?? 0;
+        $tagid = $params['tagid'] ?? 0;
+        $userid = $params['userid'] ?? 0;
+        $order = $params['order'] ?? 'create_time desc';
+        $flag = $params['flag'] ?? '';
+        $titlelen = $params['titlelen'] ?? 0;
+        $hascover = $params['hascover'] ?? -1;
+        $exclude = $params['exclude'] ?? '';
+        $days = $params['days'] ?? 0;
+
+        // 构建查询
+        $query = Article::with(['category', 'tags', 'user'])
+            ->where('status', 1);  // 只查询已发布文章
+
+        // 按分类筛选
+        if ($typeid > 0) {
+            $query->where('category_id', $typeid);
+        }
+
+        // 按标签筛选
+        if ($tagid > 0) {
+            $query->whereExists(function($query) use ($tagid) {
+                $query->table('article_tags')
+                    ->whereRaw('article_tags.article_id = articles.id')
+                    ->where('article_tags.tag_id', $tagid);
+            });
+        }
+
+        // 按作者筛选
+        if ($userid > 0) {
+            $query->where('user_id', $userid);
+        }
+
+        // 是否有封面图筛选
+        if ($hascover === 1) {
+            $query->where('cover_image', '<>', '');
+            $query->whereNotNull('cover_image');
+        } elseif ($hascover === 0) {
+            $query->where(function($query) {
+                $query->where('cover_image', '')->whereOr('cover_image', null);
+            });
+        }
+
+        // 排除指定文章
+        if (!empty($exclude)) {
+            $excludeIds = explode(',', $exclude);
+            $excludeIds = array_filter($excludeIds);
+            if (!empty($excludeIds)) {
+                $query->whereNotIn('id', $excludeIds);
+            }
+        }
+
+        // 最近N天的文章
+        if ($days > 0) {
+            $startDate = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+            $query->where('create_time', '>=', $startDate);
+        }
+
+        // 按标识筛选
+        switch ($flag) {
+            case 'hot':
+                $query->order('view_count', 'desc');
+                break;
+            case 'recommend':
+                $query->where('is_recommend', 1);
+                break;
+            case 'top':
+                $query->where('is_top', 1);
+                break;
+            case 'random':
+                $query->orderRaw('RAND()');
+                break;
+            case 'updated':
+                $query->order('update_time', 'desc');
+                break;
+        }
+
+        // 排序（当没有特殊flag时才应用自定义排序）
+        if (!empty($order) && !in_array($flag, ['hot', 'random', 'updated'])) {
+            $orderArr = explode(' ', $order);
+            $orderField = $orderArr[0] ?? 'create_time';
+            $orderType = $orderArr[1] ?? 'desc';
+            $query->order($orderField, $orderType);
+        }
+
+        // 获取总数
+        $total = $query->count();
+
+        // 分页
+        $page = max(1, intval($page));
+        $pagesize = max(1, intval($pagesize));
+        $offset = ($page - 1) * $pagesize;
+
+        $articles = $query->limit($offset, $pagesize)->select()->toArray();
+
+        // 处理标题长度
+        if ($titlelen > 0) {
+            foreach ($articles as &$article) {
+                if (mb_strlen($article['title'], 'utf-8') > $titlelen) {
+                    $article['title'] = mb_substr($article['title'], 0, $titlelen, 'utf-8') . '...';
+                }
+            }
+        }
+
+        return [
+            'list' => $articles,
+            'total' => $total,
+            'page' => $page,
+            'pagesize' => $pagesize
+        ];
+    }
+
+    /**
      * 获取单篇文章
      *
      * @param int $id 文章ID

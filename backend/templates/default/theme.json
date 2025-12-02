@@ -1,95 +1,132 @@
 {
-  "name": "默认主题",
+  "name": "Carefree \u6781\u5149",
   "code": "default",
-  "version": "1.0.0",
-  "author": "逍遥CMS",
-  "description": "逍遥CMS默认模板包，提供完整的网站功能模板",
+  "version": "2.0.0",
+  "author": "\u900d\u9065CMS",
+  "description": "\u4e00\u6b3e\u878d\u5408\u73bb\u7483\u6001\u8bbe\u8ba1\u3001\u6e10\u53d8\u52a8\u753b\u3001\u5fae\u4ea4\u4e92\u7684\u73b0\u4ee3\u5316\u6781\u81f4\u89c6\u89c9\u4f53\u9a8c\u6a21\u677f",
   "screenshot": "/templates/default/screenshot.png",
   "templates": {
     "layout": {
-      "name": "布局框架",
+      "name": "\u5e03\u5c40\u6846\u67b6",
       "file": "layout.html",
-      "description": "网站整体布局，包含头部、导航、侧边栏、底部"
+      "description": "\u7f51\u7ad9\u6574\u4f53\u5e03\u5c40\uff0c\u5305\u542b\u5934\u90e8\u3001\u5bfc\u822a\u3001\u4fa7\u8fb9\u680f\u3001\u5e95\u90e8"
     },
     "index": {
-      "name": "首页",
+      "name": "\u9996\u9875",
       "file": "index.html",
-      "description": "网站首页，展示轮播图、推荐文章、最新文章等"
+      "description": "\u7f51\u7ad9\u9996\u9875\uff0c\u5c55\u793a\u8f6e\u64ad\u56fe\u3001\u63a8\u8350\u6587\u7ae0\u3001\u6700\u65b0\u6587\u7ae0\u7b49"
     },
     "category": {
-      "name": "分类页",
+      "name": "\u5206\u7c7b\u9875",
       "file": "category.html",
-      "description": "文章分类列表页，支持分页和排序"
+      "description": "\u6587\u7ae0\u5206\u7c7b\u5217\u8868\u9875\uff0c\u652f\u6301\u5206\u9875\u548c\u6392\u5e8f"
     },
     "article": {
-      "name": "文章详情",
+      "name": "\u6587\u7ae0\u8be6\u60c5",
       "file": "article.html",
-      "description": "文章详情页，展示文章内容、评论、相关推荐等"
+      "description": "\u6587\u7ae0\u8be6\u60c5\u9875\uff0c\u5c55\u793a\u6587\u7ae0\u5185\u5bb9\u3001\u8bc4\u8bba\u3001\u76f8\u5173\u63a8\u8350\u7b49"
     },
     "articles": {
-      "name": "文章列表",
+      "name": "\u6587\u7ae0\u5217\u8868",
       "file": "articles.html",
-      "description": "全部文章列表页"
+      "description": "\u5168\u90e8\u6587\u7ae0\u5217\u8868\u9875"
     },
     "tag": {
-      "name": "标签页",
+      "name": "\u6807\u7b7e\u9875",
       "file": "tag.html",
-      "description": "标签文章列表页"
+      "description": "\u6807\u7b7e\u6587\u7ae0\u5217\u8868\u9875"
     },
     "page": {
-      "name": "单页",
+      "name": "\u5355\u9875",
       "file": "page.html",
-      "description": "单页内容展示，如关于我们、联系我们等"
+      "description": "\u5355\u9875\u5185\u5bb9\u5c55\u793a\uff0c\u5982\u5173\u4e8e\u6211\u4eec\u3001\u8054\u7cfb\u6211\u4eec\u7b49"
     },
     "search": {
-      "name": "搜索页",
+      "name": "\u641c\u7d22\u9875",
       "file": "search.html",
-      "description": "搜索结果页"
+      "description": "\u641c\u7d22\u7ed3\u679c\u9875"
     },
     "topic": {
-      "name": "专题页",
+      "name": "\u4e13\u9898\u9875",
       "file": "topic.html",
-      "description": "专题文章列表页"
+      "description": "\u4e13\u9898\u6587\u7ae0\u5217\u8868\u9875"
     },
     "archive": {
-      "name": "归档页",
+      "name": "\u5f52\u6863\u9875",
       "file": "archive.html",
-      "description": "文章归档页，按年月展示"
+      "description": "\u6587\u7ae0\u5f52\u6863\u9875\uff0c\u6309\u5e74\u6708\u5c55\u793a"
     },
     "404": {
-      "name": "404页面",
+      "name": "404\u9875\u9762",
       "file": "404.html",
-      "description": "页面未找到提示页"
+      "description": "\u9875\u9762\u672a\u627e\u5230\u63d0\u793a\u9875"
     },
     "sidebar": {
-      "name": "侧边栏",
+      "name": "\u4fa7\u8fb9\u680f",
       "file": "sidebar.html",
-      "description": "侧边栏内容，包含搜索、热门文章、分类、标签等"
+      "description": "\u4fa7\u8fb9\u680f\u5185\u5bb9\uff0c\u5305\u542b\u641c\u7d22\u3001\u70ed\u95e8\u6587\u7ae0\u3001\u5206\u7c7b\u3001\u6807\u7b7e\u7b49"
     }
   },
   "config": {
     "colors": {
-      "primary": "#409EFF",
-      "success": "#67C23A",
-      "warning": "#E6A23C",
-      "danger": "#F56C6C",
-      "text": "#303133",
-      "link": "#409EFF"
+      "primary": "#6366f1",
+      "primary_light": "#818cf8",
+      "primary_dark": "#4f46e5",
+      "secondary": "#ec4899",
+      "accent": "#f59e0b",
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "danger": "#ef4444",
+      "text": "#1e293b",
+      "text_secondary": "#64748b",
+      "text_muted": "#94a3b8",
+      "background": "#f8fafc",
+      "surface": "#ffffff",
+      "border": "#e2e8f0",
+      "gradient_start": "#667eea",
+      "gradient_end": "#764ba2"
+    },
+    "dark_colors": {
+      "text": "#f1f5f9",
+      "text_secondary": "#cbd5e1",
+      "text_muted": "#94a3b8",
+      "background": "#0f172a",
+      "surface": "#1e293b",
+      "border": "#334155"
     },
     "layout": {
-      "header_height": "60px",
-      "footer_height": "120px",
-      "sidebar_width": "300px",
-      "content_width": "1200px",
-      "fixed_header": true
+      "header_height": "72px",
+      "footer_height": "auto",
+      "sidebar_width": "320px",
+      "content_width": "1280px",
+      "fixed_header": true,
+      "glass_effect": true
     },
     "typography": {
-      "font_family": "Microsoft YaHei, Arial, sans-serif",
-      "font_size": "14px",
-      "title_font_size": "24px",
-      "h1_size": "32px",
-      "h2_size": "28px",
-      "h3_size": "24px"
+      "font_family": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "font_family_cn": "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+      "font_size_base": "16px",
+      "font_size_sm": "14px",
+      "font_size_lg": "18px",
+      "line_height": "1.75",
+      "h1_size": "3rem",
+      "h2_size": "2.25rem",
+      "h3_size": "1.875rem",
+      "h4_size": "1.5rem"
+    },
+    "animations": {
+      "duration_fast": "0.15s",
+      "duration_normal": "0.3s",
+      "duration_slow": "0.5s",
+      "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "easing_bounce": "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
+    },
+    "shadows": {
+      "sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+      "md": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+      "lg": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+      "xl": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+      "glow": "0 0 40px -10px rgb(99 102 241 / 0.5)"
     },
     "features": {
       "show_breadcrumb": true,
@@ -97,14 +134,19 @@
       "show_tags": true,
       "enable_search": true,
       "enable_comment": true,
-      "enable_share": true
+      "enable_share": true,
+      "enable_dark_mode": true,
+      "enable_reading_progress": true,
+      "enable_toc": true,
+      "enable_animations": true
     },
     "list": {
-      "articles_per_page": 20,
+      "articles_per_page": 12,
       "show_thumbnail": true,
       "show_excerpt": true,
-      "excerpt_length": 200,
-      "date_format": "Y-m-d H:i:s"
+      "excerpt_length": 160,
+      "date_format": "Y-m-d",
+      "grid_columns": 3
     },
     "article": {
       "show_author": true,
@@ -113,13 +155,15 @@
       "show_category": true,
       "show_tags": true,
       "show_related": true,
-      "related_count": 5
+      "related_count": 6,
+      "show_toc": true,
+      "show_reading_time": true
     }
   },
   "widgets": {
-    "sidebar": ["search", "hot_articles", "latest_articles", "categories", "tags", "links"]
+    "sidebar": ["search", "author", "hot_articles", "categories", "tags", "newsletter"]
   },
   "menus": {
-    "main": ["首页", "分类", "归档", "关于"]
+    "main": ["\u9996\u9875", "\u6587\u7ae0", "\u5206\u7c7b", "\u5f52\u6863", "\u5173\u4e8e"]
   }
 }

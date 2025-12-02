@@ -118,13 +118,16 @@ class ContentViolation extends Model
     {
         $total = self::count();
         $pending = self::where('status', self::STATUS_PENDING)->count();
+        $reviewed = self::where('status', self::STATUS_REVIEWED)->count();
+        $ignored = self::where('status', self::STATUS_IGNORED)->count();
         $byAction = self::group('action')->column('COUNT(*) as count', 'action');
         $byType = self::group('content_type')->column('COUNT(*) as count', 'content_type');
 
         return [
-            'total' => $total,
-            'pending' => $pending,
-            'reviewed' => self::where('status', self::STATUS_REVIEWED)->count(),
+            'total_count' => $total,
+            'pending_count' => $pending,
+            'reviewed_count' => $reviewed,
+            'ignored_count' => $ignored,
             'by_action' => $byAction,
             'by_type' => $byType
         ];

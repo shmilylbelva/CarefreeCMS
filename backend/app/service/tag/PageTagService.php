@@ -57,7 +57,7 @@ class PageTagService
 
         // 上一页
         if ($currentPage > 1) {
-            $prevUrl = str_replace('{page}', $currentPage - 1, $url);
+            $prevUrl = self::buildPageUrl($url, $currentPage - 1);
             $html .= '<a href="' . $prevUrl . '" class="prev">上一页</a>';
         } else {
             $html .= '<span class="prev disabled">上一页</span>';
@@ -68,7 +68,7 @@ class PageTagService
 
         // 下一页
         if ($currentPage < $totalPages) {
-            $nextUrl = str_replace('{page}', $currentPage + 1, $url);
+            $nextUrl = self::buildPageUrl($url, $currentPage + 1);
             $html .= '<a href="' . $nextUrl . '" class="next">下一页</a>';
         } else {
             $html .= '<span class="next disabled">下一页</span>';
@@ -93,13 +93,13 @@ class PageTagService
 
         // 首页
         if ($currentPage > 1) {
-            $firstUrl = str_replace('{page}', 1, $url);
+            $firstUrl = self::buildPageUrl($url, 1);
             $html .= '<a href="' . $firstUrl . '" class="first">首页</a>';
         }
 
         // 上一页
         if ($currentPage > 1) {
-            $prevUrl = str_replace('{page}', $currentPage - 1, $url);
+            $prevUrl = self::buildPageUrl($url, $currentPage - 1);
             $html .= '<a href="' . $prevUrl . '" class="prev">«</a>';
         } else {
             $html .= '<span class="prev disabled">«</span>';
@@ -113,14 +113,14 @@ class PageTagService
             } elseif ($page == $currentPage) {
                 $html .= '<span class="current">' . $page . '</span>';
             } else {
-                $pageUrl = str_replace('{page}', $page, $url);
+                $pageUrl = self::buildPageUrl($url, $page);
                 $html .= '<a href="' . $pageUrl . '">' . $page . '</a>';
             }
         }
 
         // 下一页
         if ($currentPage < $totalPages) {
-            $nextUrl = str_replace('{page}', $currentPage + 1, $url);
+            $nextUrl = self::buildPageUrl($url, $currentPage + 1);
             $html .= '<a href="' . $nextUrl . '" class="next">»</a>';
         } else {
             $html .= '<span class="next disabled">»</span>';
@@ -128,13 +128,26 @@ class PageTagService
 
         // 末页
         if ($currentPage < $totalPages) {
-            $lastUrl = str_replace('{page}', $totalPages, $url);
+            $lastUrl = self::buildPageUrl($url, $totalPages);
             $html .= '<a href="' . $lastUrl . '" class="last">末页</a>';
         }
 
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * 构建分页URL
+     * 支持多种占位符：{page}、[PAGE]、:page
+     */
+    private static function buildPageUrl($url, $page)
+    {
+        // 支持多种占位符格式
+        $url = str_replace('[PAGE]', $page, $url);
+        $url = str_replace('{page}', $page, $url);
+        $url = str_replace(':page', $page, $url);
+        return $url;
     }
 
     /**

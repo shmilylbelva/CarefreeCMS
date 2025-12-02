@@ -299,7 +299,9 @@ class Article extends BaseController
         );
 
         if (!$titleResult['allowed']) {
-            return Response::error($titleResult['message']);
+            $words = $titleResult['matched_words'] ?? [];
+            $message = $titleResult['message'] . (count($words) > 0 ? '，违规词：' . implode('、', $words) : '');
+            return Response::error($message);
         }
         $data['title'] = $titleResult['content'];
 
@@ -313,7 +315,9 @@ class Article extends BaseController
         );
 
         if (!$contentResult['allowed']) {
-            return Response::error($contentResult['message']);
+            $words = $contentResult['matched_words'] ?? [];
+            $message = $contentResult['message'] . (count($words) > 0 ? '，违规词：' . implode('、', $words) : '');
+            return Response::error($message);
         }
         $data['content'] = $contentResult['content'];
 
@@ -328,7 +332,9 @@ class Article extends BaseController
             );
 
             if (!$descResult['allowed']) {
-                return Response::error($descResult['message']);
+                $words = $descResult['matched_words'] ?? [];
+                $message = $descResult['message'] . (count($words) > 0 ? '，违规词：' . implode('、', $words) : '');
+                return Response::error($message);
             }
             $data['description'] = $descResult['content'];
         }
@@ -684,7 +690,9 @@ class Article extends BaseController
             );
 
             if (!$titleResult['allowed']) {
-                return Response::error($titleResult['message']);
+                $words = $titleResult['matched_words'] ?? [];
+                $message = $titleResult['message'] . (count($words) > 0 ? '，违规词：' . implode('、', $words) : '');
+                return Response::error($message);
             }
             $data['title'] = $titleResult['content'];
         }
@@ -700,7 +708,9 @@ class Article extends BaseController
             );
 
             if (!$contentResult['allowed']) {
-                return Response::error($contentResult['message']);
+                $words = $contentResult['matched_words'] ?? [];
+                $message = $contentResult['message'] . (count($words) > 0 ? '，违规词：' . implode('、', $words) : '');
+                return Response::error($message);
             }
             $data['content'] = $contentResult['content'];
         }
@@ -716,7 +726,9 @@ class Article extends BaseController
             );
 
             if (!$descResult['allowed']) {
-                return Response::error($descResult['message']);
+                $words = $descResult['matched_words'] ?? [];
+                $message = $descResult['message'] . (count($words) > 0 ? '，违规词：' . implode('、', $words) : '');
+                return Response::error($message);
             }
             $data['description'] = $descResult['content'];
         }

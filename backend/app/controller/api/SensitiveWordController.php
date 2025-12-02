@@ -46,7 +46,7 @@ class SensitiveWordController extends BaseController
         $list = $query->page($page, $pageSize)->select()->toArray();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => [
                 'total' => $total,
@@ -71,7 +71,7 @@ class SensitiveWordController extends BaseController
         }
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => $word
         ]);
@@ -108,7 +108,7 @@ class SensitiveWordController extends BaseController
         SensitiveWordService::clearCache();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '创建成功',
             'data' => $word
         ]);
@@ -145,7 +145,7 @@ class SensitiveWordController extends BaseController
         SensitiveWordService::clearCache();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '更新成功',
             'data' => $word
         ]);
@@ -169,7 +169,7 @@ class SensitiveWordController extends BaseController
         SensitiveWordService::clearCache();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '删除成功'
         ]);
     }
@@ -193,7 +193,7 @@ class SensitiveWordController extends BaseController
         SensitiveWordService::clearCache();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => "已删除 " . count($ids) . " 个敏感词"
         ]);
     }
@@ -227,7 +227,7 @@ class SensitiveWordController extends BaseController
         SensitiveWordService::clearCache();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => "成功导入 {$count} 个敏感词"
         ]);
     }
@@ -252,7 +252,7 @@ class SensitiveWordController extends BaseController
         SensitiveWordService::clearCache();
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => '更新成功'
         ]);
     }
@@ -264,7 +264,7 @@ class SensitiveWordController extends BaseController
     public function categories(): Response
     {
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => SensitiveWord::getCategoryOptions()
         ]);
@@ -277,7 +277,7 @@ class SensitiveWordController extends BaseController
     public function levels(): Response
     {
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => SensitiveWord::getLevelOptions()
         ]);
@@ -290,7 +290,7 @@ class SensitiveWordController extends BaseController
     public function statistics(): Response
     {
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => SensitiveWord::getStatistics()
         ]);
@@ -314,7 +314,7 @@ class SensitiveWordController extends BaseController
         $filterResult = $service->filter($content);
 
         return json([
-            'code' => 0,
+            'code' => 200,
             'message' => 'success',
             'data' => [
                 'has_sensitive' => $checkResult['has_sensitive'],

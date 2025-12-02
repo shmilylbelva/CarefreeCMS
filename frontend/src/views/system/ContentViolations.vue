@@ -308,12 +308,8 @@ const loadData = async () => {
     })
 
     const response = await getContentViolations(params)
-    if (response.code === 0) {
-      tableData.value = response.data.list || []
-      pagination.total = response.data.total || 0
-    } else {
-      ElMessage.error(response.message || '加载失败')
-    }
+    tableData.value = response.data?.list || []
+    pagination.total = response.data?.total || 0
   } catch (error) {
     console.error('加载违规记录失败:', error)
     ElMessage.error('加载失败')
@@ -326,10 +322,7 @@ const loadData = async () => {
 const loadStatistics = async () => {
   try {
     const response = await getContentViolationStatistics()
-    if (response.code === 0) {
-      statistics.value = response.data
-      ElMessage.success('统计信息已更新')
-    }
+    statistics.value = response.data
   } catch (error) {
     console.error('加载统计信息失败:', error)
   }
@@ -373,15 +366,11 @@ const handleSizeChange = (size) => {
 // 标记为已审核
 const markAsReviewed = async (id) => {
   try {
-    const response = await markViolationAsReviewed(id)
-    if (response.code === 0) {
-      ElMessage.success('已标记为已审核')
-      detailDialogVisible.value = false
-      loadData()
-      loadStatistics()
-    } else {
-      ElMessage.error(response.message || '操作失败')
-    }
+    await markViolationAsReviewed(id)
+    ElMessage.success('已标记为已审核')
+    detailDialogVisible.value = false
+    loadData()
+    loadStatistics()
   } catch (error) {
     console.error('标记已审核失败:', error)
     ElMessage.error('操作失败')
@@ -391,15 +380,11 @@ const markAsReviewed = async (id) => {
 // 标记为已忽略
 const markAsIgnored = async (id) => {
   try {
-    const response = await markViolationAsIgnored(id)
-    if (response.code === 0) {
-      ElMessage.success('已标记为已忽略')
-      detailDialogVisible.value = false
-      loadData()
-      loadStatistics()
-    } else {
-      ElMessage.error(response.message || '操作失败')
-    }
+    await markViolationAsIgnored(id)
+    ElMessage.success('已标记为已忽略')
+    detailDialogVisible.value = false
+    loadData()
+    loadStatistics()
   } catch (error) {
     console.error('标记已忽略失败:', error)
     ElMessage.error('操作失败')
@@ -420,14 +405,10 @@ const handleBatchReview = async (status) => {
   )
     .then(async () => {
       try {
-        const response = await batchReviewViolations(selectedIds.value, status)
-        if (response.code === 0) {
-          ElMessage.success(`已批量标记为${statusText}`)
-          loadData()
-          loadStatistics()
-        } else {
-          ElMessage.error(response.message || '操作失败')
-        }
+        await batchReviewViolations(selectedIds.value, status)
+        ElMessage.success(`已批量标记为${statusText}`)
+        loadData()
+        loadStatistics()
       } catch (error) {
         console.error('批量审核失败:', error)
         ElMessage.error('操作失败')
@@ -447,14 +428,10 @@ const handleDelete = async (id) => {
   })
     .then(async () => {
       try {
-        const response = await deleteContentViolation(id)
-        if (response.code === 0) {
-          ElMessage.success('删除成功')
-          loadData()
-          loadStatistics()
-        } else {
-          ElMessage.error(response.message || '删除失败')
-        }
+        await deleteContentViolation(id)
+        ElMessage.success('删除成功')
+        loadData()
+        loadStatistics()
       } catch (error) {
         console.error('删除失败:', error)
         ElMessage.error('删除失败')
@@ -498,12 +475,8 @@ const handleBatchDelete = () => {
 const viewDetail = async (row) => {
   try {
     const response = await getContentViolation(row.id)
-    if (response.code === 0) {
-      currentRecord.value = response.data
-      detailDialogVisible.value = true
-    } else {
-      ElMessage.error(response.message || '获取详情失败')
-    }
+    currentRecord.value = response.data
+    detailDialogVisible.value = true
   } catch (error) {
     console.error('获取详情失败:', error)
     ElMessage.error('获取详情失败')
@@ -519,11 +492,20 @@ const viewUser = (userId) => {
 // 解析匹配的敏感词
 const parseMatchedWords = (matchedWords) => {
   if (!matchedWords) return []
-  try {
-    return JSON.parse(matchedWords)
-  } catch {
-    return matchedWords.split(',')
+  // 如果已经是数组，直接返回
+  if (Array.isArray(matchedWords)) {
+    return matchedWords
   }
+  // 如果是字符串，尝试解析
+  if (typeof matchedWords === 'string') {
+    try {
+      const parsed = JSON.parse(matchedWords)
+      return Array.isArray(parsed) ? parsed : [matchedWords]
+    } catch {
+      return matchedWords.split(',').map(w => w.trim()).filter(w => w)
+    }
+  }
+  return []
 }
 
 // 获取内容类型标签

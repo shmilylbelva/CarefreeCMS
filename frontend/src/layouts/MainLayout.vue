@@ -108,6 +108,8 @@
           <el-menu-item index="/database">数据库管理</el-menu-item>
           <el-menu-item index="/cache">缓存管理</el-menu-item>
           <el-menu-item index="/system-logs">运行日志</el-menu-item>
+          <el-menu-item index="/sensitive-words">敏感词管理</el-menu-item>
+          <el-menu-item index="/content-violations">违规记录</el-menu-item>
           <el-menu-item index="/recycle-bin">回收站</el-menu-item>
         </el-sub-menu>
       </el-menu>

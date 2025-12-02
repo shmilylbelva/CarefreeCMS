@@ -1,103 +1,197 @@
 {extend name="default/layout" /}
 
-{block name="title"}搜索：{$keyword} - {$site.site_name|default='国产CMS'}{/block}
+{block name="title"}{if condition="$keyword"}搜索：{$keyword}{else /}搜索{/if} - {carefree:config name='site_name' default='Carefree CMS' /}{/block}
+
+{block name="css"}
+<link rel="stylesheet" href="{$base_url}/assets/css/list.css">
+{/block}
 
 {block name="content"}
-<div class="search-page">
-    <div class="search-header">
-        <h1>搜索结果</h1>
-        <div class="search-form">
-            <form action="/search" method="get">
-                <input type="text" name="q" value="{$keyword}" placeholder="输入关键词搜索..." autofocus>
-                <button type="submit">搜索</button>
-            </form>
-        </div>
-        {if condition="$keyword"}
-        <p class="search-info">
-            关键词 "<strong>{$keyword}</strong>" 共找到 <strong>{$total}</strong> 条结果
-        </p>
-        {/if}
-    </div>
+<div class="list-page">
+    <!-- Search Hero Header -->
+    <header class="list-hero">
+        <div class="container">
+            <div class="list-hero-inner">
+                <!-- Breadcrumb -->
+                <nav class="list-breadcrumb">
+                    {carefree:breadcrumb separator=' <span class="separator">/</span> ' id='crumb'}
+                    <a href="{$crumb.url}">{$crumb.title}</a>
+                    {/carefree:breadcrumb}
+                </nav>
 
-    {if condition="$articles"}
-    <div class="search-results">
-        {carefree:foreach from="$articles" item="article"}
-        <article class="search-item">
-            <h3 class="article-title">
-                <a href="/article/{$article.id}">{$article.title|highlight(keyword)|raw}</a>
-            </h3>
+                <!-- Title -->
+                <h1 class="list-title">
+                    <i class="bi bi-search icon"></i>
+                    搜索结果
+                </h1>
 
-            {if condition="!empty($article['summary'])"}
-            <p class="article-excerpt">{$article.summary}</p>
-            {/if}
+                <!-- Search Form -->
+                {carefree:search action='/search' placeholder='输入关键词搜索...' button='搜索' class='search-form-large' /}
 
-            <div class="article-meta">
-                {if condition="isset($article['category_id'])"}
-                <span class="category">
-                    <i class="icon-folder"></i>
-                    <a href="/category/{$article.category_id}">{$article.category_name|default='未分类'}</a>
-                </span>
+                <!-- Search Info -->
+                {if condition="$keyword"}
+                <p class="list-description" style="margin-top: var(--spacing-lg);">
+                    关键词 "<strong>{$keyword}</strong>" 共找到 <strong>{$total|default=0}</strong> 条结果
+                </p>
                 {/if}
-                <span class="date">
-                    <i class="icon-calendar"></i>
-                    {$article.publish_time|date='Y-m-d'}
-                </span>
-                <span class="views">
-                    <i class="icon-eye"></i>
-                    {$article.views} 阅读
-                </span>
             </div>
-        </article>
-        {/carefree:foreach}
-    </div>
+        </div>
+    </header>
 
-    <!-- 分页 -->
-    {if condition="$pages > 1"}
-    <div class="pagination">
-        {if condition="$page > 1"}
-        <a href="?q={$keyword}&page={$page - 1}" class="page-link prev">上一页</a>
-        {/if}
+    <!-- Main Content -->
+    <div class="list-content">
+        <div class="container">
+            <div class="list-layout">
+                <!-- Search Results -->
+                <main class="list-main">
+                    {if condition="isset($articles) && !empty($articles)"}
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="filter-left">
+                            <span class="total-count">
+                                <i class="bi bi-file-earmark-text"></i>
+                                找到 <strong>{$total|default=0}</strong> 条结果
+                            </span>
+                        </div>
+                    </div>
 
-        {for start="1" end="$pages" name="p"}
-        {if condition="$p == $page"}
-        <span class="page-link active">{$p}</span>
-        {else /}
-        <a href="?q={$keyword}&page={$p}" class="page-link">{$p}</a>
-        {/if}
-        {/for}
+                    <!-- Articles Grid -->
+                    <div class="articles-grid list-view" id="articlesGrid">
+                        {carefree:foreach from="$articles" item="article" key="idx"}
+                        <article class="article-card" data-reveal style="animation-delay: {$idx * 0.05}s">
+                            {if condition="!empty($article.cover_image)"}
+                            <div class="article-card-image">
+                                <a href="{$base_url}/article/{$article.id}.html">
+                                    <img src="{$article.cover_image}" alt="{$article.title}" loading="lazy">
+                                </a>
+                            </div>
+                            {/if}
+                            <div class="article-card-body">
+                                {if condition="!empty($article.category_id)"}
+                                <div class="article-card-category">
+                                    <i class="bi bi-folder"></i>
+                                    <a href="{$base_url}/category/{$article.category_id}.html">{$article.category_name|default='未分类'}</a>
+                                </div>
+                                {/if}
+                                <h3 class="article-card-title">
+                                    <a href="{$base_url}/article/{$article.id}.html">{$article.title}</a>
+                                </h3>
+                                {if condition="!empty($article.summary)"}
+                                <p class="article-card-excerpt">{$article.summary}</p>
+                                {/if}
+                                <div class="article-card-meta">
+                                    <span>
+                                        <i class="bi bi-person"></i>
+                                        {$article.author|default='管理员'}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-calendar3"></i>
+                                        {$article.publish_time|date='Y-m-d'}
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-eye"></i>
+                                        {$article.view_count|default=0}
+                                    </span>
+                                </div>
+                            </div>
+                        </article>
+                        {/carefree:foreach}
+                    </div>
 
-        {if condition="$page < $pages"}
-        <a href="?q={$keyword}&page={$page + 1}" class="page-link next">下一页</a>
-        {/if}
-    </div>
-    {/if}
+                    <!-- 分页 -->
+                    {carefree:pagelist total='$total' pagesize='12' currentpage='$page' url='?keyword={$keyword}&page=[PAGE]' style='full' /}
 
-    {else /}
-    <div class="empty-state">
-        {if condition="$keyword"}
-        <p>未找到与 "{$keyword}" 相关的内容</p>
-        <p class="tips">建议：</p>
-        <ul class="tips-list">
-            <li>检查输入的关键词是否正确</li>
-            <li>尝试使用更简短或更通用的关键词</li>
-            <li>尝试使用不同的关键词</li>
-        </ul>
-        {else /}
-        <p>请输入关键词进行搜索</p>
-        {/if}
-    </div>
-    {/if}
+                    {else /}
+                    <!-- Empty State -->
+                    <div class="empty-state">
+                        {if condition="$keyword"}
+                        <i class="bi bi-search empty-state-icon"></i>
+                        <h3 class="empty-state-title">未找到相关结果</h3>
+                        <p class="empty-state-text">未找到与 "{$keyword}" 相关的内容</p>
+                        <div class="search-tips" style="text-align: left; max-width: 400px; margin: var(--spacing-xl) auto;">
+                            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-sm);">搜索建议：</p>
+                            <ul style="color: var(--color-text-muted); font-size: 0.9375rem; line-height: 1.8;">
+                                <li>检查输入的关键词是否正确</li>
+                                <li>尝试使用更简短或更通用的关键词</li>
+                                <li>尝试使用不同的关键词组合</li>
+                            </ul>
+                        </div>
+                        {else /}
+                        <i class="bi bi-search empty-state-icon"></i>
+                        <h3 class="empty-state-title">开始搜索</h3>
+                        <p class="empty-state-text">输入关键词探索更多精彩内容</p>
+                        {/if}
+                    </div>
+                    {/if}
+                </main>
 
-    <!-- 热门搜索 -->
-    {if condition="$hot_keywords"}
-    <div class="hot-keywords">
-        <h3>热门搜索</h3>
-        <div class="keyword-tags">
-            {carefree:foreach from="$hot_keywords" item="kw"}
-            <a href="/search?q={$kw}" class="keyword-tag">{$kw}</a>
-            {/carefree:foreach}
+                <!-- Sidebar -->
+                <aside class="list-sidebar">
+                    <!-- Hot Keywords Widget -->
+                    <div class="sidebar-widget">
+                        <div class="widget-header">
+                            <i class="bi bi-fire"></i>
+                            <h4 class="widget-title">热门搜索</h4>
+                        </div>
+                        <div class="tags-cloud">
+                            {carefree:tag limit='15' order='article_count desc' id='kw' empty='<span class="text-muted">暂无热门搜索</span>'}
+                            <a href="{$base_url}/search?keyword={$kw.name}" class="tag-link">{$kw.name}</a>
+                            {/carefree:tag}
+                        </div>
+                    </div>
+
+                    <!-- Categories Widget -->
+                    <div class="sidebar-widget">
+                        <div class="widget-header">
+                            <i class="bi bi-grid"></i>
+                            <h4 class="widget-title">文章分类</h4>
+                        </div>
+                        <ul class="category-list">
+                            {carefree:category parent='0' limit='10' id='cat' empty='<li class="text-muted">暂无分类</li>'}
+                            <li>
+                                <a href="{$base_url}/category/{$cat.id}.html">
+                                    <span>{$cat.name}</span>
+                                    <span class="count">{$cat.article_count|default=0}</span>
+                                </a>
+                            </li>
+                            {/carefree:category}
+                        </ul>
+                    </div>
+
+                    <!-- Tags Widget -->
+                    <div class="sidebar-widget">
+                        <div class="widget-header">
+                            <i class="bi bi-tags"></i>
+                            <h4 class="widget-title">热门标签</h4>
+                        </div>
+                        <div class="tags-cloud">
+                            {carefree:tag limit='20' order='article_count desc' id='tag' empty='<span class="text-muted">暂无标签</span>'}
+                            <a href="{$base_url}/tag/{$tag.id}.html" class="tag-link">{$tag.name}</a>
+                            {/carefree:tag}
+                        </div>
+                    </div>
+                </aside>
+            </div>
         </div>
     </div>
-    {/if}
 </div>
+{/block}
+
+{block name="js"}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Reveal animation
+    const revealElements = document.querySelectorAll('[data-reveal]');
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+});
+</script>
 {/block}

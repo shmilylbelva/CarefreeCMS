@@ -16,7 +16,7 @@ class Carefree extends TagLib
      */
     protected $tags = [
         // 文章列表标签
-        'article' => ['attr' => 'typeid,tagid,userid,limit,offset,order,flag,titlelen,hascover,exclude,days,id,empty', 'close' => 1],
+        'article' => ['attr' => 'typeid,tagid,userid,limit,offset,order,flag,titlelen,hascover,exclude,days,id,empty,page,key,mod', 'close' => 1],
 
         // 分类列表标签
         'category' => ['attr' => 'parent,limit,id,empty', 'close' => 1],
@@ -24,8 +24,8 @@ class Carefree extends TagLib
         // 标签列表标签
         'tag' => ['attr' => 'limit,order,id,empty', 'close' => 1],
 
-        // 网站配置标签
-        'config' => ['attr' => 'name,id', 'close' => 1],
+        // 网站配置标签（自闭合，直接输出值）
+        'config' => ['attr' => 'name,default', 'close' => 0],
 
         // 导航菜单标签
         'nav' => ['attr' => 'limit,id', 'close' => 1],
@@ -226,6 +226,7 @@ class Carefree extends TagLib
         $titlelen = $tag['titlelen'] ?? 0;
         $id = $tag['id'] ?? 'article';  // 循环变量名
         $empty = $tag['empty'] ?? '';  // 空数据提示
+        $page = $tag['page'] ?? '';  // 是否分页
 
         // 生成唯一变量名避免冲突
         $key = !empty($tag['key']) ? $tag['key'] : 'key';
@@ -238,19 +239,48 @@ class Carefree extends TagLib
 
         // 构建PHP代码
         $parseStr = '<?php ';
-        $parseStr .= '$__articles__ = \app\service\tag\ArticleTagService::getList([';
-        $parseStr .= "'typeid' => {$typeidVar}, ";
-        $parseStr .= "'tagid' => {$tagidVar}, ";
-        $parseStr .= "'limit' => {$limit}, ";
-        $parseStr .= "'order' => '{$order}', ";
-        $parseStr .= "'flag' => '{$flag}', ";
-        $parseStr .= "'titlelen' => {$titlelen}";
-        $parseStr .= ']); ';
+
+        // 判断是否启用分页
+        if ($page === 'true' || $page === '1') {
+            // 启用分页模式
+            $parseStr .= '$__page__ = isset($_GET["page"]) ? max(1, intval($_GET["page"])) : 1; ';
+            $parseStr .= '$__result__ = \app\service\tag\ArticleTagService::getListWithPagination([';
+            $parseStr .= "'typeid' => {$typeidVar}, ";
+            $parseStr .= "'tagid' => {$tagidVar}, ";
+            $parseStr .= "'order' => '{$order}', ";
+            $parseStr .= "'flag' => '{$flag}', ";
+            $parseStr .= "'titlelen' => {$titlelen}";
+            $parseStr .= '], $__page__, ' . $limit . '); ';
+            $parseStr .= '$__articles__ = $__result__["list"] ?? []; ';
+            $parseStr .= '$__TOTAL__ = $__result__["total"] ?? 0; ';
+            $parseStr .= '$__PAGE__ = $__result__["page"] ?? 1; ';
+        } else {
+            // 普通模式（不分页）
+            $parseStr .= '$__articles__ = \app\service\tag\ArticleTagService::getList([';
+            $parseStr .= "'typeid' => {$typeidVar}, ";
+            $parseStr .= "'tagid' => {$tagidVar}, ";
+            $parseStr .= "'limit' => {$limit}, ";
+            $parseStr .= "'order' => '{$order}', ";
+            $parseStr .= "'flag' => '{$flag}', ";
+            $parseStr .= "'titlelen' => {$titlelen}";
+            $parseStr .= ']); ';
+        }
+
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__articles__ = $__articles__ ?? []; ';
+        $parseStr .= '$__count__ = count($__articles__); ';
 
         $parseStr .= 'if(!empty($__articles__)): ';
         $parseStr .= 'foreach($__articles__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
         $parseStr .= '$' . $mod . ' = ($' . $key . ' % 2); ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -294,9 +324,20 @@ class Carefree extends TagLib
         $parseStr .= "'limit' => {$limit}";
         $parseStr .= ']); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__categories__ = $__categories__ ?? []; ';
+        $parseStr .= '$__count__ = count($__categories__); ';
+
         $parseStr .= 'if(!empty($__categories__)): ';
         $parseStr .= 'foreach($__categories__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -336,9 +377,20 @@ class Carefree extends TagLib
         $parseStr .= "'order' => '{$order}'";
         $parseStr .= ']); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__tags__ = $__tags__ ?? []; ';
+        $parseStr .= '$__count__ = count($__tags__); ';
+
         $parseStr .= 'if(!empty($__tags__)): ';
         $parseStr .= 'foreach($__tags__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -357,27 +409,19 @@ class Carefree extends TagLib
     }
 
     /**
-     * 网站配置标签
-     * {carefree:config name='site_name' /}  - 直接输出
-     * {carefree:config name='site_logo' id='logo'}...{/carefree:config}  - 赋值给变量
+     * 网站配置标签（自闭合，直接输出值）
+     * {carefree:config name='site_name' /}
+     * {carefree:config name='site_name' default='默认值' /}
      */
-    public function tagConfig($tag, $content)
+    public function tagConfig($tag)
     {
         $name = $tag['name'] ?? '';
-        $id = $tag['id'] ?? '';
+        $default = $tag['default'] ?? '';
 
-        // 如果有id参数，将值赋给变量，并执行内部内容
-        if (!empty($id)) {
-            $parseStr = '<?php ';
-            $parseStr .= '$' . $id . ' = \app\service\tag\ConfigTagService::get("' . $name . '"); ';
-            $parseStr .= '?>';
-            $parseStr .= $content;
-            return $parseStr;
-        }
-
-        // 否则直接输出配置值
+        // 直接输出配置值（支持默认值）
         $parseStr = '<?php ';
-        $parseStr .= 'echo \app\service\tag\ConfigTagService::get("' . $name . '"); ';
+        $parseStr .= '$__config_val__ = \app\service\tag\ConfigTagService::get("' . $name . '"); ';
+        $parseStr .= 'echo $__config_val__ !== null && $__config_val__ !== "" ? $__config_val__ : "' . addslashes($default) . '"; ';
         $parseStr .= '?>';
 
         return $parseStr;
@@ -402,9 +446,20 @@ class Carefree extends TagLib
         $parseStr .= "'limit' => {$limit}";
         $parseStr .= ']); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__navs__ = $__navs__ ?? []; ';
+        $parseStr .= '$__count__ = count($__navs__); ';
+
         $parseStr .= 'if(!empty($__navs__)): ';
         $parseStr .= 'foreach($__navs__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -439,9 +494,20 @@ class Carefree extends TagLib
         $parseStr .= "'limit' => {$limit}";
         $parseStr .= ']); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__links__ = $__links__ ?? []; ';
+        $parseStr .= '$__count__ = count($__links__); ';
+
         $parseStr .= 'if(!empty($__links__)): ';
         $parseStr .= 'foreach($__links__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -476,12 +542,27 @@ class Carefree extends TagLib
         $parseStr = '<?php ';
         $parseStr .= '$__breadcrumbs__ = \app\service\tag\BreadcrumbTagService::get(); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__breadcrumbs__ = $__breadcrumbs__ ?? []; ';
+        $parseStr .= '$__count__ = count($__breadcrumbs__); ';
+
         $parseStr .= 'if(!empty($__breadcrumbs__)): ';
         $parseStr .= 'foreach($__breadcrumbs__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
+        // 输出分隔符（非最后一项时）
+        $parseStr .= '$__separator__ = ($' . $key . ' < $__count__ - 1) ? \'' . addslashes($separator) . '\' : \'\'; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
+        // 自动添加分隔符
+        $parseStr .= '<?php echo $__separator__; ?>';
 
         $parseStr .= '<?php endforeach; endif; ?>';
 
@@ -521,8 +602,11 @@ class Carefree extends TagLib
     {
         $catid = $tag['catid'] ?? 0;
 
+        // 使用autoBuildVar解析变量参数
+        $catidVar = $this->autoBuildVar($catid);
+
         $parseStr = '<?php ';
-        $parseStr .= '$category = \app\service\tag\CategoryTagService::getOne(' . $catid . '); ';
+        $parseStr .= '$category = \app\service\tag\CategoryTagService::getOne(' . $catidVar . '); ';
         $parseStr .= 'if($category): ?>';
 
         $parseStr .= $content;
@@ -543,8 +627,11 @@ class Carefree extends TagLib
     {
         $tagid = $tag['tagid'] ?? 0;
 
+        // 使用autoBuildVar解析变量参数
+        $tagidVar = $this->autoBuildVar($tagid);
+
         $parseStr = '<?php ';
-        $parseStr .= '$tag = \app\service\tag\TagTagService::getOne(' . $tagid . '); ';
+        $parseStr .= '$tag = \app\service\tag\TagTagService::getOne(' . $tagidVar . '); ';
         $parseStr .= 'if($tag): ?>';
 
         $parseStr .= $content;
@@ -582,9 +669,20 @@ class Carefree extends TagLib
         $parseStr .= "'limit' => {$limit}";
         $parseStr .= ']); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__sliders__ = $__sliders__ ?? []; ';
+        $parseStr .= '$__count__ = count($__sliders__); ';
+
         $parseStr .= 'if(!empty($__sliders__)): ';
         $parseStr .= 'foreach($__sliders__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -606,26 +704,43 @@ class Carefree extends TagLib
      * 分页标签
      * {carefree:pagelist total='100' pagesize='10' currentpage='1' url='/articles/page-{page}.html' style='full' /}
      */
-    public function tagPagelist($tag, $content)
+    public function tagPagelist($tag)
     {
-        $total = $tag['total'] ?? '$total';  // 允许使用变量
-        $pagesize = $tag['pagesize'] ?? '$pagesize';
-        $currentpage = $tag['currentpage'] ?? '$current_page';
+        $total = $tag['total'] ?? '0';
+        $pagesize = $tag['pagesize'] ?? '10';
+        $currentpage = $tag['currentpage'] ?? '1';
         $url = $tag['url'] ?? '';
         $style = $tag['style'] ?? 'full';
 
-        // 使用autoBuildVar解析变量参数
-        $totalVar = $this->autoBuildVar($total);
-        $pagesizeVar = $this->autoBuildVar($pagesize);
-        $currentpageVar = $this->autoBuildVar($currentpage);
+        // 处理变量参数：如果是变量（以$开头），直接使用；否则作为数字处理
+        if (strpos($total, '$') === 0) {
+            $totalVar = $total;
+        } else {
+            $totalVar = intval($total);
+        }
+
+        if (strpos($pagesize, '$') === 0) {
+            $pagesizeVar = $pagesize;
+        } else {
+            $pagesizeVar = intval($pagesize);
+        }
+
+        if (strpos($currentpage, '$') === 0) {
+            $currentpageVar = $currentpage;
+        } else {
+            $currentpageVar = intval($currentpage);
+        }
 
         $parseStr = '<?php ';
+        $parseStr .= '$__pagelist_total__ = isset(' . $totalVar . ') ? ' . $totalVar . ' : 0; ';
+        $parseStr .= '$__pagelist_pagesize__ = ' . $pagesizeVar . '; ';
+        $parseStr .= '$__pagelist_page__ = isset(' . $currentpageVar . ') ? ' . $currentpageVar . ' : 1; ';
         $parseStr .= 'echo \app\service\tag\PageTagService::render([';
-        $parseStr .= "'total' => {$totalVar}, ";
-        $parseStr .= "'pagesize' => {$pagesizeVar}, ";
-        $parseStr .= "'currentpage' => {$currentpageVar}, ";
-        $parseStr .= "'url' => '{$url}', ";
-        $parseStr .= "'style' => '{$style}'";
+        $parseStr .= "'total' => \$__pagelist_total__, ";
+        $parseStr .= "'pagesize' => \$__pagelist_pagesize__, ";
+        $parseStr .= "'currentpage' => \$__pagelist_page__, ";
+        $parseStr .= "'url' => '" . addslashes($url) . "', ";
+        $parseStr .= "'style' => '" . addslashes($style) . "'";
         $parseStr .= ']); ';
         $parseStr .= '?>';
 
@@ -702,9 +817,12 @@ class Carefree extends TagLib
         $type = $tag['type'] ?? 'article';
         $catid = $tag['catid'] ?? 0;
 
+        // 使用autoBuildVar解析变量参数
+        $catidVar = $this->autoBuildVar($catid);
+
         $parseStr = '<?php echo \app\service\tag\StatsTagService::get([';
         $parseStr .= "'type' => '{$type}', ";
-        $parseStr .= "'catid' => {$catid}";
+        $parseStr .= "'catid' => {$catidVar}";
         $parseStr .= ']); ?>';
 
         return $parseStr;
@@ -748,9 +866,20 @@ class Carefree extends TagLib
         $parseStr .= "'type' => '{$type}'";
         $parseStr .= ']); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__related_articles__ = $__related_articles__ ?? []; ';
+        $parseStr .= '$__count__ = count($__related_articles__); ';
+
         $parseStr .= 'if(!empty($__related_articles__)): ';
         $parseStr .= 'foreach($__related_articles__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -1056,9 +1185,20 @@ class Carefree extends TagLib
         $parseStr .= "'format' => '{$format}'";
         $parseStr .= ']); ';
 
+        // 计算总数用于__first__和__last__判断（确保不为null）
+        $parseStr .= '$__archives__ = $__archives__ ?? []; ';
+        $parseStr .= '$__count__ = count($__archives__); ';
+
         $parseStr .= 'if(!empty($__archives__)): ';
         $parseStr .= 'foreach($__archives__ as $' . $key . ' => $' . $id . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $id . ' = is_array($' . $id . ') ? $' . $id . ' : (is_object($' . $id . ') && method_exists($' . $id . ', \'toArray\') ? $' . $id . '->toArray() : (array)$' . $id . '); ';
         $parseStr .= '$' . $i . ' = $' . $key . ' + 1; ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $id . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $id . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $id . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $id . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
@@ -1775,6 +1915,9 @@ class Carefree extends TagLib
         $id = $tag['id'] ?? 'item';
         $empty = $tag['empty'] ?? '';
 
+        // 使用autoBuildVar解析变量参数
+        $catidVar = $this->autoBuildVar($catid);
+
         $key = !empty($tag['key']) ? $tag['key'] : 'key';
         $i = 'i';
 
@@ -1782,7 +1925,7 @@ class Carefree extends TagLib
         $parseStr .= '$__rank__ = \app\service\tag\RankTagService::getRank([';
         $parseStr .= "'type' => '{$type}', ";
         $parseStr .= "'limit' => {$limit}, ";
-        $parseStr .= "'catid' => {$catid}, ";
+        $parseStr .= "'catid' => {$catidVar}, ";
         $parseStr .= "'days' => {$days}";
         $parseStr .= ']); ';
 
@@ -3043,7 +3186,16 @@ class Carefree extends TagLib
         // 构建PHP代码
         $parseStr = '<?php ';
         $parseStr .= 'if(isset($' . $from . ') && !empty($' . $from . ')): ';
+        // 计算总数用于__first__和__last__判断
+        $parseStr .= '$__count__ = count($' . $from . '); ';
         $parseStr .= 'foreach($' . $from . ' as $' . $key . ' => $' . $item . '): ';
+        // 确保是数组格式
+        $parseStr .= '$' . $item . ' = is_array($' . $item . ') ? $' . $item . ' : (is_object($' . $item . ') && method_exists($' . $item . ', \'toArray\') ? $' . $item . '->toArray() : (array)$' . $item . '); ';
+        // 添加__first__、__last__、__index__、__key__支持
+        $parseStr .= '$' . $item . '["__first__"] = ($' . $key . ' === 0); ';
+        $parseStr .= '$' . $item . '["__last__"] = ($' . $key . ' === $__count__ - 1); ';
+        $parseStr .= '$' . $item . '["__index__"] = $' . $key . '; ';
+        $parseStr .= '$' . $item . '["__key__"] = $' . $key . '; ';
         $parseStr .= '?>';
 
         $parseStr .= $content;
