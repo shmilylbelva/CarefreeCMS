@@ -56,25 +56,34 @@
         </el-form-item>
 
         <el-form-item label="主分类" prop="category_id">
-          <el-select v-model="form.category_id" placeholder="请选择主分类" style="width: 100%;">
-            <el-option
-              v-for="category in categories"
-              :key="category.id"
-              :label="formatCategoryLabel(category)"
-              :value="category.id"
-            />
-          </el-select>
+          <el-tree-select
+            v-model="form.category_id"
+            :data="categories"
+            :props="{ value: 'id', label: 'name', children: 'children' }"
+            placeholder="请选择主分类"
+            check-strictly
+            style="width: 100%;"
+          >
+            <template #default="{ data }">
+              <span>{{ formatCategoryLabel(data) }}</span>
+            </template>
+          </el-tree-select>
         </el-form-item>
 
         <el-form-item label="副分类" v-if="subCategoryEnabled">
-          <el-select v-model="form.sub_categories" placeholder="请选择副分类（可选）" multiple style="width: 100%;">
-            <el-option
-              v-for="category in categories"
-              :key="category.id"
-              :label="formatCategoryLabel(category)"
-              :value="category.id"
-            />
-          </el-select>
+          <el-tree-select
+            v-model="form.sub_categories"
+            :data="categories"
+            :props="{ value: 'id', label: 'name', children: 'children' }"
+            placeholder="请选择副分类（可选）"
+            multiple
+            check-strictly
+            style="width: 100%;"
+          >
+            <template #default="{ data }">
+              <span>{{ formatCategoryLabel(data) }}</span>
+            </template>
+          </el-tree-select>
           <div style="margin-top: 5px; color: #909399; font-size: 12px;">
             选择的副分类将与主分类一起显示该文章，不选择则只在主分类下显示
           </div>
@@ -554,7 +563,7 @@ const loadSiteConfig = async (siteId) => {
   try {
     const res = await getSiteDetail(siteId)
     // 添加空值检查，防止配置值不存在时报错
-    subCategoryEnabled.value = res.data?.article_sub_category === 'open'
+    subCategoryEnabled.value = res.data?.config?.article_sub_category === 'open'
   } catch (error) {
     console.error('加载站点配置失败', error)
     // 默认关闭副分类
@@ -902,6 +911,8 @@ watch(() => form.site_ids, async (newSiteIds, oldSiteIds) => {
       customFieldValues.value = {}
       await loadCustomFields()
 
+	 // 加载第一个选择站点的配置（用于判断是否启用副分类等）
+      await loadSiteConfig(newSiteIds[0])
       ElMessage.info('已更新站点选择，相关选项已刷新')
     } else {
       // 如果没有选中站点，清空所有相关数据
@@ -914,6 +925,7 @@ watch(() => form.site_ids, async (newSiteIds, oldSiteIds) => {
       topics.value = []
       customFields.value = []
       customFieldValues.value = {}
+	  subCategoryEnabled.value = false
     }
   }
 }, { deep: true })
@@ -1086,12 +1098,15 @@ onMounted(async () => {
     // 创建模式：根据选中的多个站点ID加载
     if (form.site_ids && form.site_ids.length > 0) {
       await loadOptionsForSites(form.site_ids)
+	  await loadCustomFields()
+      // 加载第一个选择站点的配置
+      await loadSiteConfig(form.site_ids[0])
     } else {
       await loadOptions()
-    }
-    await loadCustomFields()
-    // 加载默认站点配置
-    await loadSiteConfig(form.site_id || 1)
+      await loadCustomFields()
+      // 默认加载站点1的配置（用户未选择站点时）
+      await loadSiteConfig(1)
+    }    
   }
 })
 
